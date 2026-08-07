@@ -49,7 +49,6 @@ from ui.setup_screen import (
 from ui.settings_panel import SettingsPanel
 
 _GEOMETRY_SAVE_DELAY_MS = 300
-_TOP_ROOM = 44  # reserved band at the window's top for floating controls
 
 
 class _UpdatePopup(Popup):
@@ -171,10 +170,7 @@ class ChatWindow(QWidget):
         self._update_popup: _UpdatePopup | None = None
 
         layout = QVBoxLayout(self)
-        # Real reserved space at the top (not just a fade) — the floating
-        # minimize/close/message-count controls live in this band, clear of
-        # where chat bubbles start, instead of overlapping scrolled content.
-        layout.setContentsMargins(0, _TOP_ROOM, 0, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         self._chat_view = ChatView()
@@ -185,28 +181,15 @@ class ChatWindow(QWidget):
         self._input_bar.enter_empty.connect(self._on_enter_empty)
         self._input_bar.new_chat_requested.connect(self._on_new_chat)
         self._input_bar.history_requested.connect(self._on_toggle_history)
+        self._input_bar.minimize_requested.connect(self.minimize_to_bubble)
+        self._input_bar.close_requested.connect(QApplication.instance().quit)
         layout.addWidget(self._input_bar)
-
-        # Floating top-left message count — no backdrop, just text.
-        self._msg_count_label = QLabel("", self)
-        self._msg_count_label.setObjectName("remainingLabel")
-
-        # Floating top-right controls: no backdrop, just icons.
-        self._min_btn = QPushButton("—", self)
-        self._min_btn.setObjectName("headerBtn")
-        self._min_btn.setFixedSize(20, 20)
-        self._min_btn.clicked.connect(self.minimize_to_bubble)
-
-        self._close_btn = QPushButton("✕", self)
-        self._close_btn.setObjectName("headerBtn")
-        self._close_btn.setFixedSize(20, 20)
-        self._close_btn.clicked.connect(QApplication.instance().quit)
 
         self._grip = QSizeGrip(self)
         self._grip.setFixedSize(16, 16)
         self._grip.setStyleSheet("QSizeGrip { background: transparent; }")
 
-        self._position_floating_controls()
+        self._position_grip()
 
         self._geometry_save_timer = QTimer(self)
         self._geometry_save_timer.setSingleShot(True)
@@ -232,22 +215,13 @@ class ChatWindow(QWidget):
         self._update_timer.start()
 
     # --- geometry ---
-    def _position_floating_controls(self) -> None:
+    def _position_grip(self) -> None:
         w, h = self.width(), self.height()
-        btn_y = (_TOP_ROOM - self._close_btn.height()) // 2
-        self._close_btn.move(w - 8 - self._close_btn.width(), btn_y)
-        self._min_btn.move(
-            w - 8 - self._close_btn.width() - 4 - self._min_btn.width(), btn_y
-        )
-        self._msg_count_label.move(8, (_TOP_ROOM - self._msg_count_label.height()) // 2)
         self._grip.move(w - self._grip.width(), h - self._grip.height())
-        self._msg_count_label.raise_()
-        self._min_btn.raise_()
-        self._close_btn.raise_()
         self._grip.raise_()
 
     def resizeEvent(self, event) -> None:
-        self._position_floating_controls()
+        self._position_grip()
         if self._geometry_ready:
             self._geometry_save_timer.start(_GEOMETRY_SAVE_DELAY_MS)
         super().resizeEvent(event)
@@ -312,12 +286,6 @@ class ChatWindow(QWidget):
         self._session_popup.anchor_above(self._input_bar.history_button)
         self._session_popup.show()
 
-    def _update_message_count(self) -> None:
-        n = len(self._conversation.messages())
-        self._msg_count_label.setText(f"{n} message{'' if n == 1 else 's'}" if n else "")
-        self._msg_count_label.adjustSize()
-        self._position_floating_controls()
-
     def _load_latest_session(self) -> None:
         """Load the most recent session, or start empty."""
         sessions = song_history.load_sessions()
@@ -333,7 +301,6 @@ class ChatWindow(QWidget):
             self._session_id = song_history.new_session_id()
             self._conversation.clear()
             self._chat_view.clear()
-        self._update_message_count()
 
     # --- new chat ---
     def _on_new_chat(self) -> None:
@@ -342,7 +309,6 @@ class ChatWindow(QWidget):
         self._session_id = song_history.new_session_id()
         self._conversation.clear()
         self._chat_view.clear()
-        self._update_message_count()
 
     def _on_session_selected(self, session_id: str) -> None:
         if self._session_id and self._conversation.messages():
@@ -357,7 +323,6 @@ class ChatWindow(QWidget):
                     self._conversation.messages(), self._rate_message
                 )
                 break
-        self._update_message_count()
 
     # --- settings popup (opened from the macOS menu bar) ---
     def open_settings(self) -> None:
@@ -385,7 +350,6 @@ class ChatWindow(QWidget):
 
         self._chat_view.begin_assistant_message()
         self._conversation.add_assistant("")
-        self._update_message_count()
 
         self._input_bar.set_enabled_inputs(False)
 
@@ -452,7 +416,6 @@ class ChatWindow(QWidget):
         self._session_id = song_history.new_session_id()
         self._conversation.clear()
         self._chat_view.clear()
-        self._update_message_count()
 
     # --- update check ---
     def _start_update_check(self) -> None:

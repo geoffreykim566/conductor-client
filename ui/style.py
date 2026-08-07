@@ -92,7 +92,7 @@ QTextEdit:focus {{
     border: 1px solid #48484a;
 }}
 QWidget#inputBubble {{
-    background-color: #1c1c1e;
+    background-color: rgba(28, 28, 30, 0.72);
     border: 1px solid #38383a;
     border-radius: 20px;
 }}
@@ -128,14 +128,14 @@ QPushButton:disabled {{
     color: #3a3a3c;
 }}
 QPushButton#sendBtn {{
-    background-color: #0a84ff;
+    background-color: rgba(10, 132, 255, 0.65);
     color: #ffffff;
     border: none;
     border-radius: 16px;
     font-size: 15px;
 }}
 QPushButton#sendBtn:hover {{
-    background-color: #409cff;
+    background-color: rgba(64, 156, 255, 0.65);
 }}
 QPushButton#sendBtn:disabled {{
     background-color: #2c2c2e;

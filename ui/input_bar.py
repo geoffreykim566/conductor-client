@@ -45,6 +45,8 @@ class InputBar(QWidget):
     enter_empty = Signal()
     new_chat_requested = Signal()
     history_requested = Signal()
+    minimize_requested = Signal()
+    close_requested = Signal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -84,7 +86,20 @@ class InputBar(QWidget):
         self._remaining_label.setObjectName("remainingLabel")
         self._remaining_label.hide()
         options_row.addWidget(self._remaining_label, 0, Qt.AlignVCenter)
+
         options_row.addStretch()
+
+        self._min_btn = QPushButton("—")
+        self._min_btn.setObjectName("headerBtn")
+        self._min_btn.setFixedSize(20, 20)
+        self._min_btn.clicked.connect(self.minimize_requested)
+        options_row.addWidget(self._min_btn, 0, Qt.AlignVCenter)
+
+        self._close_btn = QPushButton("✕")
+        self._close_btn.setObjectName("headerBtn")
+        self._close_btn.setFixedSize(20, 20)
+        self._close_btn.clicked.connect(self.close_requested)
+        options_row.addWidget(self._close_btn, 0, Qt.AlignVCenter)
 
         panel_layout.addLayout(options_row)
 
