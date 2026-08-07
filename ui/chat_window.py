@@ -171,7 +171,7 @@ class ChatWindow(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(8)
 
         self._chat_view = ChatView()
         layout.addWidget(self._chat_view, 1)

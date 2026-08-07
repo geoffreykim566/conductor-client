@@ -8,6 +8,10 @@ from ui.message_widget import MessageWidget
 MONO = '"Menlo", monospace'
 
 _FADE_HEIGHT = 40  # roughly where the old drag-header used to be
+_GROWTH_BUDGET_PX = 110  # how far a streaming response can push the view
+# down before it freezes and later chunks just accumulate below the fold —
+# a pixel budget rather than a line count, since these narrow bubbles wrap
+# to noticeably shorter lines than a line-count estimate would assume.
 
 
 class _TopEdgeFadeEffect(QGraphicsEffect):
@@ -55,7 +59,7 @@ class ChatView(QWidget):
         outer.setSpacing(0)
 
         # ── placeholder shown when chat is empty ──────────────────
-        self._placeholder = QLabel("Ask anything about your Logic Pro session.")
+        self._placeholder = QLabel("")
         self._placeholder.setObjectName("chatPlaceholder")
         self._placeholder.setAlignment(Qt.AlignCenter)
         self._placeholder.setWordWrap(True)
@@ -79,9 +83,13 @@ class ChatView(QWidget):
         self._container = QWidget()
         self._container.setAutoFillBackground(False)
         self._layout = QVBoxLayout(self._container)
-        self._layout.setAlignment(Qt.AlignTop)
-        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setContentsMargins(0, 14, 0, 0)
         self._layout.setSpacing(2)
+        # Leading stretch absorbs leftover space above the messages, so a
+        # short conversation sits flush against the input bar at the bottom
+        # (like a normal chat log) instead of floating near the top with
+        # dead space below it. Re-added by clear() since takeAt() drops it.
+        self._layout.addStretch()
         self._scroll.setWidget(self._container)
         outer.addWidget(self._scroll, 1)
 
@@ -156,6 +164,7 @@ class ChatView(QWidget):
             w = item.widget()
             if w:
                 w.deleteLater()
+        self._layout.addStretch()
         self._current_assistant = None
         self._active_wt_widget = None
         self._scroll.hide()
@@ -179,9 +188,20 @@ class ChatView(QWidget):
         self._scroll.show()
 
     def _scroll_to_bottom(self) -> None:
-        QTimer.singleShot(
-            0,
-            lambda: self._scroll.verticalScrollBar().setValue(
-                self._scroll.verticalScrollBar().maximum()
-            ),
-        )
+        QTimer.singleShot(0, self._apply_scroll)
+
+    def _apply_scroll(self) -> None:
+        # Once the streaming assistant bubble's own rendered height passes
+        # the growth budget, this stops updating the scrollbar at all —
+        # leaving it exactly where it was — so later chunks just extend the
+        # bubble below the frozen view instead of dragging its (already-
+        # read) top further up. Checking the bubble's actual height rather
+        # than capping a scroll-position offset avoids a blind spot: while
+        # the conversation still fits the viewport the scrollbar doesn't
+        # move at all (value stuck at 0), so an offset-based budget could
+        # let the bubble grow far past it before any capping ever kicked in.
+        if (self._current_assistant is not None
+                and self._current_assistant.height() > _GROWTH_BUDGET_PX):
+            return
+        bar = self._scroll.verticalScrollBar()
+        bar.setValue(bar.maximum())

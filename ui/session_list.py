@@ -62,8 +62,8 @@ class SessionListPanel(Popup):
 
         self._container = QWidget()
         self._list_layout = QVBoxLayout(self._container)
-        self._list_layout.setContentsMargins(0, 4, 0, 4)
-        self._list_layout.setSpacing(0)
+        self._list_layout.setContentsMargins(6, 4, 6, 4)
+        self._list_layout.setSpacing(4)
         self._list_layout.addStretch()
 
         self._scroll.setWidget(self._container)

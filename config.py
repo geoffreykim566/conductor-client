@@ -19,7 +19,7 @@ FEEDBACK_PROMPT_REMAINING_THRESHOLDS = (35, 20, 0)
 
 # --- Window ---
 WINDOW_WIDTH = 460
-WINDOW_HEIGHT = 550
+WINDOW_HEIGHT = 500
 WINDOW_MARGIN = 20         # distance from screen edge
 MINIMIZED_SIZE = 60        # px square for collapsed bubble
 MIN_WINDOW_WIDTH = 300

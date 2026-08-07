@@ -16,7 +16,7 @@ QWidget#minimizedRoot {{
     border-radius: 30px;
 }}
 QWidget#inputPanel {{
-    background-color: rgba(20, 20, 21, 0.82);
+    background-color: rgba(28, 28, 30, 0.82);
     border: 1px solid rgba(42, 42, 44, 0.6);
     border-radius: 18px;
 }}
@@ -92,7 +92,7 @@ QTextEdit:focus {{
     border: 1px solid #48484a;
 }}
 QWidget#inputBubble {{
-    background-color: rgba(28, 28, 30, 0.72);
+    background-color: rgba(38, 38, 41, 0.82);
     border: none;
     border-radius: 20px;
 }}
@@ -206,16 +206,15 @@ QPushButton#danger:hover {{
     border-color: #ff453a;
 }}
 QFrame#sessionRow {{
-    border-bottom: 1px solid #222224;
     background: transparent;
+    border-radius: 10px;
 }}
 QFrame#sessionRow:hover {{
     background: #1c1c1e;
 }}
 QFrame#sessionRowActive {{
-    border-bottom: 1px solid #222224;
-    border-left: 3px solid #0a84ff;
     background: #1a2640;
+    border-radius: 10px;
 }}
 QLabel#sessionDate {{
     color: #ebebf5;
