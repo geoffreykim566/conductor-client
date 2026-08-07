@@ -138,8 +138,6 @@ class MessageWidget(QWidget):
             btn.setObjectName("rateBtn")
             btn.setFixedSize(28, 20)
             btn.setCursor(Qt.PointingHandCursor)
-        self._up.setToolTip("Good response")
-        self._down.setToolTip("Bad response")
         self._up.clicked.connect(lambda: self._rate(1))
         self._down.clicked.connect(lambda: self._rate(-1))
         row.addWidget(self._up)
@@ -501,7 +499,6 @@ class MessageWidget(QWidget):
         dismiss = QPushButton("✕")
         dismiss.setObjectName("headerBtn")
         dismiss.setFixedSize(20, 20)
-        dismiss.setToolTip("Dismiss")
 
         dismiss_row = QHBoxLayout()
         dismiss_row.setContentsMargins(0, 2, 0, 0)

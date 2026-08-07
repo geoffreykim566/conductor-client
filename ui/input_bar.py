@@ -1,8 +1,13 @@
-"""Input bar: pending attachment preview, text input, and three action buttons."""
+"""Input bar: pending attachment preview, new-chat/history icons, text input, send button.
+
+Also doubles as the window's drag handle — clicking and dragging any part of
+this bar's own background (not the text edit or a button) moves the window,
+since the outer window no longer has a header to drag from.
+"""
 import base64
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QKeyEvent, QPixmap
+from PySide6.QtCore import QEvent, QPoint, Qt, Signal
+from PySide6.QtGui import QFontMetrics, QKeyEvent, QMouseEvent, QPixmap, QTextOption
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -29,22 +34,38 @@ class _ChatTextEdit(QTextEdit):
 
 
 class InputBar(QWidget):
-    """Pending-attachment row + text + buttons.
+    """Pending-attachment row + new-chat/history icons + text + send button.
 
     Emits send(text, list_of_b64_images) when the user submits.
     Emits enter_empty when Enter is pressed with no text (walkthrough advance).
+    Emits new_chat_requested / history_requested from their respective icons.
     """
 
     send = Signal(str, list)
     enter_empty = Signal()
+    new_chat_requested = Signal()
+    history_requested = Signal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._pending_images: list[str] = []
+        self._drag_offset: QPoint | None = None
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(10, 6, 10, 10)
-        root.setSpacing(6)
+        root.setContentsMargins(10, 0, 10, 10)
+        root.setSpacing(0)
+
+        # Rounded, tinted backing panel behind the whole bar — same
+        # transparent aesthetic as the message bubbles — with room at the
+        # top for the attachment preview / remaining-count row to sit inside
+        # it rather than floating loose above the pill.
+        self._panel = QWidget()
+        self._panel.setObjectName("inputPanel")
+        self._panel.installEventFilter(self)
+        panel_layout = QVBoxLayout(self._panel)
+        panel_layout.setContentsMargins(10, 10, 10, 10)
+        panel_layout.setSpacing(6)
+        root.addWidget(self._panel)
 
         # Attachment preview row (hidden when empty)
         self._attachments_row = QWidget()
@@ -52,9 +73,9 @@ class InputBar(QWidget):
         self._attachments_layout.setContentsMargins(0, 0, 0, 0)
         self._attachments_layout.setSpacing(4)
         self._attachments_row.hide()
-        root.addWidget(self._attachments_row)
+        panel_layout.addWidget(self._attachments_row)
 
-        # Options bar (above the input bubble)
+        # Options row (above the input bubble)
         options_row = QHBoxLayout()
         options_row.setContentsMargins(2, 0, 2, 0)
         options_row.setSpacing(6)
@@ -63,43 +84,60 @@ class InputBar(QWidget):
         self._remaining_label.setObjectName("remainingLabel")
         self._remaining_label.hide()
         options_row.addWidget(self._remaining_label, 0, Qt.AlignVCenter)
-
         options_row.addStretch()
 
-        self._capture_box = QPushButton("✓")
-        self._capture_box.setObjectName("captureBox")
-        self._capture_box.setCheckable(True)
-        self._capture_box.setChecked(True)
-        self._capture_box.setFixedSize(14, 14)
-        self._capture_box.setCursor(Qt.PointingHandCursor)
-        self._capture_box.setToolTip("Attach a screenshot of Logic Pro with your message")
-        options_row.addWidget(self._capture_box, 0, Qt.AlignVCenter)
+        panel_layout.addLayout(options_row)
 
-        self._capture_label = QPushButton("Include screenshot")
-        self._capture_label.setObjectName("captureLabel")
-        self._capture_label.setCursor(Qt.PointingHandCursor)
-        self._capture_label.clicked.connect(self._capture_box.toggle)
-        options_row.addWidget(self._capture_label, 0, Qt.AlignVCenter)
+        # Single rounded-rect bubble holding new-chat/history (left), the
+        # text field, and send (right) — all the same height, so this is
+        # the only boxed/backdropped element in the bar. options_row above
+        # (remaining-message count, etc.) stays outside it, sitting on top.
+        _CONTROL_SIZE = 32
 
-        root.addLayout(options_row)
+        bubble = QWidget()
+        bubble.setObjectName("inputBubble")
+        bubble_row = QHBoxLayout(bubble)
+        bubble_row.setContentsMargins(4, 4, 4, 4)
+        bubble_row.setSpacing(4)
 
-        # Input + buttons row
-        input_row = QHBoxLayout()
-        input_row.setSpacing(4)
+        new_btn = QPushButton("✦")
+        new_btn.setObjectName("sendBtn")
+        new_btn.setFixedSize(_CONTROL_SIZE, _CONTROL_SIZE)
+        new_btn.clicked.connect(self.new_chat_requested)
+        bubble_row.addWidget(new_btn)
+
+        hist_btn = QPushButton("☰")
+        hist_btn.setObjectName("sendBtn")
+        hist_btn.setFixedSize(_CONTROL_SIZE, _CONTROL_SIZE)
+        hist_btn.clicked.connect(self.history_requested)
+        bubble_row.addWidget(hist_btn)
+        self.history_button = hist_btn
 
         self._text = _ChatTextEdit()
+        self._text.setObjectName("bareInput")
         self._text.setPlaceholderText("Ask anything about Logic Pro…")
-        self._text.setFixedHeight(64)
+        # QTextEdit's placeholder is painted from the document's default text
+        # option, not the cursor-based setAlignment() — only the latter would
+        # leave the placeholder left-aligned while typed text centers. That
+        # option only covers horizontal alignment though — QTextDocument has
+        # no concept of vertical centering, so the single line is vertically
+        # centered manually via viewport margins sized from font metrics.
+        self._text.document().setDefaultTextOption(QTextOption(Qt.AlignCenter))
+        self._text.document().setDocumentMargin(0)
+        self._text.setFixedHeight(_CONTROL_SIZE)
+        line_height = QFontMetrics(self._text.font()).height()
+        top_margin = max(0, (_CONTROL_SIZE - line_height) // 2)
+        self._text.setViewportMargins(4, top_margin, 4, 0)
         self._text.submit.connect(self._on_send)
-        input_row.addWidget(self._text)
+        bubble_row.addWidget(self._text, 1)
 
         self._send_btn = QPushButton("↑")
         self._send_btn.setObjectName("sendBtn")
-        self._send_btn.setFixedSize(32, 32)
-        self._send_btn.setToolTip("Send")
+        self._send_btn.setFixedSize(_CONTROL_SIZE, _CONTROL_SIZE)
         self._send_btn.clicked.connect(self._on_send)
-        input_row.addWidget(self._send_btn, 0, Qt.AlignBottom)
-        root.addLayout(input_row)
+        bubble_row.addWidget(self._send_btn)
+
+        panel_layout.addWidget(bubble)
 
     def add_pending_image(self, b64: str) -> None:
         """Add an image to the pending attachments preview."""
@@ -126,10 +164,6 @@ class InputBar(QWidget):
 
         self._attachments_layout.addWidget(thumb_container)
         self._attachments_row.show()
-
-    def capture_enabled(self) -> bool:
-        """Whether to attach a Logic Pro screenshot to the next message."""
-        return self._capture_box.isChecked()
 
     def set_remaining(self, remaining: int | None) -> None:
         """Show how many free messages the user has left, or hide when unknown."""
@@ -174,3 +208,47 @@ class InputBar(QWidget):
         self._clear_attachments_ui()
         for b64 in images:
             self.add_pending_image(b64)
+
+    # --- window drag ---
+    # Only fires when the click lands on background with no interactive
+    # child under it (Qt routes events to a child widget first when one is
+    # under the cursor), so text selection in the input and the icon/send
+    # buttons are unaffected. `_panel` is a separate child widget covering
+    # most of the bar, so it needs its own event filter below — a plain
+    # override here only catches the thin margin outside `_panel`.
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        self._drag_press(event)
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        self._drag_move(event)
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        self._drag_release()
+        super().mouseReleaseEvent(event)
+
+    def eventFilter(self, obj, event) -> bool:
+        if obj is self._panel:
+            t = event.type()
+            if t == QEvent.Type.MouseButtonPress:
+                self._drag_press(event)
+            elif t == QEvent.Type.MouseMove:
+                self._drag_move(event)
+            elif t == QEvent.Type.MouseButtonRelease:
+                self._drag_release()
+        return super().eventFilter(obj, event)
+
+    def _drag_press(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.LeftButton:
+            self._drag_offset = event.globalPosition().toPoint() - self.window().pos()
+
+    def _drag_move(self, event: QMouseEvent) -> None:
+        if self._drag_offset is not None:
+            self.window().move(event.globalPosition().toPoint() - self._drag_offset)
+
+    def _drag_release(self) -> None:
+        if self._drag_offset is not None:
+            self._drag_offset = None
+            if hasattr(self.window(), "persist_geometry"):
+                self.window().persist_geometry()

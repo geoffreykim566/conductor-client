@@ -18,7 +18,7 @@ FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdFXMtLksRH-BfQ92v
 FEEDBACK_PROMPT_REMAINING_THRESHOLDS = (35, 20, 0)
 
 # --- Window ---
-WINDOW_WIDTH = 380
+WINDOW_WIDTH = 460
 WINDOW_HEIGHT = 550
 WINDOW_MARGIN = 20         # distance from screen edge
 MINIMIZED_SIZE = 60        # px square for collapsed bubble
@@ -30,7 +30,6 @@ MAX_WINDOW_HEIGHT = 1000
 # --- Capture ---
 # Owning-application names as reported by Quartz CGWindowListCopyWindowInfo.
 LOGIC_PRO_APP_NAMES = ("Logic Pro", "Logic Pro X")
-MAX_IMAGE_LONG_EDGE = 1568  # Claude vision sweet spot
 
 # --- System prompt ---
 SYSTEM_PROMPT = """You are a focused, friendly mentor for Logic Pro. You help the user learn the software itself — its tools, menus, signal flow, and the technical craft of music production.

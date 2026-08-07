@@ -1,11 +1,8 @@
-"""Locate the Logic Pro window and capture it as a base64 PNG (macOS)."""
-import base64
-import io
-
+"""Locate the Logic Pro window and capture it (macOS)."""
 import Quartz
 from PIL import Image
 
-from config import LOGIC_PRO_APP_NAMES, MAX_IMAGE_LONG_EDGE
+from config import LOGIC_PRO_APP_NAMES
 
 
 def _find_all_logic_pro_windows() -> list[dict]:
@@ -157,63 +154,3 @@ def capture_menubar_strip() -> tuple[Image.Image, float] | None:
     data = bytes(Quartz.CGDataProviderCopyData(Quartz.CGImageGetDataProvider(cg)))
     img = Image.frombuffer("RGBA", (pw, ph), data, "raw", "BGRA", bpr, 1).convert("RGB")
     return img, screen_h_pt
-
-
-def capture_fl_studio_window() -> str:
-    """Capture all visible Logic Pro windows (main + popups), downscale, return base64 PNG.
-
-    Name kept as `capture_fl_studio_window` so the rest of the app doesn't have to change.
-    Captures the bounding screen region covering every Logic Pro window so that plugin
-    editors and floating dialogs are included alongside the main project window.
-    """
-    windows = _find_all_logic_pro_windows()
-
-    # Compute the union bounding rect across all Logic Pro windows.
-    xs = [w["kCGWindowBounds"]["X"] for w in windows]
-    ys = [w["kCGWindowBounds"]["Y"] for w in windows]
-    x2s = [w["kCGWindowBounds"]["X"] + w["kCGWindowBounds"]["Width"] for w in windows]
-    y2s = [w["kCGWindowBounds"]["Y"] + w["kCGWindowBounds"]["Height"] for w in windows]
-    x, y = min(xs), min(ys)
-    width, height = max(x2s) - x, max(y2s) - y
-
-    if width <= 0 or height <= 0:
-        raise RuntimeError("Logic Pro window has invalid dimensions (minimized?).")
-
-    # Capture only Logic Pro's own windows (main + plugin popups already in `windows`).
-    # Using only these IDs prevents any app behind Logic Pro from bleeding into the capture.
-    window_ids = [w["kCGWindowNumber"] for w in windows]
-
-    rect = Quartz.CGRectMake(x, y, width, height)
-    cg_image = Quartz.CGWindowListCreateImageFromArray(
-        rect,
-        window_ids,
-        Quartz.kCGWindowImageNominalResolution,
-    )
-
-    if cg_image is None:
-        raise RuntimeError(
-            "Failed to capture Logic Pro window. "
-            "Grant Screen Recording permission in System Settings → Privacy & Security."
-        )
-
-    pixel_width = Quartz.CGImageGetWidth(cg_image)
-    pixel_height = Quartz.CGImageGetHeight(cg_image)
-    bytes_per_row = Quartz.CGImageGetBytesPerRow(cg_image)
-    data_provider = Quartz.CGImageGetDataProvider(cg_image)
-    data = Quartz.CGDataProviderCopyData(data_provider)
-    buffer = bytes(data)
-
-    # Quartz returns BGRA; convert to RGB via PIL.
-    img = Image.frombuffer(
-        "RGBA", (pixel_width, pixel_height), buffer, "raw", "BGRA", bytes_per_row, 1
-    ).convert("RGB")
-
-    long_edge = max(img.size)
-    if long_edge > MAX_IMAGE_LONG_EDGE:
-        scale = MAX_IMAGE_LONG_EDGE / long_edge
-        new_size = (int(img.width * scale), int(img.height * scale))
-        img = img.resize(new_size, Image.LANCZOS)
-
-    buf = io.BytesIO()
-    img.save(buf, format="PNG", optimize=True)
-    return base64.b64encode(buf.getvalue()).decode("ascii")

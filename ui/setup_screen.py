@@ -18,83 +18,8 @@ _CONFIG_PATH = Path.home() / "Library" / "Application Support" / "Conductor" / "
 
 MONO = '"Menlo", monospace'
 
-SHARED_STYLE = f"""
-    QWidget#setupRoot, QWidget#guideRoot {{
-        background-color: #141415;
-        border: 1px solid #2a2a2c;
-        border-radius: 14px;
-    }}
-    QLabel#title {{
-        color: #f2f2f7;
-        font-family: {MONO};
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }}
-    QLabel#subtitle {{
-        color: #636366;
-        font-family: {MONO};
-        font-size: 11px;
-    }}
-    QLabel#stepLabel {{
-        color: #ebebf5;
-        font-size: 13px;
-        padding: 2px 0;
-    }}
-    QLabel#error {{
-        color: #ff453a;
-        font-family: {MONO};
-        font-size: 11px;
-    }}
-    QLineEdit {{
-        background-color: #1c1c1e;
-        color: #ebebf5;
-        border: 1px solid #38383a;
-        border-radius: 8px;
-        padding: 8px 10px;
-        font-family: {MONO};
-        font-size: 12px;
-    }}
-    QLineEdit:focus {{
-        border: 1px solid #48484a;
-    }}
-    QPushButton#primary {{
-        background-color: #0a84ff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 9px;
-        font-family: {MONO};
-        font-size: 12px;
-        font-weight: 600;
-    }}
-    QPushButton#primary:hover {{ background-color: #409cff; }}
-    QPushButton#primary:disabled {{ background-color: #2c2c2e; color: #48484a; }}
-    QPushButton#ghost {{
-        background: transparent;
-        color: #0a84ff;
-        border: none;
-        font-family: {MONO};
-        font-size: 11px;
-        padding: 0;
-    }}
-    QPushButton#ghost:hover {{ color: #409cff; }}
-    QPushButton#chip {{
-        background-color: #1c1c1e;
-        color: #ebebf5;
-        border: 1px solid #38383a;
-        border-radius: 8px;
-        padding: 7px 8px;
-        font-family: {MONO};
-        font-size: 11px;
-    }}
-    QPushButton#chip:hover {{ border: 1px solid #48484a; }}
-    QPushButton#chip[selected="true"] {{
-        background-color: #0a84ff;
-        border: 1px solid #0a84ff;
-        color: white;
-    }}
-"""
+# Styling for these dialogs comes from the app-wide stylesheet (ui/style.py),
+# applied once at the QApplication level in main.py.
 
 
 def _read_config() -> dict:
@@ -242,8 +167,8 @@ class PermissionScreen(QWidget):
         layout.addWidget(title)
 
         desc = QLabel(
-            "Conductor captures your Logic Pro window to give\n"
-            "Claude visual context when you ask questions."
+            "Conductor reads Logic Pro's windows to locate controls\n"
+            "and run walkthroughs on screen."
         )
         desc.setObjectName("subtitle")
         desc.setWordWrap(True)
@@ -273,7 +198,6 @@ class PermissionScreen(QWidget):
         skip_row.addStretch()
         layout.addLayout(skip_row)
 
-        self.setStyleSheet(SHARED_STYLE)
         x, y = _centered_pos(self)
         self.move(x, y)
 
@@ -351,7 +275,6 @@ class InputMonitoringScreen(QWidget):
         skip_row.addStretch()
         layout.addLayout(skip_row)
 
-        self.setStyleSheet(SHARED_STYLE)
         x, y = _centered_pos(self)
         self.move(x, y)
 
@@ -410,7 +333,6 @@ class DisclaimerScreen(QWidget):
         btn.clicked.connect(self._on_continue)
         layout.addWidget(btn)
 
-        self.setStyleSheet(SHARED_STYLE)
         x, y = _centered_pos(self)
         self.move(x, y)
 
@@ -477,7 +399,6 @@ class QuestionsDialog(QWidget):
         skip_row.addStretch()
         layout.addLayout(skip_row)
 
-        self.setStyleSheet(SHARED_STYLE)
         x, y = _centered_pos(self)
         self.move(x, y)
 
@@ -578,7 +499,6 @@ class FeedbackDialog(QWidget):
         bottom_row.addWidget(never_btn)
         layout.addLayout(bottom_row)
 
-        self.setStyleSheet(SHARED_STYLE)
         x, y = _centered_pos(self)
         self.move(x, y)
 

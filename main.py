@@ -2,7 +2,8 @@
 import sys
 
 from PySide6.QtCore import QEvent
-from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QApplication, QMenuBar
 
 from ui.setup_screen import (
     DisclaimerScreen,
@@ -16,6 +17,7 @@ from ui.setup_screen import (
     mark_setup_complete,
 )
 from ui.chat_window import ChatWindow
+from ui.style import STYLESHEET
 
 
 class ConductorApp(QApplication):
@@ -23,6 +25,7 @@ class ConductorApp(QApplication):
         super().__init__(argv)
         self._chat_window: ChatWindow | None = None
         self._screen = None  # holds the current onboarding screen so it isn't GC'd
+        self._menu_bar: QMenuBar | None = None  # holds the app menu so it isn't GC'd
 
     def event(self, event: QEvent) -> bool:
         if (
@@ -57,6 +60,7 @@ def main() -> None:
     print(f"[conductor] server → {SERVER_BASE_URL}")
     _check_server(SERVER_BASE_URL)
     app = ConductorApp(sys.argv)
+    app.setStyleSheet(STYLESHEET)
     app.setQuitOnLastWindowClosed(False)
     app.aboutToQuit.connect(lambda: app._chat_window and app._chat_window.prepare_for_quit())
 
@@ -123,7 +127,21 @@ def _show_questions(app: ConductorApp) -> None:
 def _launch_chat(app: ConductorApp) -> None:
     window = ChatWindow()
     app._chat_window = window
+    _install_menu_bar(app, window)
     window.show()
+
+
+def _install_menu_bar(app: ConductorApp, window: ChatWindow) -> None:
+    """A QMenuBar with no parent window still merges into the native macOS
+    menu bar. Settings is given the standard Preferences role so macOS places
+    it under the app's own menu (top-left) with the usual Cmd+, shortcut."""
+    menu_bar = QMenuBar()
+    app._menu_bar = menu_bar
+    menu = menu_bar.addMenu("Conductor")
+    settings_action = QAction("Settings…", menu_bar)
+    settings_action.setMenuRole(QAction.MenuRole.PreferencesRole)
+    settings_action.triggered.connect(window.open_settings)
+    menu.addAction(settings_action)
 
 
 if __name__ == "__main__":
