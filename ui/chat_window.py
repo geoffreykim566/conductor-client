@@ -284,6 +284,9 @@ class ChatWindow(QWidget):
         self._session_popup.session_selected.connect(self._on_session_selected)
         self._session_popup.load(song_history.load_sessions(), self._session_id)
         self._session_popup.anchor_above(self._input_bar.history_button)
+        self._session_popup.enable_click_outside_dismiss(
+            ignore_widget=self._input_bar.history_button
+        )
         self._session_popup.show()
 
     def _load_latest_session(self) -> None:

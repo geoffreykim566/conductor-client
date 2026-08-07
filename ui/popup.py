@@ -4,8 +4,8 @@ Used for Settings, its confirm dialogs (delete history / uninstall), and the
 launch-time update prompt — all centered on screen. History uses the same
 base but anchors above a button instead of centering (see anchor_above).
 """
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtCore import QEvent, QRect, Qt, Signal
+from PySide6.QtGui import QCursor, QGuiApplication
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 
@@ -52,6 +52,9 @@ class Popup(QWidget):
         self.body = QWidget()
         panel_layout.addWidget(self.body, 1)
 
+        self._dismiss_on_outside_click = False
+        self._dismiss_ignore_widget: QWidget | None = None
+
     def _on_close(self) -> None:
         self.closed.emit()
         self.close()
@@ -62,6 +65,44 @@ class Popup(QWidget):
     def resizeEvent(self, event) -> None:
         self._sync_panel_size()
         super().resizeEvent(event)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        # Without this, a popup that isn't yet the active/key window can eat its
+        # first click just activating the window (macOS), so e.g. the X button
+        # doesn't register until a second click.
+        self.raise_()
+        self.activateWindow()
+
+    def enable_click_outside_dismiss(self, ignore_widget: QWidget | None = None) -> None:
+        """Close this popup when it loses focus to a click outside it.
+
+        `ignore_widget` is the button (if any) that toggles this popup open —
+        a click there also deactivates us, but that widget's own click handler
+        already closes us, so skip our own close to avoid closing-then-
+        immediately-reopening.
+        """
+        self._dismiss_on_outside_click = True
+        self._dismiss_ignore_widget = ignore_widget
+
+    def event(self, event) -> bool:
+        if (
+            event.type() == QEvent.Type.WindowDeactivate
+            and self._dismiss_on_outside_click
+            and self.isVisible()
+            and not self._click_is_on_ignore_widget()
+        ):
+            self._on_close()
+        return super().event(event)
+
+    def _click_is_on_ignore_widget(self) -> bool:
+        if self._dismiss_ignore_widget is None:
+            return False
+        top_left = self._dismiss_ignore_widget.mapToGlobal(
+            self._dismiss_ignore_widget.rect().topLeft()
+        )
+        rect = QRect(top_left, self._dismiss_ignore_widget.size())
+        return rect.contains(QCursor.pos())
 
     def center_on_screen(self) -> None:
         self.adjustSize()
