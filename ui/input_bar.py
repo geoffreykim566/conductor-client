@@ -54,7 +54,7 @@ class InputBar(QWidget):
         self._drag_offset: QPoint | None = None
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(60, 0, 10, 10)
+        root.setContentsMargins(70, 0, 0, 10)
         root.setSpacing(0)
 
         # Rounded, tinted backing panel behind the whole bar — same
