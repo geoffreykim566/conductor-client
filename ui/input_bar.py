@@ -54,7 +54,7 @@ class InputBar(QWidget):
         self._drag_offset: QPoint | None = None
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(10, 0, 10, 10)
+        root.setContentsMargins(60, 0, 10, 10)
         root.setSpacing(0)
 
         # Rounded, tinted backing panel behind the whole bar — same
@@ -65,8 +65,8 @@ class InputBar(QWidget):
         self._panel.setObjectName("inputPanel")
         self._panel.installEventFilter(self)
         panel_layout = QVBoxLayout(self._panel)
-        panel_layout.setContentsMargins(10, 18, 10, 10)
-        panel_layout.setSpacing(6)
+        panel_layout.setContentsMargins(10, 8, 10, 10)
+        panel_layout.setSpacing(2)
         root.addWidget(self._panel)
 
         # Attachment preview row (hidden when empty)
@@ -78,9 +78,26 @@ class InputBar(QWidget):
         panel_layout.addWidget(self._attachments_row)
 
         # Options row (above the input bubble)
+        _CONTROL_SIZE = 32
+
         options_row = QHBoxLayout()
         options_row.setContentsMargins(2, 0, 2, 0)
         options_row.setSpacing(6)
+
+        new_btn = QPushButton("✦")
+        new_btn.setObjectName("headerBtn")
+        new_btn.setFixedSize(20, 20)
+        new_btn.clicked.connect(self.new_chat_requested)
+        options_row.addWidget(new_btn, 0, Qt.AlignVCenter)
+
+        hist_btn = QPushButton("☰")
+        hist_btn.setObjectName("headerBtn")
+        hist_btn.setFixedSize(20, 20)
+        hist_btn.clicked.connect(self.history_requested)
+        options_row.addWidget(hist_btn, 0, Qt.AlignVCenter)
+        self.history_button = hist_btn
+
+        options_row.addStretch()
 
         self._remaining_label = QLabel("")
         self._remaining_label.setObjectName("remainingLabel")
@@ -103,46 +120,30 @@ class InputBar(QWidget):
 
         panel_layout.addLayout(options_row)
 
-        # Single rounded-rect bubble holding new-chat/history (left), the
-        # text field, and send (right) — all the same height, so this is
-        # the only boxed/backdropped element in the bar. options_row above
-        # (remaining-message count, etc.) stays outside it, sitting on top.
-        _CONTROL_SIZE = 32
-
+        # Single rounded-rect bubble holding the text field and send button —
+        # all the same height, so this is the only boxed/backdropped element
+        # in the bar. options_row above (new-chat/history, remaining-message
+        # count, etc.) stays outside it, sitting on top.
         bubble = QWidget()
         bubble.setObjectName("inputBubble")
         bubble_row = QHBoxLayout(bubble)
         bubble_row.setContentsMargins(4, 4, 4, 4)
         bubble_row.setSpacing(4)
 
-        new_btn = QPushButton("✦")
-        new_btn.setObjectName("sendBtn")
-        new_btn.setFixedSize(_CONTROL_SIZE, _CONTROL_SIZE)
-        new_btn.clicked.connect(self.new_chat_requested)
-        bubble_row.addWidget(new_btn)
-
-        hist_btn = QPushButton("☰")
-        hist_btn.setObjectName("sendBtn")
-        hist_btn.setFixedSize(_CONTROL_SIZE, _CONTROL_SIZE)
-        hist_btn.clicked.connect(self.history_requested)
-        bubble_row.addWidget(hist_btn)
-        self.history_button = hist_btn
-
         self._text = _ChatTextEdit()
         self._text.setObjectName("bareInput")
         self._text.setPlaceholderText("Ask anything about Logic Pro…")
         # QTextEdit's placeholder is painted from the document's default text
-        # option, not the cursor-based setAlignment() — only the latter would
-        # leave the placeholder left-aligned while typed text centers. That
-        # option only covers horizontal alignment though — QTextDocument has
-        # no concept of vertical centering, so the single line is vertically
-        # centered manually via viewport margins sized from font metrics.
-        self._text.document().setDefaultTextOption(QTextOption(Qt.AlignCenter))
+        # option, not the cursor-based setAlignment(). Left-aligned so both
+        # the placeholder and the cursor start at the field's left edge
+        # rather than the middle. Vertical centering (QTextDocument has no
+        # concept of it) is handled manually via viewport margins below.
+        self._text.document().setDefaultTextOption(QTextOption(Qt.AlignLeft))
         self._text.document().setDocumentMargin(0)
         self._text.setFixedHeight(_CONTROL_SIZE)
         line_height = QFontMetrics(self._text.font()).height()
         top_margin = max(0, (_CONTROL_SIZE - line_height) // 2)
-        self._text.setViewportMargins(4, top_margin, 4, 0)
+        self._text.setViewportMargins(12, top_margin, 4, 0)
         self._text.submit.connect(self._on_send)
         bubble_row.addWidget(self._text, 1)
 

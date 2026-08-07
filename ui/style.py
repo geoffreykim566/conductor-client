@@ -65,7 +65,7 @@ QPushButton#headerBtn:hover {{
     color: #ebebf5;
 }}
 QFrame#userBubble {{
-    background-color: rgba(10, 132, 255, 0.88);
+    background-color: rgba(8, 110, 212, 0.78);
     border-radius: 16px;
 }}
 QFrame#userBubble QLabel {{
@@ -93,13 +93,14 @@ QTextEdit:focus {{
 }}
 QWidget#inputBubble {{
     background-color: rgba(28, 28, 30, 0.72);
-    border: 1px solid #38383a;
+    border: none;
     border-radius: 20px;
 }}
 QTextEdit#bareInput {{
     background: transparent;
     border: none;
     padding: 0;
+    font-size: 11px;
 }}
 QLineEdit {{
     background-color: #1c1c1e;
@@ -128,14 +129,14 @@ QPushButton:disabled {{
     color: #3a3a3c;
 }}
 QPushButton#sendBtn {{
-    background-color: rgba(10, 132, 255, 0.65);
+    background-color: rgba(10, 132, 255, 0.7);
     color: #ffffff;
     border: none;
     border-radius: 16px;
     font-size: 15px;
 }}
 QPushButton#sendBtn:hover {{
-    background-color: rgba(64, 156, 255, 0.65);
+    background-color: rgba(64, 156, 255, 0.7);
 }}
 QPushButton#sendBtn:disabled {{
     background-color: #2c2c2e;
@@ -151,8 +152,9 @@ QPushButton#rateBtn {{
     background: transparent;
     border: 1px solid transparent;
     border-radius: 4px;
-    font-size: 12px;
-    padding: 0;
+    font-family: {MONO};
+    font-size: 11px;
+    padding: 0 6px;
 }}
 QPushButton#rateBtn:hover {{
     background: #1c1c1e;

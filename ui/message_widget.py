@@ -132,15 +132,20 @@ class MessageWidget(QWidget):
         row = QHBoxLayout()
         row.setContentsMargins(6, 0, 0, 0)  # indent under the bubble's left edge
         row.setSpacing(4)
-        self._up = QPushButton("\U0001F44D")
-        self._down = QPushButton("\U0001F44E")
+        self._up = QPushButton("Upvote ↑")
+        self._down = QPushButton("Downvote ↓")
         for btn in (self._up, self._down):
             btn.setObjectName("rateBtn")
-            btn.setFixedSize(28, 20)
+            btn.setFixedHeight(20)
             btn.setCursor(Qt.PointingHandCursor)
         self._up.clicked.connect(lambda: self._rate(1))
         self._down.clicked.connect(lambda: self._rate(-1))
         row.addWidget(self._up)
+
+        sep = QLabel("·")
+        sep.setObjectName("remainingLabel")
+        row.addWidget(sep)
+
         row.addWidget(self._down)
         row.addStretch()
         self._outer.addLayout(row)
