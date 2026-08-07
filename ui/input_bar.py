@@ -63,7 +63,7 @@ class InputBar(QWidget):
         self._panel.setObjectName("inputPanel")
         self._panel.installEventFilter(self)
         panel_layout = QVBoxLayout(self._panel)
-        panel_layout.setContentsMargins(10, 10, 10, 10)
+        panel_layout.setContentsMargins(10, 18, 10, 10)
         panel_layout.setSpacing(6)
         root.addWidget(self._panel)
 
