@@ -174,9 +174,12 @@ QScrollBar:vertical {{
     margin: 0;
 }}
 QScrollBar::handle:vertical {{
-    background: #38383a;
+    background: transparent;
     border-radius: 2px;
     min-height: 24px;
+}}
+QScrollBar[scrolling="true"]::handle:vertical {{
+    background: #38383a;
 }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
     height: 0;
