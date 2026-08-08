@@ -6,9 +6,10 @@ from pre-token builds are ignored: they are unsigned, so the server would
 reject them anyway.
 """
 import json
-from pathlib import Path
 
-_CONFIG_PATH = Path.home() / "Library" / "Application Support" / "Conductor" / "config.json"
+from config import APP_SUPPORT_DIR
+
+_CONFIG_PATH = APP_SUPPORT_DIR / "config.json"
 
 
 def _read_config() -> dict:

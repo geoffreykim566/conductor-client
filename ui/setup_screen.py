@@ -1,6 +1,5 @@
 """First-run setup screens and persisted local config (window size, onboarding state)."""
 import json
-from pathlib import Path
 import Quartz
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QDesktopServices, QGuiApplication
@@ -14,7 +13,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-_CONFIG_PATH = Path.home() / "Library" / "Application Support" / "Conductor" / "config.json"
+from config import APP_SUPPORT_DIR
+
+_CONFIG_PATH = APP_SUPPORT_DIR / "config.json"
 
 MONO = '"Menlo", monospace'
 

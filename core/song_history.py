@@ -1,9 +1,10 @@
 """Global chat history — persists all sessions in a single file."""
 import json
 from datetime import datetime
-from pathlib import Path
 
-HISTORY_FILE = Path.home() / "Library" / "Application Support" / "Conductor" / "history.json"
+from config import APP_SUPPORT_DIR
+
+HISTORY_FILE = APP_SUPPORT_DIR / "history.json"
 
 
 def new_session_id() -> str:

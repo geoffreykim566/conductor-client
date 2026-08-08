@@ -1,10 +1,17 @@
-"""Configuration: constants and system prompt. API key is read from ~/Library/Application Support/Conductor/config.json at runtime."""
+"""Configuration: constants and system prompt. API key is read from APP_SUPPORT_DIR/config.json at runtime."""
 import os
+from pathlib import Path
 
 VERSION = "0.2.6"
 
 MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 1024
+
+# --- App data ---
+# Own directory, separate from the shipping v1 app's "Conductor" dir, so v3
+# dev runs never read/write v1's production identity token, chat history, or
+# window state.
+APP_SUPPORT_DIR = Path.home() / "Library" / "Application Support" / "Conductor-v3"
 
 # --- Server (proxy backend) ---
 # TODO: points at local server-v3 for dev. Once server-v3 has a real deployed

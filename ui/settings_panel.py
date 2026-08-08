@@ -1,15 +1,15 @@
 """Settings popup — Danger Zone + window reset. Opened from the macOS menu bar."""
 import shutil
-from pathlib import Path
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+from config import APP_SUPPORT_DIR
 from core import song_history
 from core.server_client import delete_me
 from ui.popup import Popup
 
-_APP_DATA = Path.home() / "Library" / "Application Support" / "Conductor"
+_APP_DATA = APP_SUPPORT_DIR
 
 
 class _ConfirmPopup(Popup):
