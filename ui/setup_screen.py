@@ -217,7 +217,7 @@ class PermissionScreen(QWidget):
 
 
 class InputMonitoringScreen(QWidget):
-    """Requests Input Monitoring access, needed for the walkthrough kill switch (Shift+Esc)."""
+    """Requests Input Monitoring access, needed for the walkthrough kill switch (any key)."""
 
     finished = Signal()
 
@@ -245,7 +245,7 @@ class InputMonitoringScreen(QWidget):
         layout.addWidget(title)
 
         desc = QLabel(
-            "Conductor listens for Shift+Esc so you can end a\n"
+            "Conductor listens for any key, click, or scroll so you can end a\n"
             "walkthrough at any time, even while Logic Pro is focused."
         )
         desc.setObjectName("subtitle")

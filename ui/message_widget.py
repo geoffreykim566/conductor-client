@@ -244,7 +244,7 @@ class MessageWidget(QWidget):
         cl.addWidget(hint)
         self._wt_hint = hint
 
-        end_hint = QLabel("Shift+Esc to stop")
+        end_hint = QLabel("Press any key to stop")
         end_hint.setFont(_system_font(9))
         end_hint.setStyleSheet("QLabel { color: #48484a; padding-left: 2px; }")
         cl.addWidget(end_hint)
