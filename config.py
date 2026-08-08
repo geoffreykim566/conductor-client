@@ -19,8 +19,12 @@ APP_SUPPORT_DIR = Path.home() / "Library" / "Application Support" / "Conductor-v
 SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "http://127.0.0.1:8000")
 
 # --- Updates ---
-GITHUB_REPO = "geoffreykim566/conductor-logic-pro-v1"
-WEBSITE_URL = "https://geoffreykim566.github.io/conductor-logic-pro-v1/"
+# DMG releases and the marketing page both moved to conductor-website (see
+# that repo's commit "Update download link for Conductor DMG file" and its
+# README/wrangler.jsonc for the askconductor.ai domain) -- these used to
+# point at v1's old repo/GitHub Pages URL.
+GITHUB_REPO = "geoffreykim566/conductor-website"
+WEBSITE_URL = "https://askconductor.ai"
 
 # --- Feedback ---
 FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdFXMtLksRH-BfQ92vm6nQJKtupz2Nm8LZgBczXiOhZwMCt9A/viewform?usp=dialog"

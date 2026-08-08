@@ -8,8 +8,6 @@ from PySide6.QtCore import QEvent, QPoint, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import QDesktopServices, QGuiApplication, QMouseEvent
 from PySide6.QtWidgets import (
     QApplication,
-    QHBoxLayout,
-    QLabel,
     QPushButton,
     QSizeGrip,
     QVBoxLayout,
@@ -33,10 +31,10 @@ from core import song_history
 from core.server_client import post_rating_async
 from ui.chat_view import ChatView
 from ui.input_bar import InputBar
-from ui.popup import Popup
 from ui.session_list import SessionListPanel
 from ui.setup_screen import (
     FeedbackDialog,
+    UpdatePopup,
     clear_window_pos,
     clear_window_size,
     get_saved_window_pos,
@@ -49,36 +47,6 @@ from ui.setup_screen import (
 from ui.settings_panel import SettingsPanel
 
 _GEOMETRY_SAVE_DELAY_MS = 300
-
-
-class _UpdatePopup(Popup):
-    """Shown at launch when a newer version is available. Reappears every
-    launch while an update is available — Skip only dismisses this session,
-    it doesn't persist a permanent opt-out."""
-
-    get_clicked = Signal()
-
-    def __init__(self, version: str) -> None:
-        super().__init__("UPDATE AVAILABLE", width=300)
-        layout = QVBoxLayout(self.body)
-        layout.setContentsMargins(16, 12, 16, 16)
-        layout.setSpacing(10)
-
-        lbl = QLabel(f"Conductor v{version} is available.")
-        lbl.setObjectName("stepLabel")
-        lbl.setWordWrap(True)
-        layout.addWidget(lbl)
-
-        row = QHBoxLayout()
-        get_btn = QPushButton("Download")
-        get_btn.setObjectName("primary")
-        get_btn.clicked.connect(self.get_clicked)
-        row.addWidget(get_btn)
-        skip_btn = QPushButton("Skip")
-        skip_btn.setObjectName("secondary")
-        skip_btn.clicked.connect(self.close)
-        row.addWidget(skip_btn)
-        layout.addLayout(row)
 
 
 class _MinimizedBubble(QWidget):
@@ -172,7 +140,7 @@ class ChatWindow(QWidget):
         self._session_id: str | None = None
         self._session_popup: SessionListPanel | None = None
         self._settings_popup: SettingsPanel | None = None
-        self._update_popup: _UpdatePopup | None = None
+        self._update_popup: UpdatePopup | None = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -449,9 +417,8 @@ class ChatWindow(QWidget):
     def _on_update_available(self, version: str) -> None:
         if self._update_popup is not None and self._update_popup.isVisible():
             return
-        self._update_popup = _UpdatePopup(version)
+        self._update_popup = UpdatePopup(version)
         self._update_popup.get_clicked.connect(self._on_update_get)
-        self._update_popup.center_on_screen()
         self._update_popup.show()
 
     def _on_update_get(self) -> None:

@@ -122,12 +122,40 @@ def reset_feedback_for_new_version() -> None:
 
 
 
-def _centered_pos(widget: QWidget) -> tuple[int, int]:
-    screen = QGuiApplication.primaryScreen().availableGeometry()
-    return (
-        screen.center().x() - widget.width() // 2,
-        screen.center().y() - widget.height() // 2,
-    )
+class CenteredDialog(QWidget):
+    """Frameless, translucent, centered-on-screen dialog with no header bar or
+    close button -- the setup-screen aesthetic (bold centered title, plain
+    subtitle, full-width primary button, ghost secondary buttons) shared by
+    every screen in this file: onboarding (PermissionScreen,
+    InputMonitoringScreen, DisclaimerScreen, QuestionsDialog) and periodic
+    prompts (FeedbackDialog, UpdatePopup). Distinct from ui/popup.py's Popup,
+    which has a header bar + close button for things dismissed casually
+    (Settings, its confirm dialogs, History) -- these two aesthetics are
+    deliberately not merged, keep new setup/prompt screens on this one rather
+    than hand-rolling the same window-flags/translucency/centering
+    boilerplate again.
+
+    Subclasses build their own QVBoxLayout(self.body) -- margins/spacing vary
+    slightly per screen, so this only owns what's genuinely identical: window
+    flags, translucency, fixed size, the "setupRoot" background widget, and
+    screen centering.
+    """
+
+    def __init__(self, width: int, height: int, parent=None) -> None:
+        super().__init__(parent)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setFixedSize(width, height)
+
+        self.body = QWidget(self)
+        self.body.setObjectName("setupRoot")
+        self.body.setGeometry(0, 0, width, height)
+
+        screen = QGuiApplication.primaryScreen().availableGeometry()
+        self.move(
+            screen.center().x() - width // 2,
+            screen.center().y() - height // 2,
+        )
 
 
 
@@ -139,26 +167,19 @@ def has_input_monitoring_permission() -> bool:
     return bool(Quartz.CGPreflightListenEventAccess())
 
 
-class PermissionScreen(QWidget):
+class PermissionScreen(CenteredDialog):
     """Step 1 of first-run: request Screen Recording access before anything else."""
 
     finished = Signal()
 
     def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(360, 300)
+        super().__init__(360, 300, parent)
 
         self._poll = QTimer(self)
         self._poll.setInterval(1000)
         self._poll.timeout.connect(self._check)
 
-        root = QWidget(self)
-        root.setObjectName("setupRoot")
-        root.setGeometry(0, 0, 360, 300)
-
-        layout = QVBoxLayout(root)
+        layout = QVBoxLayout(self.body)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
@@ -199,9 +220,6 @@ class PermissionScreen(QWidget):
         skip_row.addStretch()
         layout.addLayout(skip_row)
 
-        x, y = _centered_pos(self)
-        self.move(x, y)
-
     def _on_grant(self) -> None:
         Quartz.CGRequestScreenCaptureAccess()
         self._btn.setEnabled(False)
@@ -216,26 +234,19 @@ class PermissionScreen(QWidget):
             self.finished.emit()
 
 
-class InputMonitoringScreen(QWidget):
+class InputMonitoringScreen(CenteredDialog):
     """Requests Input Monitoring access, needed for the walkthrough kill switch (any key)."""
 
     finished = Signal()
 
     def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(360, 300)
+        super().__init__(360, 300, parent)
 
         self._poll = QTimer(self)
         self._poll.setInterval(1000)
         self._poll.timeout.connect(self._check)
 
-        root = QWidget(self)
-        root.setObjectName("setupRoot")
-        root.setGeometry(0, 0, 360, 300)
-
-        layout = QVBoxLayout(root)
+        layout = QVBoxLayout(self.body)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
@@ -276,9 +287,6 @@ class InputMonitoringScreen(QWidget):
         skip_row.addStretch()
         layout.addLayout(skip_row)
 
-        x, y = _centered_pos(self)
-        self.move(x, y)
-
     def _on_grant(self) -> None:
         Quartz.CGRequestListenEventAccess()
         self._btn.setEnabled(False)
@@ -293,22 +301,15 @@ class InputMonitoringScreen(QWidget):
             self.finished.emit()
 
 
-class DisclaimerScreen(QWidget):
+class DisclaimerScreen(CenteredDialog):
     """Beta data-collection disclaimer. Acknowledging is required to continue."""
 
     finished = Signal()
 
     def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(360, 320)
+        super().__init__(360, 320, parent)
 
-        root = QWidget(self)
-        root.setObjectName("setupRoot")
-        root.setGeometry(0, 0, 360, 320)
-
-        layout = QVBoxLayout(root)
+        layout = QVBoxLayout(self.body)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
@@ -334,14 +335,11 @@ class DisclaimerScreen(QWidget):
         btn.clicked.connect(self._on_continue)
         layout.addWidget(btn)
 
-        x, y = _centered_pos(self)
-        self.move(x, y)
-
     def _on_continue(self) -> None:
         self.finished.emit()
 
 
-class QuestionsDialog(QWidget):
+class QuestionsDialog(CenteredDialog):
     """One-time onboarding questions, shown after the first message. Skippable."""
 
     closed = Signal()
@@ -350,21 +348,14 @@ class QuestionsDialog(QWidget):
     ROLES = [("Producer", "producer"), ("Mixer", "mixer"), ("Artist", "artist")]
 
     def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(360, 320)
+        super().__init__(360, 320, parent)
 
         self._experience: str | None = None
         self._role: str | None = None
         self._exp_btns: list[QPushButton] = []
         self._role_btns: list[QPushButton] = []
 
-        root = QWidget(self)
-        root.setObjectName("setupRoot")
-        root.setGeometry(0, 0, 360, 320)
-
-        layout = QVBoxLayout(root)
+        layout = QVBoxLayout(self.body)
         layout.setContentsMargins(24, 22, 24, 20)
         layout.setSpacing(10)
 
@@ -399,9 +390,6 @@ class QuestionsDialog(QWidget):
         skip_row.addWidget(skip_btn)
         skip_row.addStretch()
         layout.addLayout(skip_row)
-
-        x, y = _centered_pos(self)
-        self.move(x, y)
 
     def _section(self, text: str) -> QLabel:
         label = QLabel(text)
@@ -448,22 +436,15 @@ class QuestionsDialog(QWidget):
         self.close()
 
 
-class FeedbackDialog(QWidget):
+class FeedbackDialog(CenteredDialog):
     """Periodic feedback prompt shown after the user crosses a usage threshold."""
 
     closed = Signal()
 
     def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(360, 240)
+        super().__init__(360, 240, parent)
 
-        root = QWidget(self)
-        root.setObjectName("setupRoot")
-        root.setGeometry(0, 0, 360, 240)
-
-        layout = QVBoxLayout(root)
+        layout = QVBoxLayout(self.body)
         layout.setContentsMargins(24, 24, 24, 20)
         layout.setSpacing(12)
 
@@ -500,9 +481,6 @@ class FeedbackDialog(QWidget):
         bottom_row.addWidget(never_btn)
         layout.addLayout(bottom_row)
 
-        x, y = _centered_pos(self)
-        self.move(x, y)
-
     def _on_feedback(self) -> None:
         from config import FEEDBACK_FORM_URL
         QDesktopServices.openUrl(QUrl(FEEDBACK_FORM_URL))
@@ -511,6 +489,51 @@ class FeedbackDialog(QWidget):
     def _on_never(self) -> None:
         mark_feedback_never_show()
         self._finish()
+
+    def _finish(self) -> None:
+        self.closed.emit()
+        self.close()
+
+
+class UpdatePopup(CenteredDialog):
+    """Shown at launch when a newer version is available. Reappears every
+    launch while an update is available -- Skip only dismisses this session,
+    it doesn't persist a permanent opt-out (unlike FeedbackDialog's "Don't ask
+    again": staying on an old version isn't a real preference to remember,
+    just a launch someone hasn't updated yet)."""
+
+    get_clicked = Signal()
+    closed = Signal()
+
+    def __init__(self, version: str, parent=None) -> None:
+        super().__init__(360, 200, parent)
+
+        layout = QVBoxLayout(self.body)
+        layout.setContentsMargins(24, 24, 24, 20)
+        layout.setSpacing(12)
+
+        title = QLabel("Update available")
+        title.setObjectName("title")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        body = QLabel(f"Conductor v{version} is available.")
+        body.setObjectName("subtitle")
+        body.setWordWrap(True)
+        body.setAlignment(Qt.AlignCenter)
+        layout.addWidget(body)
+
+        layout.addStretch()
+
+        get_btn = QPushButton("Download")
+        get_btn.setObjectName("primary")
+        get_btn.clicked.connect(self.get_clicked)
+        layout.addWidget(get_btn)
+
+        skip_btn = QPushButton("Skip")
+        skip_btn.setObjectName("ghost")
+        skip_btn.clicked.connect(self._finish)
+        layout.addWidget(skip_btn)
 
     def _finish(self) -> None:
         self.closed.emit()
