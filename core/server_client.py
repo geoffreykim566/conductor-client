@@ -60,12 +60,17 @@ def _headers(token: str) -> dict:
     return {"X-Conductor-Id": token, "Content-Type": "application/json"}
 
 
-def stream_chat(messages: list[dict]) -> Iterator[tuple[str, object]]:
-    """Relay a chat and yield (kind, payload) as the proxy streams.
+def stream_chat(text: str, history: list[dict] | None) -> Iterator[tuple[str, object]]:
+    """Relay one new user turn and yield (kind, payload) as the proxy streams.
+
+    `history` is opaque — exactly what a prior call's "done" payload carried
+    as "history" (None to start a fresh conversation) — round-tripped as-is
+    so the server can keep multi-turn continuity without pinning any state
+    of its own between requests.
 
     kind is one of:
         "chunk" -> payload is a str of streamed text
-        "done"  -> payload is a dict {event_id, tokens_in, tokens_out}
+        "done"  -> payload is a dict {event_id, tokens_in, tokens_out, history, ...}
         "error" -> payload is a str error message
 
     Raises FreeLimitReached on 402 when the message cap is hit, and
@@ -78,7 +83,7 @@ def stream_chat(messages: list[dict]) -> Iterator[tuple[str, object]]:
     for attempt in range(2):
         with httpx.stream(
             "POST", url, headers=_headers(_ensure_token()),
-            json={"messages": messages}, timeout=120,
+            json={"message": text, "history": history}, timeout=120,
         ) as resp:
             if resp.status_code == 401 and attempt == 0:
                 identity.clear_token()

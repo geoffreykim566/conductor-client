@@ -27,8 +27,15 @@ def clear_all() -> None:
         HISTORY_FILE.write_text(json.dumps({"sessions": []}, indent=2))
 
 
-def save_session(session_id: str, messages: list) -> None:
-    """Persist one session's messages, creating or updating it."""
+def save_session(session_id: str, messages: list, server_history: list | None = None) -> None:
+    """Persist one session's messages, creating or updating it.
+
+    `server_history` is the opaque server-side turn history (see
+    ChatWindow._server_history) needed to resume this session with real
+    multi-turn continuity later — always pass the caller's current value
+    explicitly (even when unchanged, e.g. on a rating-only save), since it's
+    stored as a plain field here and a missing value overwrites it with None.
+    """
     HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     sessions = load_sessions()
     serialized = [
@@ -38,7 +45,8 @@ def save_session(session_id: str, messages: list) -> None:
     for s in sessions:
         if s["id"] == session_id:
             s["messages"] = serialized
+            s["server_history"] = server_history
             break
     else:
-        sessions.append({"id": session_id, "messages": serialized})
+        sessions.append({"id": session_id, "messages": serialized, "server_history": server_history})
     HISTORY_FILE.write_text(json.dumps({"sessions": sessions}, indent=2))

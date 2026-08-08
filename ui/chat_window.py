@@ -162,6 +162,11 @@ class ChatWindow(QWidget):
         self.resize(*(saved_size or (WINDOW_WIDTH, WINDOW_HEIGHT)))
 
         self._conversation = Conversation()
+        # Opaque server-returned turn history for the current session — round-
+        # tripped verbatim to /v1/chat each turn so the server can keep real
+        # multi-turn continuity without pinning any state of its own. None
+        # starts a fresh conversation server-side.
+        self._server_history: list[dict] | None = None
         self._worker: StreamWorker | None = None
         self._me_worker: MeWorker | None = None
         self._session_id: str | None = None
@@ -295,6 +300,7 @@ class ChatWindow(QWidget):
         if sessions:
             latest = sessions[-1]
             self._session_id = latest["id"]
+            self._server_history = latest.get("server_history")
             self._conversation.clear()
             self._conversation.load_messages(latest["messages"])
             self._chat_view.load_history(
@@ -302,24 +308,31 @@ class ChatWindow(QWidget):
             )
         else:
             self._session_id = song_history.new_session_id()
+            self._server_history = None
             self._conversation.clear()
             self._chat_view.clear()
 
     # --- new chat ---
     def _on_new_chat(self) -> None:
         if self._session_id and self._conversation.messages():
-            song_history.save_session(self._session_id, self._conversation.messages())
+            song_history.save_session(
+                self._session_id, self._conversation.messages(), self._server_history
+            )
         self._session_id = song_history.new_session_id()
+        self._server_history = None
         self._conversation.clear()
         self._chat_view.clear()
 
     def _on_session_selected(self, session_id: str) -> None:
         if self._session_id and self._conversation.messages():
-            song_history.save_session(self._session_id, self._conversation.messages())
+            song_history.save_session(
+                self._session_id, self._conversation.messages(), self._server_history
+            )
         sessions = song_history.load_sessions()
         for s in sessions:
             if s["id"] == session_id:
                 self._session_id = session_id
+                self._server_history = s.get("server_history")
                 self._conversation.clear()
                 self._conversation.load_messages(s["messages"])
                 self._chat_view.load_history(
@@ -356,7 +369,7 @@ class ChatWindow(QWidget):
 
         self._input_bar.set_enabled_inputs(False)
 
-        self._worker = StreamWorker(self._conversation.to_api_format()[:-1])
+        self._worker = StreamWorker(text, self._server_history)
         self._worker.chunk.connect(self._on_chunk)
         self._worker.status.connect(self._on_status)
         self._worker.done.connect(self._on_done)
@@ -374,7 +387,8 @@ class ChatWindow(QWidget):
     def _on_done(self, event_id: str = "", remaining: int = -1,
                  source_tier: str = "", sources: object = None,
                  locate_type: str = "", element: str = "",
-                 walkthrough_steps: object = None) -> None:
+                 walkthrough_steps: object = None, history: object = None) -> None:
+        self._server_history = history
         msg = self._conversation.last_assistant()
         self._chat_view.set_assistant_tier(source_tier, sources or [])
         if event_id and msg is not None:
@@ -388,7 +402,9 @@ class ChatWindow(QWidget):
             self._chat_view.setup_locate_affordance(element)
         self._chat_view.end_assistant_message()
         if self._session_id:
-            song_history.save_session(self._session_id, self._conversation.messages())
+            song_history.save_session(
+                self._session_id, self._conversation.messages(), self._server_history
+            )
         self._input_bar.set_remaining(remaining if remaining >= 0 else None)
         self._input_bar.set_enabled_inputs(True)
         self._input_bar.setFocus()
@@ -413,10 +429,13 @@ class ChatWindow(QWidget):
             post_rating_async(message.event_id, value)
         message.rating = value
         if self._session_id:
-            song_history.save_session(self._session_id, self._conversation.messages())
+            song_history.save_session(
+                self._session_id, self._conversation.messages(), self._server_history
+            )
 
     def _on_history_cleared(self) -> None:
         self._session_id = song_history.new_session_id()
+        self._server_history = None
         self._conversation.clear()
         self._chat_view.clear()
 
