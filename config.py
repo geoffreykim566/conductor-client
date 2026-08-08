@@ -7,7 +7,9 @@ MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 1024
 
 # --- Server (proxy backend) ---
-SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "https://api.askconductor.ai")
+# TODO: points at local server-v3 for dev. Once server-v3 has a real deployed
+# API, change this default back to that URL (not v1's api.askconductor.ai).
+SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "http://127.0.0.1:8000")
 
 # --- Updates ---
 GITHUB_REPO = "geoffreykim566/conductor-logic-pro-v1"
