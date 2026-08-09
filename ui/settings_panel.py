@@ -1,7 +1,7 @@
-"""Settings popup — Danger Zone + window reset. Opened from the macOS menu bar."""
+"""Settings popup — Danger Zone + window controls. Opened from the macOS menu bar."""
 import shutil
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from config import APP_SUPPORT_DIR
@@ -10,6 +10,66 @@ from core.server_client import delete_me
 from ui.popup import Popup
 
 _APP_DATA = APP_SUPPORT_DIR
+
+
+class _ConfirmButton(QPushButton):
+    """Arms (turns red, "Confirm?") on first click; only fires `confirmed` on
+    a second click while armed. Auto-disarms after a few seconds so a stray
+    later click can't land on an already-armed action."""
+
+    confirmed = Signal()
+    _ARM_TIMEOUT_MS = 3000
+
+    def __init__(self, label: str) -> None:
+        super().__init__(label)
+        self._label = label
+        self._armed = False
+        self.setObjectName("secondary")
+        self.clicked.connect(self._on_click)
+        self._disarm_timer = QTimer(self)
+        self._disarm_timer.setSingleShot(True)
+        self._disarm_timer.timeout.connect(self._disarm)
+
+    def _on_click(self) -> None:
+        if self._armed:
+            self._disarm()
+            self.confirmed.emit()
+        else:
+            self._armed = True
+            self.setObjectName("danger")
+            self.setText("Confirm?")
+            self._refresh_style()
+            self._disarm_timer.start(self._ARM_TIMEOUT_MS)
+
+    def _disarm(self) -> None:
+        self._disarm_timer.stop()
+        self._armed = False
+        self.setObjectName("secondary")
+        self.setText(self._label)
+        self._refresh_style()
+
+    def _refresh_style(self) -> None:
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+
+class _EditSizeButton(QPushButton):
+    """Toggles between "Edit Size" and "Save" -- emits edit_requested on the
+    first click, save_requested on the second (Save) click."""
+
+    edit_requested = Signal()
+    save_requested = Signal()
+
+    def __init__(self) -> None:
+        super().__init__("Edit Size")
+        self.setObjectName("secondary")
+        self._editing = False
+        self.clicked.connect(self._on_click)
+
+    def _on_click(self) -> None:
+        self._editing = not self._editing
+        self.setText("Save" if self._editing else "Edit Size")
+        (self.edit_requested if self._editing else self.save_requested).emit()
 
 
 class _ConfirmPopup(Popup):
@@ -42,12 +102,18 @@ class SettingsPanel(Popup):
     """Settings popup.
 
     Signals:
-        history_cleared()          — user confirmed clearing all chat history
-        reset_window_requested()   — user asked to reset window size/position to default
+        history_cleared()           — user confirmed clearing all chat history
+        edit_size_requested()       — user clicked "Edit Size": show a resize border/grip
+        save_size_requested()       — user clicked "Save": commit the current size
+        reset_size_requested()      — user confirmed resetting size to default
+        reset_position_requested()  — user confirmed resetting position to default
     """
 
     history_cleared = Signal()
-    reset_window_requested = Signal()
+    edit_size_requested = Signal()
+    save_size_requested = Signal()
+    reset_size_requested = Signal()
+    reset_position_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__("SETTINGS", width=300)
@@ -61,10 +127,18 @@ class SettingsPanel(Popup):
         window_label.setObjectName("sessionTitle")
         layout.addWidget(window_label)
 
-        reset_btn = QPushButton("Reset Window")
-        reset_btn.setObjectName("secondary")
-        reset_btn.clicked.connect(self.reset_window_requested)
-        layout.addWidget(reset_btn)
+        edit_size_btn = _EditSizeButton()
+        edit_size_btn.edit_requested.connect(self.edit_size_requested)
+        edit_size_btn.save_requested.connect(self.save_size_requested)
+        layout.addWidget(edit_size_btn)
+
+        reset_size_btn = _ConfirmButton("Reset Size")
+        reset_size_btn.confirmed.connect(self.reset_size_requested)
+        layout.addWidget(reset_size_btn)
+
+        reset_pos_btn = _ConfirmButton("Reset Position")
+        reset_pos_btn.confirmed.connect(self.reset_position_requested)
+        layout.addWidget(reset_pos_btn)
 
         layout.addSpacing(4)
         sep = QLabel()

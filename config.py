@@ -31,13 +31,13 @@ FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdFXMtLksRH-BfQ92v
 FEEDBACK_PROMPT_REMAINING_THRESHOLDS = (35, 20, 0)
 
 # --- Window ---
-WINDOW_WIDTH = 460
+WINDOW_WIDTH = 420
 WINDOW_HEIGHT = 500
 WINDOW_MARGIN = 20         # distance from screen edge
 MINIMIZED_SIZE = 60        # px square for collapsed bubble
 MIN_WINDOW_WIDTH = 300
 MIN_WINDOW_HEIGHT = 380
-MAX_WINDOW_WIDTH = 800
+MAX_WINDOW_WIDTH = 700
 MAX_WINDOW_HEIGHT = 1000
 
 # --- Capture ---
