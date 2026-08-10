@@ -1,12 +1,10 @@
 """Single chat message bubble (user or assistant)."""
 import base64
-import io
-import math
 
 from typing import Callable
 
-from PySide6.QtCore import QPointF, QRectF, Qt, QThread, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -17,31 +15,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-class _LocateWorker(QThread):
-    """Background thread: runs the OCR locate pipeline and emits the result."""
-    found = Signal(object)
-
-    def __init__(self, element: str, parent=None) -> None:
-        super().__init__(parent)
-        self._element = element
-
-    def run(self) -> None:
-        print(f"[locate_worker] target={self._element!r}")
-        try:
-            from core.locate import resolve
-            from core.server_client import fetch_control_map
-            raw_map = fetch_control_map()
-            result = resolve(self._element, element=self._element, raw_map=raw_map)
-        except Exception as exc:
-            print(f"[locate_worker] exception: {exc}")
-            result = {"box": None, "img": None, "plugin": None,
-                      "size": None, "word_count": 0, "error": str(exc)}
-        box = result.get("box")
-        deny = result.get("deny_reason", "")
-        print(f"[locate_worker] result: box={'found' if box else 'None'}  deny={deny!r}  words={result.get('word_count')}  plugin={result.get('plugin')!r}")
-        self.found.emit(result)
-
 
 def _system_font(size: int = 13) -> QFont:
     font = QApplication.font()
@@ -190,18 +163,6 @@ class MessageWidget(QWidget):
             )
             lbl.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
             self._bubble_layout.addWidget(lbl)
-
-    def setup_locate(self, element: str) -> None:
-        """Run locate in the background; show 'Show me on screen' only if found."""
-        if self._role != "assistant" or not element:
-            return
-        self._locate_element = element
-        self._locate_result_cache: dict | None = None
-        self._locate_container: QWidget | None = None
-        self._show_me_btn: QPushButton | None = None
-        self._locate_worker = _LocateWorker(element, parent=self)
-        self._locate_worker.found.connect(self._on_locate_result)
-        self._locate_worker.start()
 
     def setup_walkthrough(self, steps: list) -> None:
         """Render a walkthrough step-list card inside the bubble. Press Enter to run."""
@@ -412,125 +373,6 @@ class MessageWidget(QWidget):
             return
         self._wt_active = False
         self._wt_end()
-
-    def _on_show_me(self) -> None:
-        result = self._locate_result_cache
-        if not result:
-            return
-        self._show_me_btn.hide()
-        box = result.get("box")
-        img = result.get("img")
-        win_info = result.get("win_info")
-        self._render_locate(img, box)
-        if win_info is not None:
-            try:
-                from ui.overlay_window import instance as _overlay
-                _overlay().show_arrow(box, img.size, win_info)
-            except Exception as e:
-                print(f"[overlay] show_arrow failed: {e}")
-
-    def _on_locate_result(self, result: dict) -> None:
-        box = result.get("box")
-        img = result.get("img")
-        if box is None or img is None:
-            return  # locate failed — show nothing
-        self._locate_result_cache = result
-        btn = QPushButton("Show me on screen")
-        btn.setObjectName("showMeBtn")
-        btn.setCursor(Qt.PointingHandCursor)
-        btn.clicked.connect(self._on_show_me)
-        self._bubble_layout.addWidget(btn)
-        self._show_me_btn = btn
-
-    def _render_locate(self, img: object, box: dict) -> None:
-        """Draw an arrow at the matched control and show as an in-bubble thumbnail."""
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        pix = QPixmap()
-        pix.loadFromData(buf.getvalue(), "PNG")
-        pix = pix.scaledToWidth(240, Qt.SmoothTransformation)
-        dw, dh = pix.width(), pix.height()
-        iw, ih = img.size
-
-        painter = QPainter(pix)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        # Scale box coords to display pixel space
-        bx = box["left"] / iw * dw
-        by = box["top"] / ih * dh
-        bw = box["width"] / iw * dw
-        bh = box["height"] / ih * dh
-
-        painter.setPen(QPen(QColor("#0a84ff"), 2))
-        painter.setBrush(QColor(10, 132, 255, 60))
-        painter.drawRoundedRect(QRectF(bx, by, bw, bh), 4, 4)
-
-        # Arrow pointing down into the box from above
-        tip = QPointF(bx + bw / 2, by)
-        tail = QPointF(bx + bw / 2, max(by - 22, 2))
-        painter.setPen(QPen(QColor("#0a84ff"), 2))
-        painter.drawLine(tail, tip)
-        ang = math.atan2(tip.y() - tail.y(), tip.x() - tail.x())
-        for da in (math.radians(150), math.radians(-150)):
-            painter.drawLine(
-                tip,
-                QPointF(tip.x() + 9 * math.cos(ang + da),
-                        tip.y() + 9 * math.sin(ang + da)),
-            )
-
-        label = box.get("label", "")
-        if label:
-            painter.setFont(_system_font(9))
-            fm = painter.fontMetrics()
-            cw = fm.horizontalAdvance(label) + 8
-            ch = fm.height() + 2
-            cx = min(max(bx, 0.0), float(max(dw - cw, 0)))
-            cy = by - ch - 4
-            if cy < 0:
-                cy = by + bh + 2
-            chip = QRectF(cx, cy, cw, ch)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor("#0a84ff"))
-            painter.drawRoundedRect(chip, 3, 3)
-            painter.setPen(QColor("#ffffff"))
-            painter.drawText(chip, Qt.AlignCenter, label)
-
-        painter.end()
-
-        thumb = QLabel()
-        thumb.setPixmap(pix)
-        thumb.setStyleSheet("border-radius: 6px;")
-
-        dismiss = QPushButton("✕")
-        dismiss.setObjectName("headerBtn")
-        dismiss.setFixedSize(20, 20)
-
-        dismiss_row = QHBoxLayout()
-        dismiss_row.setContentsMargins(0, 2, 0, 0)
-        dismiss_row.addStretch()
-        dismiss_row.addWidget(dismiss)
-
-        container = QWidget()
-        cl = QVBoxLayout(container)
-        cl.setContentsMargins(0, 0, 0, 0)
-        cl.setSpacing(2)
-        cl.addWidget(thumb)
-        cl.addLayout(dismiss_row)
-
-        def _dismiss() -> None:
-            container.hide()
-            self._show_me_btn.setEnabled(True)
-            self._show_me_btn.setText("Show me on screen")
-            self._show_me_btn.show()
-            try:
-                from ui.overlay_window import instance as _overlay
-                _overlay().dismiss()
-            except Exception:
-                pass
-
-        dismiss.clicked.connect(_dismiss)
-        self._bubble_layout.addWidget(container)
-        self._locate_container = container
 
     def _rate(self, value: int) -> None:
         # Clicking the already-active button undoes the vote (back to 0).

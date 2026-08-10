@@ -420,7 +420,6 @@ class ChatWindow(QWidget):
 
     def _on_done(self, event_id: str = "", remaining: int = -1,
                  source_tier: str = "", sources: object = None,
-                 locate_type: str = "", element: str = "",
                  walkthrough_steps: object = None, history: object = None) -> None:
         self._server_history = history
         msg = self._conversation.last_assistant()
@@ -432,8 +431,6 @@ class ChatWindow(QWidget):
             )
         if walkthrough_steps:
             self._chat_view.setup_walkthrough_card(list(walkthrough_steps))
-        elif locate_type == "navigation" and element:
-            self._chat_view.setup_locate_affordance(element)
         self._chat_view.end_assistant_message()
         if self._session_id:
             song_history.save_session(

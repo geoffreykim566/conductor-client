@@ -8,7 +8,6 @@ rather than burn a registration slot for a throwaway identity.
 """
 import json
 import threading
-import time
 from typing import Iterator
 
 import httpx
@@ -187,32 +186,6 @@ def put_me_async(**kwargs) -> None:
             pass
 
     threading.Thread(target=_run, daemon=True).start()
-
-
-_control_map_cache: dict | None = None
-_control_map_fetched_at: float = 0.0
-_CONTROL_MAP_TTL = 3600.0
-
-
-def fetch_control_map() -> dict | None:
-    """Return {entries, chrome} from the server, cached for 1 hour.
-
-    Returns the stale cache on network error so the locate pipeline keeps
-    working when the server is temporarily unreachable. Returns None only
-    on the very first call when no cache exists yet and the request fails.
-    """
-    global _control_map_cache, _control_map_fetched_at
-    if (_control_map_cache is not None
-            and time.monotonic() - _control_map_fetched_at < _CONTROL_MAP_TTL):
-        return _control_map_cache
-    try:
-        r = httpx.get(f"{SERVER_BASE_URL}/v1/control-map", timeout=10)
-        r.raise_for_status()
-        _control_map_cache = r.json()
-        _control_map_fetched_at = time.monotonic()
-    except Exception:
-        pass  # return stale cache (or None on first-call failure)
-    return _control_map_cache
 
 
 def delete_me() -> None:

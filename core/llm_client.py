@@ -14,16 +14,16 @@ class StreamWorker(QThread):
     Signals:
         chunk(str)                           — emitted for each piece of text streamed in
         status(str)                          — transient research-progress notice
-        done(str, int, str, object, str, str, object, object)  — (event_id, remaining,
-                                                            source_tier, sources, locate_type,
-                                                            element, walkthrough_steps, history)
+        done(str, int, str, object, object, object)  — (event_id, remaining,
+                                                            source_tier, sources,
+                                                            walkthrough_steps, history)
         error(str)                           — emitted with an error message on failure
         limit_reached(int)                   — message cap reached (arg is the cap, or -1 if unknown)
     """
 
     chunk = Signal(str)
     status = Signal(str)
-    done = Signal(str, int, str, object, str, str, object, object)
+    done = Signal(str, int, str, object, object, object)
     error = Signal(str)
     limit_reached = Signal(int)
 
@@ -50,21 +50,13 @@ class StreamWorker(QThread):
                     remaining = payload.get("remaining", -1)
                     source_tier = payload.get("source_tier", "")
                     sources = payload.get("sources") or []
-                    locate_type = payload.get("locate_type", "")
-                    element = payload.get("element", "")
-                    search_term = payload.get("search_term", "")
                     walkthrough_steps = payload.get("walkthrough_steps") or []
                     history = payload.get("history")
                 elif kind == "error":
                     self.error.emit(str(payload))
                     return
-            # Use element if present; fall back to first word of search_term so
-            # navigation queries without a named element still get a locate target.
-            intent = payload.get("intent", "")
-            locate_target = element or (search_term.split()[0] if search_term else "")
-            print(f"[classify] intent={intent!r} element={element!r} search_term={search_term!r}", flush=True)
             self.done.emit(event_id, remaining, source_tier, sources,
-                           locate_type, locate_target, walkthrough_steps, history)
+                           walkthrough_steps, history)
         except FreeLimitReached as e:
             self.limit_reached.emit(e.limit if e.limit is not None else -1)
         except RegistrationThrottled:

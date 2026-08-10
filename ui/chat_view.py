@@ -180,10 +180,6 @@ class ChatView(QWidget):
             self._current_assistant.set_source_tier(tier)
             self._current_assistant.set_sources(sources)
 
-    def setup_locate_affordance(self, element: str) -> None:
-        if self._current_assistant is not None:
-            self._current_assistant.setup_locate(element)
-
     def setup_walkthrough_card(self, steps: list) -> None:
         if self._current_assistant is not None:
             self._current_assistant.setup_walkthrough(steps)
