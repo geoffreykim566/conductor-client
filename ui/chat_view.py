@@ -2,6 +2,7 @@
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QColor, QLinearGradient, QPainter
 from PySide6.QtWidgets import (
+    QApplication,
     QGraphicsEffect,
     QLabel,
     QScrollArea,
@@ -29,12 +30,11 @@ _FADE_HEIGHT = 24  # how many px the transition takes, not where it starts --
 _SCROLLBAR_IDLE_MS = 600  # how long after the last scroll before the handle fades back out
 # Fraction of the viewport height a new turn's user message is anchored to
 # from the top, leaving the remainder below for the response to render into.
-# Not the true bottom — pinning to the true bottom (the old approach) meant
-# every streamed chunk had to re-scroll to follow it, dragging the already-
-# read top further up past the fade as the bubble grew. Anchoring once at
-# turn start and then holding still lets the bubble grow downward in place
-# instead; a response that outgrows the reserved space just extends below
-# the fold, same end state as before, without the per-chunk rescroll.
+# Not the true bottom — pinning to the true bottom for the *whole* turn (the
+# old approach) meant every streamed chunk had to re-scroll to follow it,
+# dragging the already-read top further up past the fade as the bubble kept
+# growing, for the entire length of a long response. Anchoring once at turn
+# start and then holding still avoids that.
 _TURN_ANCHOR_FRACTION = 1 / 3
 
 
@@ -173,18 +173,21 @@ class ChatView(QWidget):
         self._show_messages()
         self._current_assistant = MessageWidget("assistant", text="")
         self._insert_before_trailing_spacer(self._current_assistant)
-        # No scroll here — the turn's anchor was already set by the user
-        # message right above this one; the empty bubble starts inside that
-        # reserved space and just grows into it as chunks arrive.
+        # No scroll here — the turn's anchor (see _apply_turn_anchor) already
+        # reserved enough room below the user message for the response to
+        # render into; the empty bubble just grows into it as chunks arrive.
 
     def append_to_assistant(self, chunk: str) -> None:
         if self._current_assistant is None:
             return
         self._current_assistant.append_text(chunk)
-        # No re-scroll per chunk (deliberate, see _anchor_new_turn) — the
-        # view holds still for the whole turn; a response that outgrows the
-        # reserved space below the anchor just extends past the visible
-        # bottom instead of dragging the top further up as it grows.
+        # No re-scroll per chunk (deliberate) -- the view holds still for the
+        # whole turn once the anchor lands; a response that outgrows the
+        # reserved space just extends past the visible bottom instead of
+        # dragging the top further up as it grows. A brief "follow the
+        # response's growth" mechanic was tried and removed 2026-09-04 --
+        # unnecessary once _apply_turn_anchor reliably reserves real room
+        # below the anchor for every turn, not just the first.
 
     def set_assistant_status(self, text: str) -> None:
         if self._current_assistant is not None:
@@ -244,6 +247,7 @@ class ChatView(QWidget):
             if w:
                 w.deleteLater()
         self._unfreeze_spacer()
+        self._trailing_spacer.setMinimumHeight(0)
         self._current_assistant = None
         self._active_wt_widget = None
         self._scroll.verticalScrollBar().setValue(0)
@@ -299,34 +303,72 @@ class ChatView(QWidget):
         """Position a freshly sent user message about _TURN_ANCHOR_FRACTION
         down the viewport instead of flush at the bottom, leaving the
         remainder below for the response to render into. Set once per turn
-        and then left alone — see append_to_assistant for why."""
+        and then left alone — see append_to_assistant for why.
+
+        Deferred one tick to get outside the current call stack (Qt won't
+        have laid out the just-inserted widget until then), then
+        _apply_turn_anchor forces the rest of the sync itself -- see its own
+        docstring for why a fixed number of deferred ticks isn't reliable
+        here."""
         QTimer.singleShot(0, lambda: self._apply_turn_anchor(user_widget))
 
     def _apply_turn_anchor(self, user_widget: QWidget) -> None:
+        """Same target position for every turn, first message or the
+        hundredth: widget_top and content_above below are both real,
+        directly-derived quantities (content_above is a subtraction, not a
+        guess), so this produces the identical target regardless of how the
+        leading spacer got to its current size.
+
+        A same-shaped "just measure the widget and grow the spacer if
+        short" version was tried and reverted 2026-09-04: it never SHRINKS
+        the spacer, but the very first message needs exactly that -- before
+        any turn, the idle/resting spacer sits large on purpose (the
+        flush-at-bottom look for a short conversation, see its own comment
+        above), and shrinking it down to the target fraction is what pulls
+        the first message up to the anchor position at all. Growing-only
+        left it pinned at that large natural size, anchoring at the very
+        bottom instead.
+
+        Both measurements below (widget_top up front, bar.maximum() at the
+        end) are wrapped in processEvents() rather than a guessed number of
+        QTimer.singleShot(0, ...) defers -- a fixed tick count worked for a
+        turn or two and then silently didn't (found live 2026-09-04: message
+        3 landed at the bottom again after 1 and 2 were both correct), since
+        how many pending layout events are actually queued varies with how
+        much the prior turn's response just resized while streaming.
+        processEvents() drains whatever's actually pending instead of
+        guessing how many ticks that takes.
+
+        _trailing_spacer's minimum height is (re)claimed every turn to
+        guarantee real scroll room exists below the new message *before* the
+        scrollbar math below runs -- found live 2026-09-04 (turn 2 onward):
+        once _flex_spacer is already floored at 0 from a prior turn, this
+        method's only lever left is bar.setValue(), which needs
+        bar.maximum() to already reach target_scroll. At this exact instant
+        the new assistant bubble is still empty, so without a reserve the
+        real scrollable range is whatever tiny amount of content happens to
+        sit below the new message -- setValue() silently clamps to that too-
+        small max, landing the message far lower than intended, then gets
+        re-clamped again a beat later as the range keeps changing (the
+        flicker-then-snap-to-bottom). Same fix shape as _flex_spacer, mirrored
+        below the content instead of above it."""
+        QApplication.processEvents()
         viewport_h = self._scroll.viewport().height()
+        target_position = int(viewport_h * _TURN_ANCHOR_FRACTION)
+        self._trailing_spacer.setMinimumHeight(max(0, viewport_h - target_position))
+        QApplication.processEvents()  # let the reserve's resize land before measuring
+
         widget_top = user_widget.mapTo(self._container, QPoint(0, 0)).y()
-        # Height of any real conversation content above this turn (prior
-        # messages), i.e. everything the still-flexible spacer's current
-        # natural size does NOT account for.
+        # Real conversation content above this turn, i.e. everything the
+        # spacer's current size does NOT itself account for.
         content_above = widget_top - self._flex_spacer.height()
 
-        # Freeze the spacer at whatever height places the widget at the
-        # target fraction from the top. For a short/fresh conversation this
-        # is a real positive height, which also matters beyond just this
-        # turn's position: QScrollArea's setWidgetResizable(True) keeps the
-        # container at least viewport-tall regardless, and with no trailing
-        # stretch to soak up the difference, freezing this leading gap
-        # *smaller* than its natural size pushes that same leftover space to
-        # the BOTTOM of the container instead — exactly the room the
-        # response needs to grow into, with no separate margin trick
-        # required. For an already-long conversation this clamps to 0 (the
-        # spacer was already contributing nothing), and the scroll below
-        # does the real work instead.
-        target_spacer_h = max(0, int(viewport_h * _TURN_ANCHOR_FRACTION) - content_above)
+        target_spacer_h = max(0, target_position - content_above)
         self._flex_spacer.setFixedHeight(target_spacer_h)
-
         new_widget_top = target_spacer_h + content_above
-        target_scroll = new_widget_top - int(viewport_h * _TURN_ANCHOR_FRACTION)
+        target_scroll = new_widget_top - target_position
+
+        QApplication.processEvents()  # let the setFixedHeight() resize above land
         bar = self._scroll.verticalScrollBar()
         bar.setValue(max(0, min(target_scroll, bar.maximum())))
 
