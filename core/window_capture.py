@@ -1,8 +1,11 @@
 """Locate the Logic Pro window and capture it (macOS)."""
+import base64
+import io
+
 import Quartz
 from PIL import Image
 
-from config import LOGIC_PRO_APP_NAMES
+from config import LOGIC_PRO_APP_NAMES, MAX_CONTEXT_WINDOWS, MAX_IMAGE_LONG_EDGE
 
 
 def _find_all_logic_pro_windows() -> list[dict]:
@@ -109,6 +112,56 @@ def capture_window_bestres() -> tuple[Image.Image, dict]:
             "in System Settings → Privacy & Security."
         )
     return img, target
+
+
+def capture_context_images_b64() -> list[str]:
+    """Capture every open Logic Pro window as its own base64 PNG, for pushing
+    live visual context into a chat turn (see prompt.py's "Look at what's
+    actually on screen" section, previously live instruction with nothing
+    behind it -- v3-log.md, 2026-09-03).
+
+    Deliberately per-window, not v1's single union-bounding-rect composite
+    (window_capture.py's old capture_fl_studio_window): that approach has a
+    documented, never-fixed bug where a plugin editor on a different display
+    than the main window balloons the union rect into a mostly-empty canvas
+    and degrades what the model can actually read off it. Per-window capture
+    sidesteps that entirely (same reasoning as the old OCR locate path) and
+    shows each plugin editor at native clarity instead of shrunk into a
+    shared canvas.
+
+    Largest windows first (main project window typically dominates), capped
+    at MAX_CONTEXT_WINDOWS so a session with several plugin editors open
+    doesn't balloon vision tokens. Best-effort: returns [] on any failure
+    (Logic Pro not running, no Screen Recording permission, etc.) -- this is
+    pushed context, never something a turn should block or error on.
+    """
+    try:
+        wins = _find_all_logic_pro_windows()
+    except RuntimeError:
+        return []
+    wins = sorted(
+        wins,
+        key=lambda w: w["kCGWindowBounds"]["Width"] * w["kCGWindowBounds"]["Height"],
+        reverse=True,
+    )[:MAX_CONTEXT_WINDOWS]
+
+    images_b64 = []
+    for w in wins:
+        try:
+            img = _capture_one_bestres(w)
+        except Exception:
+            continue
+        if img is None:
+            continue
+        long_edge = max(img.size)
+        if long_edge > MAX_IMAGE_LONG_EDGE:
+            scale = MAX_IMAGE_LONG_EDGE / long_edge
+            new_size = (int(img.width * scale), int(img.height * scale))
+            img = img.resize(new_size, Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="PNG", optimize=True)
+        images_b64.append(base64.b64encode(buf.getvalue()).decode("ascii"))
+    return images_b64
 
 
 def capture_menubar_strip() -> tuple[Image.Image, float] | None:

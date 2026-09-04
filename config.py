@@ -36,7 +36,28 @@ MIN_WINDOW_WIDTH = 300
 MIN_WINDOW_HEIGHT = 380
 MAX_WINDOW_WIDTH = 700
 MAX_WINDOW_HEIGHT = 1000
+# Shared left inset for both the input bar's panel (input_bar.py) and the
+# chat bubbles' container (chat_view.py) -- kept as one constant so the two
+# independently-scrolling areas stay left-aligned with each other and with
+# the bubbles backdrop panel (chat_window.py's paintEvent, which measures the
+# input bar's actual panel bounds directly). Previously input-bar-only (added
+# there to align with the chat scrollbar); bubbles spilled left past it until
+# chat_view.py picked up the same value (found live 2026-09-04, screenshot
+# feedback after the backdrop panel was narrowed to the input bar's width).
+CONTENT_LEFT_INSET = 70
 
 # --- Capture ---
 # Owning-application names as reported by Quartz CGWindowListCopyWindowInfo.
 LOGIC_PRO_APP_NAMES = ("Logic Pro", "Logic Pro X")
+MAX_IMAGE_LONG_EDGE = 1568  # Claude vision sweet spot (matches v1's config.py)
+# Per-window capture (not v1's single union-rect composite -- that has a
+# documented, unresolved bug: when a plugin editor sits on a different
+# display than the main window, the union bounding rect spans a huge sparse
+# canvas and visual context degrades; see .old-drafts-planning-docs/
+# v0.3-phase1-revised-build-log.md's "C2" item). Capturing each window
+# separately is immune to that (same reasoning as v1's per-window OCR locate
+# path) and shows plugin editors at native clarity instead of shrunk into a
+# shared canvas. Capped so a session with many plugin windows open doesn't
+# balloon vision tokens/payload size -- most turns only ever have the main
+# window (or main + one editor) open anyway.
+MAX_CONTEXT_WINDOWS = 4

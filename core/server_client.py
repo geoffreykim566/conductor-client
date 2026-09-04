@@ -59,13 +59,20 @@ def _headers(token: str) -> dict:
     return {"X-Conductor-Id": token, "Content-Type": "application/json"}
 
 
-def stream_chat(text: str, history: list[dict] | None) -> Iterator[tuple[str, object]]:
+def stream_chat(
+    text: str, history: list[dict] | None, screenshots_b64: list[str] | None = None
+) -> Iterator[tuple[str, object]]:
     """Relay one new user turn and yield (kind, payload) as the proxy streams.
 
     `history` is opaque — exactly what a prior call's "done" payload carried
     as "history" (None to start a fresh conversation) — round-tripped as-is
     so the server can keep multi-turn continuity without pinning any state
     of its own between requests.
+
+    `screenshots_b64` is fresh, per-request visual context (base64 PNGs, one
+    per captured Logic Pro window) — never part of `history`. The server
+    only ever uses it for this turn's model calls and doesn't echo it back,
+    so screenshots aren't resent on every later turn.
 
     kind is one of:
         "chunk" -> payload is a str of streamed text
@@ -82,7 +89,8 @@ def stream_chat(text: str, history: list[dict] | None) -> Iterator[tuple[str, ob
     for attempt in range(2):
         with httpx.stream(
             "POST", url, headers=_headers(_ensure_token()),
-            json={"message": text, "history": history}, timeout=120,
+            json={"message": text, "history": history, "screenshots": screenshots_b64 or None},
+            timeout=120,
         ) as resp:
             if resp.status_code == 401 and attempt == 0:
                 identity.clear_token()
