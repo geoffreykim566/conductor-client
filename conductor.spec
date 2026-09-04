@@ -13,6 +13,7 @@ a = Analysis(
         'Quartz',
         'AppKit',
         'Vision',  # Apple Vision OCR (S3b); dynamic pyobjc import PyInstaller can't see
+        'ApplicationServices',  # AX state capture (ax_capture.py); same dynamic-import issue
     ],
     hookspath=[],
     hooksconfig={},

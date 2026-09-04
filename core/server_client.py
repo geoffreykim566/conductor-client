@@ -60,7 +60,10 @@ def _headers(token: str) -> dict:
 
 
 def stream_chat(
-    text: str, history: list[dict] | None, screenshots_b64: list[str] | None = None
+    text: str,
+    history: list[dict] | None,
+    screenshots_b64: list[str] | None = None,
+    ax_state: str | None = None,
 ) -> Iterator[tuple[str, object]]:
     """Relay one new user turn and yield (kind, payload) as the proxy streams.
 
@@ -73,6 +76,12 @@ def stream_chat(
     per captured Logic Pro window) — never part of `history`. The server
     only ever uses it for this turn's model calls and doesn't echo it back,
     so screenshots aren't resent on every later turn.
+
+    `ax_state` is the same kind of fresh, per-turn-only context (see
+    core.ax_capture) — a text dump of currently open Logic windows/dialogs'
+    Accessibility state, pushed alongside the screenshots for the same
+    reason: exact control values (checkbox state, selected dropdown item,
+    a field's real contents) that a screenshot alone can get wrong.
 
     kind is one of:
         "chunk" -> payload is a str of streamed text
@@ -89,7 +98,12 @@ def stream_chat(
     for attempt in range(2):
         with httpx.stream(
             "POST", url, headers=_headers(_ensure_token()),
-            json={"message": text, "history": history, "screenshots": screenshots_b64 or None},
+            json={
+                "message": text,
+                "history": history,
+                "screenshots": screenshots_b64 or None,
+                "ax_state": ax_state,
+            },
             timeout=120,
         ) as resp:
             if resp.status_code == 401 and attempt == 0:

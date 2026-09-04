@@ -5,7 +5,7 @@ key and enforces the message cap. A 402 fires `limit_reached`.
 """
 from PySide6.QtCore import QThread, Signal
 
-from core import window_capture
+from core import ax_capture, window_capture
 from core.server_client import FreeLimitReached, RegistrationThrottled, get_me, stream_chat
 
 
@@ -48,7 +48,11 @@ class StreamWorker(QThread):
         except Exception:
             screenshots_b64 = []
         try:
-            for kind, payload in stream_chat(self._text, self._history, screenshots_b64):
+            ax_state = ax_capture.capture_ax_state()
+        except Exception:
+            ax_state = None
+        try:
+            for kind, payload in stream_chat(self._text, self._history, screenshots_b64, ax_state):
                 if kind == "chunk":
                     self.chunk.emit(payload)
                 elif kind == "status":
