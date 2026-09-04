@@ -10,12 +10,22 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from config import CONTENT_LEFT_INSET
 from ui.message_widget import MessageWidget
 
 MONO = '"Menlo", monospace'
 _QWIDGETSIZE_MAX = 16777215  # Qt's own constant for "no max height set"
 
-_FADE_HEIGHT = 40  # roughly where the old drag-header used to be
+_FADE_HEIGHT = 24  # how many px the transition takes, not where it starts --
+# it always starts at chat_view's own top edge (confirmed live 2026-09-04:
+# exactly 44px from the window top, right below the controls row). A bigger
+# number stretches the same 0%->100% transition further down, it doesn't move
+# the start point higher; kept small for a fast, snappy fade right under the
+# controls instead of a slow one bleeding deep into the second bubble.
+# (2026-09-04) -- 40 was tuned for the old drag-header, and stayed too tight
+# a transition once controls moved: bubbles read as fully visible right up to
+# the last ~40px before chat_view's own top edge, well below the controls'
+# bottom border, instead of visibly fading out sooner.
 _SCROLLBAR_IDLE_MS = 600  # how long after the last scroll before the handle fades back out
 # Fraction of the viewport height a new turn's user message is anchored to
 # from the top, leaving the remainder below for the response to render into.
@@ -97,7 +107,12 @@ class ChatView(QWidget):
         self._container = QWidget()
         self._container.setAutoFillBackground(False)
         self._layout = QVBoxLayout(self._container)
-        self._layout.setContentsMargins(0, 14, 0, 0)
+        # Left margin matches input_bar.py's own left inset (CONTENT_LEFT_INSET)
+        # so left-aligned assistant bubbles stay inside the bubbles backdrop
+        # panel (chat_window.py's paintEvent, which aligns to the input bar's
+        # actual panel bounds) instead of spilling past its left edge (found
+        # live 2026-09-04, screenshot feedback after that panel was narrowed).
+        self._layout.setContentsMargins(CONTENT_LEFT_INSET, 14, 0, 0)
         self._layout.setSpacing(2)
         # A real widget rather than layout.addStretch()'s QSpacerItem, so it
         # can be frozen at a specific fixed height for the duration of a turn
@@ -258,6 +273,12 @@ class ChatView(QWidget):
         bar.style().unpolish(bar)
         bar.style().polish(bar)
         self._scrollbar_hide_timer.start(_SCROLLBAR_IDLE_MS)
+        # QScrollArea scrolls its viewport by blitting directly, which never
+        # asks ChatView's own QGraphicsEffect (_TopEdgeFadeEffect) to
+        # recompute -- without this, the fade stayed frozen at whatever it
+        # last rendered instead of following newly-scrolled-in content (found
+        # live 2026-09-04: changing _FADE_HEIGHT had no visible effect at all).
+        self.update()
 
     def _hide_scrollbar(self) -> None:
         bar = self._scroll.verticalScrollBar()

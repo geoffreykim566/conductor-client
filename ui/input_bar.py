@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from config import CONTENT_LEFT_INSET
+
 
 class _ChatTextEdit(QTextEdit):
     """QTextEdit that sends on Enter and inserts newline on Shift+Enter."""
@@ -54,7 +56,7 @@ class InputBar(QWidget):
         self._drag_offset: QPoint | None = None
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(70, 0, 0, 10)
+        root.setContentsMargins(CONTENT_LEFT_INSET, 0, 0, 10)
         root.setSpacing(0)
 
         # Rounded, tinted backing panel behind the whole bar — same
@@ -65,9 +67,18 @@ class InputBar(QWidget):
         self._panel.setObjectName("inputPanel")
         self._panel.installEventFilter(self)
         panel_layout = QVBoxLayout(self._panel)
-        panel_layout.setContentsMargins(10, 8, 10, 10)
+        # Top now matches bottom -- used to be asymmetric (8 vs 10) to leave
+        # room for the controls row that lived here; that row moved to sit on
+        # the bubbles backdrop panel instead (see ChatWindow.__init__), so
+        # this panel's top is bare like its bottom now and the two should match.
+        panel_layout.setContentsMargins(10, 10, 10, 10)
         panel_layout.setSpacing(2)
         root.addWidget(self._panel)
+        # Public alias -- ChatWindow's backdrop panel (paintEvent) aligns its
+        # own left/right edges to this panel's actual bounds, not InputBar's
+        # own wider, edge-to-edge widget (root's 70px left margin above insets
+        # this panel from InputBar's edge, to align with the chat scrollbar).
+        self.panel = self._panel
 
         # Attachment preview row (hidden when empty)
         self._attachments_row = QWidget()
@@ -77,53 +88,67 @@ class InputBar(QWidget):
         self._attachments_row.hide()
         panel_layout.addWidget(self._attachments_row)
 
-        # Options row (above the input bubble)
+        # Controls row (new-chat/history/remaining-count/minimize/close) --
+        # NOT part of this panel. Sits on the bubbles backdrop panel instead
+        # (ChatWindow adds self.controls above the chat view, see
+        # ChatWindow.__init__), a standalone widget so it can be placed there
+        # while everything else about InputBar (text/send, signals) stays
+        # exactly as before.
         _CONTROL_SIZE = 32
 
-        options_row = QHBoxLayout()
-        options_row.setContentsMargins(2, 0, 2, 0)
-        options_row.setSpacing(6)
+        self.controls = QWidget()
+        controls_row = QHBoxLayout(self.controls)
+        # Left matches CONTENT_LEFT_INSET (same edge as the bubbles/input bar)
+        # plus a little interior padding so the first icon clears the bubbles
+        # panel's rounded corner; top clears the same corner from above. This
+        # is now the ONLY thing controlling the gap to chat_view below
+        # (ChatWindow's main layout has zero spacing there deliberately, see
+        # ChatWindow.__init__), not stacked with layout spacing like before.
+        # Bottom smaller than top despite equal-margin math suggesting they
+        # should read the same -- found live 2026-09-04 that equal numeric
+        # margins still looked bottom-heavy (likely the row's own content,
+        # e.g. label line-height, isn't perfectly vertically symmetric),
+        # tuned down by feel rather than by a formula.
+        controls_row.setContentsMargins(CONTENT_LEFT_INSET + 10, 10, 12, 7)
+        controls_row.setSpacing(6)
 
         new_btn = QPushButton("✦")
         new_btn.setObjectName("headerBtn")
         new_btn.setFixedSize(20, 20)
         new_btn.clicked.connect(self.new_chat_requested)
-        options_row.addWidget(new_btn, 0, Qt.AlignVCenter)
+        controls_row.addWidget(new_btn, 0, Qt.AlignVCenter)
 
         hist_btn = QPushButton("☰")
         hist_btn.setObjectName("headerBtn")
         hist_btn.setFixedSize(20, 20)
         hist_btn.clicked.connect(self.history_requested)
-        options_row.addWidget(hist_btn, 0, Qt.AlignVCenter)
+        controls_row.addWidget(hist_btn, 0, Qt.AlignVCenter)
         self.history_button = hist_btn
 
-        options_row.addStretch()
+        controls_row.addStretch()
 
         self._remaining_label = QLabel("")
         self._remaining_label.setObjectName("remainingLabel")
         self._remaining_label.hide()
-        options_row.addWidget(self._remaining_label, 0, Qt.AlignVCenter)
+        controls_row.addWidget(self._remaining_label, 0, Qt.AlignVCenter)
 
-        options_row.addStretch()
+        controls_row.addStretch()
 
         self._min_btn = QPushButton("—")
         self._min_btn.setObjectName("headerBtn")
         self._min_btn.setFixedSize(20, 20)
         self._min_btn.clicked.connect(self.minimize_requested)
-        options_row.addWidget(self._min_btn, 0, Qt.AlignVCenter)
+        controls_row.addWidget(self._min_btn, 0, Qt.AlignVCenter)
 
         self._close_btn = QPushButton("✕")
         self._close_btn.setObjectName("headerBtn")
         self._close_btn.setFixedSize(20, 20)
         self._close_btn.clicked.connect(self.close_requested)
-        options_row.addWidget(self._close_btn, 0, Qt.AlignVCenter)
-
-        panel_layout.addLayout(options_row)
+        controls_row.addWidget(self._close_btn, 0, Qt.AlignVCenter)
 
         # Single rounded-rect bubble holding the text field and send button —
-        # all the same height, so this is the only boxed/backdropped element
-        # in the bar. options_row above (new-chat/history, remaining-message
-        # count, etc.) stays outside it, sitting on top.
+        # the only boxed element left in this panel now that the controls
+        # row above has moved out onto the bubbles backdrop panel instead.
         bubble = QWidget()
         bubble.setObjectName("inputBubble")
         bubble_row = QHBoxLayout(bubble)

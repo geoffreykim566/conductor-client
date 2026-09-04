@@ -2,7 +2,7 @@
 
 Used for Settings, its confirm dialogs (delete history / uninstall), and the
 launch-time update prompt — all centered on screen. History uses the same
-base but anchors above a button instead of centering (see anchor_above).
+base but anchors below a button instead of centering (see anchor_below).
 """
 from PySide6.QtCore import QEvent, QRect, Qt, Signal
 from PySide6.QtGui import QCursor, QGuiApplication
@@ -124,4 +124,17 @@ class Popup(QWidget):
         screen = QGuiApplication.primaryScreen().availableGeometry()
         x = max(screen.left(), min(x, screen.right() - self.width()))
         y = max(screen.top(), y)
+        self.move(x, y)
+
+    def anchor_below(self, widget: QWidget, gap: int = 8) -> None:
+        """Position this popup's top edge `gap` px below `widget`'s bottom edge,
+        right-aligned to `widget`'s right edge, clamped to stay on screen."""
+        self.adjustSize()
+        self._sync_panel_size()
+        bottom_left = widget.mapToGlobal(widget.rect().bottomLeft())
+        x = bottom_left.x() + widget.width() - self.width()
+        y = bottom_left.y() + gap
+        screen = QGuiApplication.primaryScreen().availableGeometry()
+        x = max(screen.left(), min(x, screen.right() - self.width()))
+        y = min(y, screen.bottom() - self.height())
         self.move(x, y)

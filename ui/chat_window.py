@@ -1,10 +1,13 @@
 """Main floating chat window. Frameless, always-on-top, minimizes to a small bubble.
 
-No outer window panel/backdrop — only the input bar and message bubbles are
-boxed; everything floats directly over Logic Pro. Settings and history are
-separate popup windows (see ui/popup.py), not stack pages.
+A permanent, slightly-transparent rounded panel (see paintEvent) sits behind
+the message bubbles -- Logic Pro showing through blank space behind the
+bubbles read as chaotic given that space was never clickable anyway. Stops
+above the input bar, which already draws its own backing panel (#inputPanel,
+ui/style.py). Settings and history are separate popup windows (see
+ui/popup.py), not stack pages.
 """
-from PySide6.QtCore import QEvent, QPoint, Qt, QTimer, Signal, QUrl
+from PySide6.QtCore import QEvent, QPoint, QRect, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QGuiApplication, QMouseEvent, QPainter
 from PySide6.QtWidgets import (
     QApplication,
@@ -117,9 +120,9 @@ class ChatWindow(QWidget):
         # covering the whole window) — this window itself has no rule, so it
         # needs styled-background painting turned off explicitly to stay
         # see-through. Children keep it on so their own bubble/bar rules
-        # from ui/style.py still render. During Edit Size (see
-        # _on_edit_size_requested) a panel is drawn directly in paintEvent
-        # instead -- a toggled QSS rule on this widget didn't reliably repaint
+        # from ui/style.py still render. The permanent backdrop panel (see
+        # paintEvent) is drawn directly instead of via a QSS rule on this
+        # widget -- a toggled QSS rule here didn't reliably repaint
         # (translucent frameless top-level + zero-margin children covering the
         # edge), direct QPainter drawing behind the children is more robust.
         self.setAttribute(Qt.WA_StyledBackground, False)
@@ -151,11 +154,20 @@ class ChatWindow(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        # No uniform spacing -- the controls-to-chat_view gap is controlled
+        # entirely by controls_row's own bottom margin instead (input_bar.py),
+        # so it's one clean lever instead of margin+spacing stacking
+        # unpredictably (found live 2026-09-04: with 8px shared spacing here,
+        # matching controls_row's top/bottom margins still left the bottom gap
+        # visibly bigger, since spacing added onto it but not the top side).
+        # chat_view-to-input_bar keeps its own explicit gap below instead.
+        layout.setSpacing(0)
 
-        self._chat_view = ChatView()
-        layout.addWidget(self._chat_view, 1)
-
+        # Built before being placed so its .controls widget (new-chat/history/
+        # minimize/close) exists to add above the bubbles, ahead of the bubbles
+        # panel itself below -- moved there from the top of the input bar's own
+        # panel 2026-09-04 (user preference), sitting directly on the bubbles
+        # backdrop panel (paintEvent) instead of inside a nested one.
         self._input_bar = InputBar()
         self._input_bar.send.connect(self._on_user_send)
         self._input_bar.enter_empty.connect(self._on_enter_empty)
@@ -163,6 +175,12 @@ class ChatWindow(QWidget):
         self._input_bar.history_requested.connect(self._on_toggle_history)
         self._input_bar.minimize_requested.connect(self.minimize_to_bubble)
         self._input_bar.close_requested.connect(QApplication.instance().quit)
+        layout.addWidget(self._input_bar.controls)
+
+        self._chat_view = ChatView()
+        layout.addWidget(self._chat_view, 1)
+
+        layout.addSpacing(8)
         layout.addWidget(self._input_bar)
 
         # Only shown/interactive during Edit Size (see _on_edit_size_requested)
@@ -238,15 +256,35 @@ class ChatWindow(QWidget):
 
     # --- edit size (Settings > Edit Size) ---
     def paintEvent(self, event) -> None:
-        if self._editing_size:
-            # Same look as #inputPanel (ui/style.py) -- drawn directly rather
-            # than via a toggled stylesheet rule, see the WA_StyledBackground
-            # comment in __init__.
-            painter = QPainter(self)
-            painter.setRenderHint(QPainter.Antialiasing)
-            painter.setPen(QColor(42, 42, 44, 153))
-            painter.setBrush(QColor(28, 28, 30, 209))
-            painter.drawRoundedRect(self.rect().adjusted(0, 0, -1, -1), 18, 18)
+        # Same look as #inputPanel (ui/style.py) -- drawn directly rather than
+        # via a stylesheet rule, see the WA_StyledBackground comment in
+        # __init__. Previously only shown during Edit Size; made permanent
+        # 2026-09-04 -- with no backdrop at all, Logic Pro's own UI showed
+        # through every blank area behind the floating bubbles, which reads as
+        # chaotic given that space was never clickable anyway (found via user
+        # feedback after living with the fully transparent window for a
+        # session).
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(QColor(42, 42, 44, 153))
+        painter.setBrush(QColor(28, 28, 30, 209))
+        # Stops above the input bar rather than spanning the full window --
+        # the input bar already draws its own backing panel (#inputPanel,
+        # ui/style.py), so covering it too just doubled up as a second panel
+        # sitting behind it. Only the chat bubbles' area gets this backdrop.
+        # Left/right edges match the input bar's own visible panel (not
+        # InputBar's wider, edge-to-edge widget) -- that panel sits inset by
+        # InputBar's own left margin (aligned to the chat scrollbar), and this
+        # backdrop spilling past it on the left read as misaligned.
+        input_panel_left = self._input_bar.panel.mapTo(self, QPoint(0, 0)).x()
+        input_panel_width = self._input_bar.panel.width()
+        # A few px short of the input bar's own top edge -- previously flush
+        # (the layout's 8px spacing exists between the *widgets*, but this
+        # panel filled all the way down to the input bar's top regardless),
+        # leaving no visible gap between the two rounded panels.
+        panel_bottom = self._input_bar.y() - 4
+        panel_rect = QRect(input_panel_left, 0, input_panel_width, panel_bottom)
+        painter.drawRoundedRect(panel_rect.adjusted(0, 0, -1, -1), 18, 18)
         super().paintEvent(event)
 
     def _set_editing_size_visual(self, editing: bool) -> None:
@@ -318,7 +356,10 @@ class ChatWindow(QWidget):
         self._session_popup = SessionListPanel()
         self._session_popup.session_selected.connect(self._on_session_selected)
         self._session_popup.load(song_history.load_sessions(), self._session_id)
-        self._session_popup.anchor_above(self._input_bar.history_button)
+        # history_button now sits in the controls row at the top of the
+        # bubbles panel (moved there 2026-09-04), not the bottom input bar
+        # -- opens downward over the chat area instead of upward now.
+        self._session_popup.anchor_below(self._input_bar.history_button)
         self._session_popup.enable_click_outside_dismiss(
             ignore_widget=self._input_bar.history_button
         )
