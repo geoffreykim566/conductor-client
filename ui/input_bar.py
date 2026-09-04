@@ -59,19 +59,23 @@ class InputBar(QWidget):
         root.setContentsMargins(CONTENT_LEFT_INSET, 0, 0, 10)
         root.setSpacing(0)
 
-        # Rounded, tinted backing panel behind the whole bar — same
-        # transparent aesthetic as the message bubbles — with room at the
-        # top for the attachment preview / remaining-count row to sit inside
-        # it rather than floating loose above the pill.
+        # Invisible layout container (background: transparent, ui/style.py) --
+        # no longer its own visible panel now that the bubbles backdrop panel
+        # sits right above it (redundant to draw two stacked panels, per
+        # direction). Only the #inputBubble pill inside it is actually drawn.
+        # installEventFilter below still makes clicking its blank area drag
+        # the window, same as before.
         self._panel = QWidget()
         self._panel.setObjectName("inputPanel")
         self._panel.installEventFilter(self)
         panel_layout = QVBoxLayout(self._panel)
-        # Top now matches bottom -- used to be asymmetric (8 vs 10) to leave
-        # room for the controls row that lived here; that row moved to sit on
-        # the bubbles backdrop panel instead (see ChatWindow.__init__), so
-        # this panel's top is bare like its bottom now and the two should match.
-        panel_layout.setContentsMargins(10, 10, 10, 10)
+        # Zero margins -- this panel itself is invisible now (background:
+        # transparent, ui/style.py), just a layout container; the visible
+        # #inputBubble inside it is sized to fill it exactly, so it reads as
+        # the same width as the bubbles backdrop panel above (which already
+        # aligns to *this* panel's own bounds -- see chat_window.py's
+        # paintEvent) instead of being inset narrower than it.
+        panel_layout.setContentsMargins(0, 0, 0, 0)
         panel_layout.setSpacing(2)
         root.addWidget(self._panel)
         # Public alias -- ChatWindow's backdrop panel (paintEvent) aligns its
@@ -94,7 +98,7 @@ class InputBar(QWidget):
         # ChatWindow.__init__), a standalone widget so it can be placed there
         # while everything else about InputBar (text/send, signals) stays
         # exactly as before.
-        _CONTROL_SIZE = 32
+        _CONTROL_SIZE = 38
 
         self.controls = QWidget()
         controls_row = QHBoxLayout(self.controls)
@@ -167,8 +171,14 @@ class InputBar(QWidget):
         self._text.document().setDocumentMargin(0)
         self._text.setFixedHeight(_CONTROL_SIZE)
         line_height = QFontMetrics(self._text.font()).height()
-        top_margin = max(0, (_CONTROL_SIZE - line_height) // 2)
-        self._text.setViewportMargins(12, top_margin, 4, 0)
+        # Bottom explicitly computed as the remainder rather than hardcoded 0
+        # -- a bottom margin of 0 left the leftover space as implicit,
+        # top-aligned-within-the-viewport blank room instead, which read as
+        # visibly bigger than the top margin (found live 2026-09-04).
+        extra = max(0, _CONTROL_SIZE - line_height)
+        top_margin = extra // 2
+        bottom_margin = extra - top_margin
+        self._text.setViewportMargins(12, top_margin, 4, bottom_margin)
         self._text.submit.connect(self._on_send)
         bubble_row.addWidget(self._text, 1)
 

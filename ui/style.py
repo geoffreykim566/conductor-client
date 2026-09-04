@@ -16,9 +16,8 @@ QWidget#minimizedRoot {{
     border-radius: 30px;
 }}
 QWidget#inputPanel {{
-    background-color: rgba(28, 28, 30, 0.82);
-    border: 1px solid rgba(42, 42, 44, 0.6);
-    border-radius: 18px;
+    background: transparent;
+    border: none;
 }}
 QWidget#sessionHeader {{
     border-bottom: 1px solid #222224;
@@ -92,9 +91,13 @@ QTextEdit:focus {{
     border: 1px solid #48484a;
 }}
 QWidget#inputBubble {{
-    background-color: rgba(38, 38, 41, 0.82);
-    border: none;
-    border-radius: 20px;
+    background-color: rgba(28, 28, 30, 0.82);
+    border: 1px solid rgba(42, 42, 44, 0.6);
+    /* Must stay >= half the bubble's actual height (input_bar.py's
+       _CONTROL_SIZE + bubble_row's own 4+4 margins) for fully-rounded
+       (pill/capsule) ends -- a smaller radius reads as slightly
+       rectangular once the control size grows (found live 2026-09-04). */
+    border-radius: 23px;
 }}
 QTextEdit#bareInput {{
     background: transparent;
@@ -132,7 +135,9 @@ QPushButton#sendBtn {{
     background-color: rgba(10, 132, 255, 0.7);
     color: #ffffff;
     border: none;
-    border-radius: 16px;
+    /* Exactly half of input_bar.py's _CONTROL_SIZE (its fixed width/height)
+       for a perfect circle -- a smaller radius reads as a rounded square. */
+    border-radius: 19px;
     font-size: 15px;
 }}
 QPushButton#sendBtn:hover {{
