@@ -96,50 +96,71 @@ def stream_chat(
     # signing secret rotated), so re-register once. A loop, not recursion —
     # a misconfigured server must not turn every client into a register storm.
     for attempt in range(2):
-        with httpx.stream(
-            "POST", url, headers=_headers(_ensure_token()),
-            json={
-                "message": text,
-                "history": history,
-                "screenshots": screenshots_b64 or None,
-                "ax_state": ax_state,
-            },
-            timeout=120,
-        ) as resp:
-            if resp.status_code == 401 and attempt == 0:
-                identity.clear_token()
-                continue
-            if resp.status_code == 402:
-                limit = None
-                try:
-                    resp.read()  # body isn't read implicitly on a streaming response
-                    detail = resp.json().get("detail")
-                    if isinstance(detail, dict):
-                        limit = detail.get("limit")
-                except Exception:
-                    pass
-                raise FreeLimitReached(limit)
-            if resp.status_code in (413, 422):
-                # Oversized / rejected body — e.g. a single message past the
-                # server's length cap, which the rolling window can't trim away.
-                # Surface a clean message instead of a raw HTTPStatusError.
-                resp.read()
-                yield ("error", "That message was too long to send. Try shortening it, or start a new chat.")
-                return
-            resp.raise_for_status()
-            for line in resp.iter_lines():
-                if not line.startswith("data: "):
+        try:
+            with httpx.stream(
+                "POST", url, headers=_headers(_ensure_token()),
+                json={
+                    "message": text,
+                    "history": history,
+                    "screenshots": screenshots_b64 or None,
+                    "ax_state": ax_state,
+                },
+                timeout=120,
+            ) as resp:
+                if resp.status_code == 401 and attempt == 0:
+                    identity.clear_token()
                     continue
-                obj = json.loads(line[len("data: "):])
-                kind = obj.get("type")
-                if kind == "chunk":
-                    yield ("chunk", obj.get("text", ""))
-                elif kind == "done":
-                    yield ("done", obj)
-                elif kind == "status":
-                    yield ("status", obj.get("text", ""))
-                elif kind == "error":
-                    yield ("error", obj.get("message", "error"))
+                if resp.status_code == 402:
+                    limit = None
+                    try:
+                        resp.read()  # body isn't read implicitly on a streaming response
+                        detail = resp.json().get("detail")
+                        if isinstance(detail, dict):
+                            limit = detail.get("limit")
+                    except Exception:
+                        pass
+                    raise FreeLimitReached(limit)
+                if resp.status_code in (413, 422):
+                    # Oversized / rejected body — e.g. a single message past the
+                    # server's length cap, which the rolling window can't trim away.
+                    # Surface a clean message instead of a raw HTTPStatusError.
+                    resp.read()
+                    yield ("error", "That message was too long to send. Try shortening it, or start a new chat.")
+                    return
+                resp.raise_for_status()
+                for line in resp.iter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    obj = json.loads(line[len("data: "):])
+                    kind = obj.get("type")
+                    if kind == "chunk":
+                        yield ("chunk", obj.get("text", ""))
+                    elif kind == "done":
+                        yield ("done", obj)
+                    elif kind == "status":
+                        yield ("status", obj.get("text", ""))
+                    elif kind == "error":
+                        yield ("error", obj.get("message", "error"))
+                return
+        except httpx.TimeoutException:
+            # A slow turn (most likely web_research -- server-v3's own budget
+            # for that is 150s, and a normal call there averages ~107s) can
+            # outrun this request's own timeout even though the server is
+            # still legitimately working, not hung. Rather than surface the
+            # raw exception as a scary error bubble, degrade to a plain,
+            # generic-tier answer -- same shape as any other unverified turn
+            # -- and hand back the same `history` this call was given, so the
+            # next turn continues from before this attempt rather than
+            # dropping context or replaying anything broken. Found live
+            # 2026-09-04.
+            yield (
+                "chunk",
+                "The research call I was running timed out, so I wasn't able to "
+                "get a confirmed answer for this. From general knowledge alone "
+                "I can't verify it — try asking again, or try rephrasing your "
+                "question.",
+            )
+            yield ("done", {"source_tier": "generic", "sources": [], "history": history})
             return
 
 
