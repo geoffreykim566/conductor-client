@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from config import CONTENT_RIGHT_INSET
+
 def _system_font(size: int = 13) -> QFont:
     font = QApplication.font()
     font.setPointSize(size)
@@ -87,8 +89,17 @@ class MessageWidget(QWidget):
 
         # Vertical stack so a rating row can sit *under* the bubble (like Claude),
         # outside the response itself.
+        # Right margin trimmed by CONTENT_RIGHT_INSET for user bubbles only --
+        # they're right-aligned (bubble_row below), so chat_view.py's own
+        # right-side gutter (reserved for the scrollbar) lands on top of
+        # whatever's set here; assistant bubbles are left-aligned off
+        # CONTENT_LEFT_INSET instead and don't see that gutter at all, so
+        # their margin stays the plain default (found live 2026-09-04: user
+        # bubbles sat visibly further from the panel's right edge than
+        # assistant bubbles sat from its left, once uncompensated).
+        right_margin = 12 - CONTENT_RIGHT_INSET if role == "user" else 12
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(12, 3, 12, 3)
+        outer.setContentsMargins(12, 3, right_margin, 3)
         outer.setSpacing(3)
         self._outer = outer
 

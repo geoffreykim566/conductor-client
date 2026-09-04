@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from config import CONTENT_LEFT_INSET
+from config import CONTENT_LEFT_INSET, CONTENT_RIGHT_INSET
 from ui.message_widget import MessageWidget
 
 MONO = '"Menlo", monospace'
@@ -79,7 +79,7 @@ class ChatView(QWidget):
         self.setGraphicsEffect(_TopEdgeFadeEffect(self))
 
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setContentsMargins(0, 0, CONTENT_RIGHT_INSET, 0)
         outer.setSpacing(0)
 
         # ── placeholder shown when chat is empty ──────────────────
@@ -222,14 +222,24 @@ class ChatView(QWidget):
 
     def end_assistant_message(self) -> None:
         self._current_assistant = None
-        # The spacer frozen by this turn's _apply_turn_anchor is deliberately
-        # left frozen here rather than unfrozen back to flexible: unfreezing
-        # right when a short response finishes would let it snap back to its
-        # natural (larger) expanding size, which shrinks the scrollable range
-        # and forces the scrollbar to auto-clamp down — a visible snap-to-
-        # bottom with no explicit scroll call behind it. Left frozen until
-        # the next turn recomputes it fresh (add_user_message) or New Chat
-        # unfreezes it (clear()).
+        # The leading spacer frozen by this turn's _apply_turn_anchor is
+        # deliberately left frozen here rather than unfrozen back to
+        # flexible: unfreezing right when a short response finishes would
+        # let it snap back to its natural (larger) expanding size, which
+        # shrinks the scrollable range and forces the scrollbar to auto-
+        # clamp down — a visible snap-to-bottom with no explicit scroll call
+        # behind it. Left frozen until the next turn recomputes it fresh
+        # (add_user_message) or New Chat unfreezes it (clear()).
+        #
+        # The *trailing* spacer's floor is released here, though — it was
+        # only ever a temporary streaming buffer (room for the response to
+        # render into, reserved fresh every turn by _apply_turn_anchor), not
+        # something that needs to survive after the turn is done. Left
+        # un-reset, it persisted as permanent scrollable blank space below
+        # the last message (found live 2026-09-04, screenshot: content in
+        # the top third of the panel, empty space scrollable all the way
+        # down from there).
+        self._trailing_spacer.setMinimumHeight(0)
 
     def clear(self) -> None:
         # Stop any running walkthrough thread before its owning widget gets

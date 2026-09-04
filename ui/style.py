@@ -176,7 +176,12 @@ QScrollArea, QScrollArea > QWidget > QWidget {{
 QScrollBar:vertical {{
     background: transparent;
     width: 4px;
-    margin: 0;
+    /* Bottom margin keeps the track clear of the backdrop panel's 18px
+    bottom-right corner radius (chat_window.py paintEvent) -- at this
+    close to the right edge, the track ran almost to the very bottom and
+    the handle visibly spilled past the rounded corner's curve when
+    scrolled all the way down (found live 2026-09-04). */
+    margin: 0 0 8px 0;
 }}
 QScrollBar::handle:vertical {{
     background: transparent;

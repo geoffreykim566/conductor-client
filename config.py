@@ -45,6 +45,16 @@ MAX_WINDOW_HEIGHT = 1000
 # chat_view.py picked up the same value (found live 2026-09-04, screenshot
 # feedback after the backdrop panel was narrowed to the input bar's width).
 CONTENT_LEFT_INSET = 70
+# Right gutter chat_view.py reserves so the scrollbar sits inboard of the
+# backdrop panel's rounded edge (was flush against it). Shared with
+# message_widget.py too -- that gutter shrinks the whole scrollable
+# container's width, and since user bubbles are right-aligned (assistant
+# bubbles are left-aligned, positioned off CONTENT_LEFT_INSET instead and
+# unaffected), their own outer margin needs to give back exactly this much
+# or they pick up the full gutter on top of their existing margin (found
+# live 2026-09-04: user bubbles sat visibly further from the right edge than
+# assistant bubbles sat from the left).
+CONTENT_RIGHT_INSET = 6
 
 # --- Capture ---
 # Owning-application names as reported by Quartz CGWindowListCopyWindowInfo.
