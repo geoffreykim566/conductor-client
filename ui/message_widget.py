@@ -36,27 +36,37 @@ class _Chip(QLabel):
     def __init__(self, text: str, hover_text: str) -> None:
         super().__init__(text)
         self._hover_text = hover_text
-        self._popup: QLabel | None = None
+        self._popup: QWidget | None = None
         self.setCursor(Qt.PointingHandCursor)
 
     def enterEvent(self, event) -> None:
         if self._popup is None:
-            popup = QLabel(self._hover_text)
+            # The top-level widget itself must stay bare -- a translucent
+            # top-level window never paints its own stylesheet background
+            # (confirmed live: text rendered with no box at all). Same fix
+            # ui/popup.py's Popup already uses: keep the window transparent,
+            # put the actual background/border on a non-top-level child.
+            popup = QWidget()
             popup.setWindowFlags(
                 Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
                 | Qt.Tool | Qt.WindowDoesNotAcceptFocus
             )
             popup.setAttribute(Qt.WA_TranslucentBackground)
-            popup.setWordWrap(True)
-            popup.setFixedWidth(220)
-            popup.setStyleSheet(
+            layout = QVBoxLayout(popup)
+            layout.setContentsMargins(0, 0, 0, 0)
+            card = QLabel(self._hover_text)
+            card.setWordWrap(True)
+            card.setFixedWidth(220)
+            card.setStyleSheet(
                 "QLabel { background-color: #1c1c1e; color: #ebebf5;"
                 " border: 1px solid #38383a; border-radius: 6px;"
                 " font-family: 'Menlo', monospace; font-size: 10px; padding: 6px 8px; }"
             )
+            layout.addWidget(card)
             self._popup = popup
         pos = self.mapToGlobal(self.rect().bottomLeft())
         self._popup.move(pos.x(), pos.y() + 4)
+        self._popup.adjustSize()
         self._popup.show()
         self._popup.raise_()
         super().enterEvent(event)
@@ -184,9 +194,10 @@ class MessageWidget(QWidget):
         ),
         "moderate": (
             "Confidence: Moderate", "#1c3a2a", "#30d158",
-            "The knowledge base was checked, but nothing matched with high "
-            "confidence -- treat this as general guidance rather than a "
-            "confirmed answer.",
+            "Confirmed against Conductor's verified Logic Pro knowledge base, "
+            "but not as confidently as a strong match -- usually this means "
+            "the model included its own knowledge alongside it that we "
+            "couldn't completely verify.",
         ),
         "research": (
             "Research Verified", "#1c2a3a", "#0a84ff",
@@ -194,8 +205,9 @@ class MessageWidget(QWidget):
         ),
         "generic": (
             "General Answer", "#2c2c2e", "#8e8e93",
-            "The knowledge base wasn't checked this turn -- a general answer "
-            "from the model's own knowledge.",
+            "The knowledge base didn't have anything for this -- treat this "
+            "as general guidance from the model's own knowledge, not a "
+            "confirmed answer.",
         ),
     }
 
