@@ -4,8 +4,10 @@ A permanent, slightly-transparent rounded panel (see paintEvent) sits behind
 the message bubbles -- Logic Pro showing through blank space behind the
 bubbles read as chaotic given that space was never clickable anyway. Stops
 above the input bar, which already draws its own backing panel (#inputPanel,
-ui/style.py). Settings and history are separate popup windows (see
-ui/popup.py), not stack pages.
+ui/style.py). History is a page in the same QStackedWidget as the chat view,
+swapped in over the bubbles panel (see _show_history/_show_chat) rather than
+a separate popup window -- Settings and its confirm dialogs still use
+ui/popup.py's Popup for that.
 """
 from PySide6.QtCore import QEvent, QPoint, QRect, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QGuiApplication, QMouseEvent, QPainter
@@ -13,6 +15,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QPushButton,
     QSizeGrip,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -50,6 +53,9 @@ from ui.setup_screen import (
 from ui.settings_panel import SettingsPanel
 
 _GEOMETRY_SAVE_DELAY_MS = 300
+
+_PAGE_CHAT = 0
+_PAGE_HISTORY = 1
 
 
 class _MinimizedBubble(QWidget):
@@ -148,7 +154,6 @@ class ChatWindow(QWidget):
         self._worker: StreamWorker | None = None
         self._me_worker: MeWorker | None = None
         self._session_id: str | None = None
-        self._session_popup: SessionListPanel | None = None
         self._settings_popup: SettingsPanel | None = None
         self._update_popup: UpdatePopup | None = None
 
@@ -178,7 +183,13 @@ class ChatWindow(QWidget):
         layout.addWidget(self._input_bar.controls)
 
         self._chat_view = ChatView()
-        layout.addWidget(self._chat_view, 1)
+        self._session_panel = SessionListPanel()
+        self._session_panel.session_selected.connect(self._on_session_selected)
+        self._session_panel.closed.connect(self._show_chat)
+        self._stack = QStackedWidget()
+        self._stack.addWidget(self._chat_view)      # _PAGE_CHAT
+        self._stack.addWidget(self._session_panel)  # _PAGE_HISTORY
+        layout.addWidget(self._stack, 1)
 
         layout.addSpacing(8)
         layout.addWidget(self._input_bar)
@@ -348,22 +359,19 @@ class ChatWindow(QWidget):
         self.raise_()
         self.activateWindow()
 
-    # --- history popup ---
+    # --- history page ---
+    def _show_chat(self) -> None:
+        self._stack.setCurrentIndex(_PAGE_CHAT)
+
+    def _show_history(self) -> None:
+        self._session_panel.load(song_history.load_sessions(), self._session_id)
+        self._stack.setCurrentIndex(_PAGE_HISTORY)
+
     def _on_toggle_history(self) -> None:
-        if self._session_popup is not None and self._session_popup.isVisible():
-            self._session_popup.close()
-            return
-        self._session_popup = SessionListPanel()
-        self._session_popup.session_selected.connect(self._on_session_selected)
-        self._session_popup.load(song_history.load_sessions(), self._session_id)
-        # history_button now sits in the controls row at the top of the
-        # bubbles panel (moved there 2026-09-04), not the bottom input bar
-        # -- opens downward over the chat area instead of upward now.
-        self._session_popup.anchor_below(self._input_bar.history_button)
-        self._session_popup.enable_click_outside_dismiss(
-            ignore_widget=self._input_bar.history_button
-        )
-        self._session_popup.show()
+        if self._stack.currentIndex() == _PAGE_HISTORY:
+            self._show_chat()
+        else:
+            self._show_history()
 
     def _load_latest_session(self) -> None:
         """Load the most recent session, or start empty."""
@@ -393,6 +401,7 @@ class ChatWindow(QWidget):
         self._server_history = None
         self._conversation.clear()
         self._chat_view.clear()
+        self._show_chat()
 
     def _on_session_selected(self, session_id: str) -> None:
         if self._session_id and self._conversation.messages():
@@ -410,6 +419,7 @@ class ChatWindow(QWidget):
                     self._conversation.messages(), self._rate_message
                 )
                 break
+        self._show_chat()
 
     # --- settings popup (opened from the macOS menu bar) ---
     def open_settings(self) -> None:

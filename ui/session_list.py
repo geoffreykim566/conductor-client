@@ -1,21 +1,21 @@
-"""History popup — lists past chat sessions. Anchored above the history button
-in the input bar (opens upward), not centered. Taller rows than a typical
-dropdown, small width, scrolls once content exceeds the max height."""
+"""History page — lists past chat sessions. Embedded as a page inside
+ChatWindow's stacked bubbles panel (see chat_window.py), swapped in over the
+chat view rather than shown as a separate popup window."""
 from datetime import date, datetime
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
+    QHBoxLayout,
     QLabel,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
-from ui.popup import Popup
-
-_MAX_HEIGHT = 320
+from config import CONTENT_LEFT_INSET
 
 
 def _format_date(session_id: str) -> str:
@@ -37,28 +37,52 @@ def _format_date(session_id: str) -> str:
         return session_id
 
 
-class SessionListPanel(Popup):
-    """History popup listing all past sessions.
+class SessionListPanel(QWidget):
+    """History page listing all past sessions, embedded in ChatWindow's stack.
 
     Signals:
         session_selected(str)  — user clicked a session; emits its id
-        closed()               — user dismissed the popup without selecting (inherited)
+        closed()               — user dismissed the page (header's ✕) without selecting
     """
 
     session_selected = Signal(str)
+    closed = Signal()
 
     def __init__(self) -> None:
-        super().__init__("PAST CHATS", width=260)
+        super().__init__()
 
-        layout = QVBoxLayout(self.body)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout = QVBoxLayout(self)
+        # Left inset matches input_bar.py's/chat_view.py's own CONTENT_LEFT_INSET
+        # -- this page shares ChatWindow's painted backdrop panel (chat_window.py's
+        # paintEvent), which is itself inset from the actual window's left edge,
+        # so content here has to match or it spills into that dead space (found
+        # live 2026-09-04, screenshot feedback right after this page was embedded).
+        layout.setContentsMargins(CONTENT_LEFT_INSET, 0, 0, 0)
         layout.setSpacing(0)
+
+        # Same header shape/object names as ui/popup.py's Popup base (which
+        # this no longer subclasses -- Settings/confirm dialogs/the update
+        # prompt still use Popup as a real floating window, this doesn't) so
+        # the existing QSS keeps applying unchanged.
+        header = QWidget()
+        header.setObjectName("sessionHeader")
+        hl = QHBoxLayout(header)
+        hl.setContentsMargins(12, 8, 12, 8)
+        title_lbl = QLabel("PAST CHATS")
+        title_lbl.setObjectName("sessionTitle")
+        hl.addWidget(title_lbl)
+        hl.addStretch()
+        close_btn = QPushButton("✕")
+        close_btn.setObjectName("headerBtn")
+        close_btn.setFixedSize(20, 20)
+        close_btn.clicked.connect(self.closed)
+        hl.addWidget(close_btn)
+        layout.addWidget(header)
 
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self._scroll.setFrameShape(QScrollArea.NoFrame)
-        self._scroll.setMaximumHeight(_MAX_HEIGHT)
 
         self._container = QWidget()
         self._list_layout = QVBoxLayout(self._container)
@@ -67,7 +91,7 @@ class SessionListPanel(Popup):
         self._list_layout.addStretch()
 
         self._scroll.setWidget(self._container)
-        layout.addWidget(self._scroll)
+        layout.addWidget(self._scroll, 1)
 
         self._empty_label = QLabel("No past chats yet.")
         self._empty_label.setObjectName("sessionEmpty")
@@ -117,8 +141,5 @@ class SessionListPanel(Popup):
         prev_lbl.setWordWrap(True)
         rl.addWidget(prev_lbl)
 
-        row.mousePressEvent = lambda _e, sid=session_id: (
-            self.session_selected.emit(sid),
-            self.close(),
-        )
+        row.mousePressEvent = lambda _e, sid=session_id: self.session_selected.emit(sid)
         return row
