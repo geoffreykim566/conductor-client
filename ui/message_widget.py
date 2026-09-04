@@ -22,6 +22,51 @@ def _system_font(size: int = 13) -> QFont:
     return font
 
 
+class _Chip(QLabel):
+    """A QLabel with a custom hover popup instead of the native QToolTip.
+
+    Native tooltips render *behind* this app's frameless, always-on-top main
+    window on macOS (ChatWindow's Qt.WindowStaysOnTopHint) -- setToolTip()
+    alone silently never showed anything (found live 2026-09-04: hovering
+    changed the cursor but no tooltip ever appeared). This popup carries the
+    same WindowStaysOnTopHint level itself so it isn't stuck behind its own
+    parent window.
+    """
+
+    def __init__(self, text: str, hover_text: str) -> None:
+        super().__init__(text)
+        self._hover_text = hover_text
+        self._popup: QLabel | None = None
+        self.setCursor(Qt.PointingHandCursor)
+
+    def enterEvent(self, event) -> None:
+        if self._popup is None:
+            popup = QLabel(self._hover_text)
+            popup.setWindowFlags(
+                Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+                | Qt.Tool | Qt.WindowDoesNotAcceptFocus
+            )
+            popup.setAttribute(Qt.WA_TranslucentBackground)
+            popup.setWordWrap(True)
+            popup.setFixedWidth(220)
+            popup.setStyleSheet(
+                "QLabel { background-color: #1c1c1e; color: #ebebf5;"
+                " border: 1px solid #38383a; border-radius: 6px;"
+                " font-family: 'Menlo', monospace; font-size: 10px; padding: 6px 8px; }"
+            )
+            self._popup = popup
+        pos = self.mapToGlobal(self.rect().bottomLeft())
+        self._popup.move(pos.x(), pos.y() + 4)
+        self._popup.show()
+        self._popup.raise_()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event) -> None:
+        if self._popup is not None:
+            self._popup.hide()
+        super().leaveEvent(event)
+
+
 class MessageWidget(QWidget):
     """A chat bubble. Use append_text() to grow streamed assistant messages."""
 
@@ -125,17 +170,47 @@ class MessageWidget(QWidget):
         self._rate_row = row
         self._refresh_rating()
 
+    # tier -> (label, background, foreground, hover explanation). Confidence
+    # bands computed server-side (pipeline.py's _confidence_tier) off the same
+    # deterministic trace data that used to drive a literal hedge sentence
+    # forced onto the top of every "moderate" answer -- that text now lives in
+    # this badge's tooltip instead (v3-log.md, 2026-09-04). "research" is
+    # styled and ready but never sent yet -- no live web-research tool exists
+    # in server-v3 today.
+    _TIER_CHIP = {
+        "strong": (
+            "Confidence: Strong", "#1c2a3a", "#0a84ff",
+            "Confirmed against Conductor's verified Logic Pro knowledge base.",
+        ),
+        "moderate": (
+            "Confidence: Moderate", "#1c3a2a", "#30d158",
+            "The knowledge base was checked, but nothing matched with high "
+            "confidence -- treat this as general guidance rather than a "
+            "confirmed answer.",
+        ),
+        "research": (
+            "Research Verified", "#1c2a3a", "#0a84ff",
+            "Backed by a live web search for up-to-date information.",
+        ),
+        "generic": (
+            "General Answer", "#2c2c2e", "#8e8e93",
+            "The knowledge base wasn't checked this turn -- a general answer "
+            "from the model's own knowledge.",
+        ),
+    }
+
     def set_source_tier(self, tier: str) -> None:
-        """Add a small chip inside the bubble for notable source tiers."""
-        _CHIP = {
-            "expert-reviewed":   ("Expert",     "#1c3a2a", "#30d158"),
-            "community-verified": ("Community",  "#1c2a3a", "#0a84ff"),
-            "confirmed-research": ("Researched", "#2a2a1c", "#ffd60a"),
-        }
-        if tier not in _CHIP or self._role != "assistant":
+        """Add a small confidence badge below the bubble (hover for what it means).
+
+        Deliberately outside the bubble, not inline in the response text --
+        the old design forced a full hedge sentence at the top of every
+        moderate-confidence answer, which read as noisy on turns where it
+        fired often. The badge carries the same signal passively instead.
+        """
+        if tier not in self._TIER_CHIP or self._role != "assistant" or getattr(self, "_tier_row", None) is not None:
             return
-        label_text, bg, fg = _CHIP[tier]
-        chip = QLabel(label_text)
+        label_text, bg, fg, tooltip = self._TIER_CHIP[tier]
+        chip = _Chip(label_text, tooltip)
         chip.setStyleSheet(
             f"QLabel {{ background-color: {bg}; color: {fg}; border-radius: 4px;"
             f" font-family: 'Menlo', monospace; font-size: 10px; font-weight: 600;"
@@ -143,7 +218,13 @@ class MessageWidget(QWidget):
         )
         chip.setFixedHeight(18)
         chip.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self._bubble_layout.addWidget(chip)
+
+        row = QHBoxLayout()
+        row.setContentsMargins(6, 0, 0, 0)  # indent under the bubble's left edge
+        row.addWidget(chip)
+        row.addStretch()
+        self._outer.addLayout(row)
+        self._tier_row = row
 
     def set_sources(self, sources: list) -> None:
         """Add source chips inside the bubble, stacked vertically (research turns only)."""
