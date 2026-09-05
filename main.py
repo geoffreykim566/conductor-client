@@ -1,4 +1,4 @@
-"""Conductor-Logic-Pro-v1 — entry point."""
+"""Conductor-client-v3 — entry point."""
 import sys
 
 from PySide6.QtCore import QEvent

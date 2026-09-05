@@ -41,7 +41,7 @@ def register() -> str:
 
     Raises RegistrationThrottled on 429 (per-IP registration cap).
     """
-    r = httpx.post(f"{SERVER_BASE_URL}/v1/register", timeout=30)
+    r = httpx.post(f"{SERVER_BASE_URL}/v3/register", timeout=30)
     if r.status_code == 429:
         raise RegistrationThrottled()
     r.raise_for_status()
@@ -91,7 +91,7 @@ def stream_chat(
     Raises FreeLimitReached on 402 when the message cap is hit, and
     RegistrationThrottled if a needed registration is rate limited.
     """
-    url = f"{SERVER_BASE_URL}/v1/chat"
+    url = f"{SERVER_BASE_URL}/v3/chat"
     # Exactly one retry on 401: the token was rejected (e.g. the server's
     # signing secret rotated), so re-register once. A loop, not recursion —
     # a misconfigured server must not turn every client into a register storm.
@@ -170,7 +170,7 @@ def post_rating(event_id: str, rating: int) -> None:
     if token is None:
         return  # never registered — there is no event of ours to rate
     r = httpx.post(
-        f"{SERVER_BASE_URL}/v1/ratings",
+        f"{SERVER_BASE_URL}/v3/ratings",
         headers=_headers(token),
         json={"event_id": event_id, "rating": rating},
         timeout=30,
@@ -192,7 +192,7 @@ def post_rating_async(event_id: str, rating: int) -> None:
 def get_me() -> dict:
     """Fetch this user's profile + free-tier usage (free_used, free_limit, remaining)."""
     for attempt in range(2):  # one retry on 401, same rationale as stream_chat
-        r = httpx.get(f"{SERVER_BASE_URL}/v1/me", headers=_headers(_ensure_token()), timeout=30)
+        r = httpx.get(f"{SERVER_BASE_URL}/v3/me", headers=_headers(_ensure_token()), timeout=30)
         if r.status_code == 401 and attempt == 0:
             identity.clear_token()
             continue
@@ -216,7 +216,7 @@ def put_me(
         }.items()
         if v is not None
     }
-    r = httpx.put(f"{SERVER_BASE_URL}/v1/me", headers=_headers(token), json=body, timeout=30)
+    r = httpx.put(f"{SERVER_BASE_URL}/v3/me", headers=_headers(token), json=body, timeout=30)
     r.raise_for_status()
 
 
@@ -237,6 +237,6 @@ def delete_me() -> None:
     if token is None:
         return  # never registered — no server-side user to mark
     try:
-        httpx.delete(f"{SERVER_BASE_URL}/v1/me", headers=_headers(token), timeout=5)
+        httpx.delete(f"{SERVER_BASE_URL}/v3/me", headers=_headers(token), timeout=5)
     except Exception:
         pass

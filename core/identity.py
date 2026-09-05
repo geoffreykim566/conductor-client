@@ -1,6 +1,6 @@
 """Per-install identity token, stored in config.json.
 
-The token (`<uuid>.<sig>`) is minted by the server via POST /v1/register and
+The token (`<uuid>.<sig>`) is minted by the server via POST /v3/register and
 is opaque here — this module only persists it. Legacy `device_id` entries
 from pre-token builds are ignored: they are unsigned, so the server would
 reject them anyway.

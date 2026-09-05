@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_SUPPORT="$HOME/Library/Application Support/Conductor"
 CONFIG_FILE="$APP_SUPPORT/config.json"
-SERVER="https://askconductor.ai"
+SERVER="https://api.askconductor.ai"
 
 echo ""
 echo "Conductor Uninstaller"
@@ -24,7 +24,7 @@ fi
 if [ -f "$CONFIG_FILE" ] && command -v python3 &>/dev/null; then
   DEVICE_ID=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('device_id',''))" "$CONFIG_FILE" 2>/dev/null || true)
   if [ -n "$DEVICE_ID" ]; then
-    curl -sf -X DELETE "$SERVER/v1/me" \
+    curl -sf -X DELETE "$SERVER/v3/me" \
       -H "X-Conductor-Id: $DEVICE_ID" \
       -H "Content-Type: application/json" \
       --max-time 5 >/dev/null 2>&1 || true

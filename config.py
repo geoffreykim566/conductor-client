@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-VERSION = "0.2.6"
+VERSION = "0.3.0"
 
 # --- App data ---
 # Own directory, separate from the shipping v1 app's "Conductor" dir, so v3
@@ -11,9 +11,9 @@ VERSION = "0.2.6"
 APP_SUPPORT_DIR = Path.home() / "Library" / "Application Support" / "Conductor-v3"
 
 # --- Server (proxy backend) ---
-# TODO: points at local server-v3 for dev. Once server-v3 has a real deployed
-# API, change this default back to that URL (not v1's api.askconductor.ai).
-SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "http://127.0.0.1:8000")
+# Real deployed server-v3 API. Override CONDUCTOR_SERVER_URL for local dev
+# against a docker-compose server-v3 instance instead.
+SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "https://api.askconductor.ai")
 
 # --- Updates ---
 # DMG releases and the marketing page both moved to conductor-website (see

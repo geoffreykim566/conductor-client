@@ -147,7 +147,7 @@ class ChatWindow(QWidget):
 
         self._conversation = Conversation()
         # Opaque server-returned turn history for the current session — round-
-        # tripped verbatim to /v1/chat each turn so the server can keep real
+        # tripped verbatim to /v3/chat each turn so the server can keep real
         # multi-turn continuity without pinning any state of its own. None
         # starts a fresh conversation server-side.
         self._server_history: list[dict] | None = None
