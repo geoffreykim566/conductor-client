@@ -71,3 +71,14 @@ MAX_IMAGE_LONG_EDGE = 1568  # Claude vision sweet spot (matches v1's config.py)
 # balloon vision tokens/payload size -- most turns only ever have the main
 # window (or main + one editor) open anyway.
 MAX_CONTEXT_WINDOWS = 4
+# JPEG, not PNG. Found live 2026-09-09 (v0.3.0): Logic's Compressor in its
+# brushed-metal Studio VCA skin at 100% view came out ~2.7M base64 chars as a
+# 1568px PNG, over server-v3's 2M per-image cap, so every turn 422'd while
+# that window was open. The model's vision cost/quality depends on pixel
+# dimensions, not bytes -- the same capture at quality 80 is ~340K chars with
+# every label/scale number still legible (checked at 1:1). Stay >= 70 to keep
+# small scale text crisp.
+SCREENSHOT_JPEG_QUALITY = 80
+# Mirror of server-v3 api.py's _MAX_SCREENSHOT_CHARS. Anything still over it
+# after JPEG encoding is skipped client-side rather than sent to be dropped.
+MAX_SCREENSHOT_B64_CHARS = 2 * 1024 * 1024

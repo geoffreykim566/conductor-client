@@ -5,7 +5,13 @@ import io
 import Quartz
 from PIL import Image
 
-from config import LOGIC_PRO_APP_NAMES, MAX_CONTEXT_WINDOWS, MAX_IMAGE_LONG_EDGE
+from config import (
+    LOGIC_PRO_APP_NAMES,
+    MAX_CONTEXT_WINDOWS,
+    MAX_IMAGE_LONG_EDGE,
+    MAX_SCREENSHOT_B64_CHARS,
+    SCREENSHOT_JPEG_QUALITY,
+)
 
 
 def _find_all_logic_pro_windows() -> list[dict]:
@@ -159,8 +165,17 @@ def capture_context_images_b64() -> list[str]:
             new_size = (int(img.width * scale), int(img.height * scale))
             img = img.resize(new_size, Image.LANCZOS)
         buf = io.BytesIO()
-        img.save(buf, format="PNG", optimize=True)
-        images_b64.append(base64.b64encode(buf.getvalue()).decode("ascii"))
+        # JPEG, not PNG -- see config.SCREENSHOT_JPEG_QUALITY for the live
+        # incident. CGImage captures carry an alpha channel JPEG can't encode.
+        img.convert("RGB").save(buf, format="JPEG", quality=SCREENSHOT_JPEG_QUALITY)
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        if len(b64) > MAX_SCREENSHOT_B64_CHARS:
+            # Server would drop it anyway (api.py's _validate_screenshots);
+            # skipping here saves the upload and keeps the reason in our log.
+            print(f"[window_capture] skipped {img.width}x{img.height} capture: "
+                  f"{len(b64)} b64 chars > cap {MAX_SCREENSHOT_B64_CHARS}")
+            continue
+        images_b64.append(b64)
     return images_b64
 
 

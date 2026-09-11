@@ -123,8 +123,17 @@ def stream_chat(
                 if resp.status_code in (413, 422):
                     # Oversized / rejected body — e.g. a single message past the
                     # server's length cap, which the rolling window can't trim away.
-                    # Surface a clean message instead of a raw HTTPStatusError.
+                    # Surface a clean message instead of a raw HTTPStatusError,
+                    # but keep the server's actual detail in our log: the 422
+                    # body names which validator fired, and until 2026-09-09
+                    # it was discarded here, leaving a live incident (an
+                    # oversized screenshot) to be reconstructed by hand.
                     resp.read()
+                    try:
+                        detail = resp.json().get("detail")
+                    except Exception:
+                        detail = resp.text[:500]
+                    print(f"[server_client] {resp.status_code} from /v3/chat: {detail}")
                     yield ("error", "That message was too long to send. Try shortening it, or start a new chat.")
                     return
                 resp.raise_for_status()
