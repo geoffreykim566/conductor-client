@@ -6,7 +6,7 @@ MONO = '"Menlo", monospace'
 
 STYLESHEET = f"""
 QWidget#setupRoot, QWidget#guideRoot, QWidget#popupRoot {{
-    background-color: rgba(28, 28, 30, 0.82);
+    background-color: rgba(28, 28, 30, 0.9);
     border: 1px solid rgba(42, 42, 44, 0.6);
     border-radius: 14px;
 }}
@@ -270,7 +270,7 @@ QLabel#chatPlaceholder {{
     padding: 32px;
 }}
 QPushButton#primary {{
-    background-color: #0a84ff;
+    background-color: rgba(8, 110, 212, 0.78);
     color: white;
     border: none;
     border-radius: 8px;
@@ -279,7 +279,7 @@ QPushButton#primary {{
     font-size: 12px;
     font-weight: 600;
 }}
-QPushButton#primary:hover {{ background-color: #409cff; }}
+QPushButton#primary:hover {{ background-color: rgba(64, 156, 255, 0.78); }}
 QPushButton#primary:disabled {{ background-color: #2c2c2e; color: #48484a; }}
 QPushButton#secondary {{
     background-color: #2c2c2e;
