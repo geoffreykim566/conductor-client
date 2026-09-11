@@ -179,7 +179,7 @@ class ChatWindow(QWidget):
         self._input_bar.new_chat_requested.connect(self._on_new_chat)
         self._input_bar.history_requested.connect(self._on_toggle_history)
         self._input_bar.minimize_requested.connect(self.minimize_to_bubble)
-        self._input_bar.close_requested.connect(QApplication.instance().quit)
+        self._input_bar.close_requested.connect(self.hide_to_dock)
         layout.addWidget(self._input_bar.controls)
 
         self._chat_view = ChatView()
@@ -358,6 +358,11 @@ class ChatWindow(QWidget):
         self.show()
         self.raise_()
         self.activateWindow()
+
+    def hide_to_dock(self) -> None:
+        if self._bubble is not None:
+            self._bubble.hide()
+        self.hide()
 
     # --- history page ---
     def _show_chat(self) -> None:

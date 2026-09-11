@@ -6,13 +6,13 @@ MONO = '"Menlo", monospace'
 
 STYLESHEET = f"""
 QWidget#setupRoot, QWidget#guideRoot, QWidget#popupRoot {{
-    background-color: #141415;
-    border: 1px solid #2a2a2c;
+    background-color: rgba(28, 28, 30, 0.82);
+    border: 1px solid rgba(42, 42, 44, 0.6);
     border-radius: 14px;
 }}
 QWidget#minimizedRoot {{
-    background-color: #141415;
-    border: 1px solid #2a2a2c;
+    background-color: rgba(28, 28, 30, 0.82);
+    border: 1px solid rgba(42, 42, 44, 0.6);
     border-radius: 30px;
 }}
 QWidget#inputPanel {{
@@ -195,14 +195,14 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
     height: 0;
 }}
 QPushButton#bubble {{
-    background-color: #0a84ff;
+    background-color: rgba(28, 28, 30, 0.82);
     color: white;
+    border: 1px solid rgba(42, 42, 44, 0.6);
     border-radius: 30px;
     font-size: 24px;
-    border: none;
 }}
 QPushButton#bubble:hover {{
-    background-color: #409cff;
+    background-color: rgba(44, 44, 46, 0.82);
 }}
 QPushButton#danger {{
     background-color: #2a1515;
