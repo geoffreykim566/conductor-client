@@ -27,34 +27,7 @@ WEBSITE_URL = "https://askconductor.ai"
 FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdFXMtLksRH-BfQ92vm6nQJKtupz2Nm8LZgBczXiOhZwMCt9A/viewform?usp=dialog"
 FEEDBACK_PROMPT_REMAINING_THRESHOLDS = (35, 20, 0)
 
-# --- Window ---
-WINDOW_WIDTH = 420
-WINDOW_HEIGHT = 500
-WINDOW_MARGIN = 20         # distance from screen edge
-MINIMIZED_SIZE = 60        # px square for collapsed bubble
-MIN_WINDOW_WIDTH = 300
-MIN_WINDOW_HEIGHT = 380
-MAX_WINDOW_WIDTH = 700
-MAX_WINDOW_HEIGHT = 1000
-# Shared left inset for both the input bar's panel (input_bar.py) and the
-# chat bubbles' container (chat_view.py) -- kept as one constant so the two
-# independently-scrolling areas stay left-aligned with each other and with
-# the bubbles backdrop panel (chat_window.py's paintEvent, which measures the
-# input bar's actual panel bounds directly). Previously input-bar-only (added
-# there to align with the chat scrollbar); bubbles spilled left past it until
-# chat_view.py picked up the same value (found live 2026-09-04, screenshot
-# feedback after the backdrop panel was narrowed to the input bar's width).
-CONTENT_LEFT_INSET = 70
-# Right gutter chat_view.py reserves so the scrollbar sits inboard of the
-# backdrop panel's rounded edge (was flush against it). Shared with
-# message_widget.py too -- that gutter shrinks the whole scrollable
-# container's width, and since user bubbles are right-aligned (assistant
-# bubbles are left-aligned, positioned off CONTENT_LEFT_INSET instead and
-# unaffected), their own outer margin needs to give back exactly this much
-# or they pick up the full gutter on top of their existing margin (found
-# live 2026-09-04: user bubbles sat visibly further from the right edge than
-# assistant bubbles sat from the left).
-CONTENT_RIGHT_INSET = 6
+# Window geometry and all other UI tokens live in ui/theme.py.
 
 # --- Capture ---
 # Owning-application names as reported by Quartz CGWindowListCopyWindowInfo.

@@ -1,173 +1,219 @@
 """App-wide stylesheet, applied once at the QApplication level so every
 top-level window (main chat window, popups, minimized bubble, onboarding
-dialogs) shares the same look without each needing its own setStyleSheet call."""
+dialogs) shares the same look without each needing its own setStyleSheet call.
 
-MONO = '"Menlo", monospace'
+Every value here is a ui/theme.py token -- add new tokens there rather than
+new literals here."""
+from ui.theme import (
+    ACCENT,
+    ACCENT_FILL,
+    ACCENT_FILL_ALPHA,
+    ACCENT_HOVER,
+    ACCENT_TINT,
+    BORDER,
+    BORDER_FOCUS,
+    BUBBLE_RADIUS,
+    BUTTON_RADIUS,
+    CHIP_RADIUS,
+    DANGER,
+    DANGER_BG,
+    DANGER_BORDER,
+    DIVIDER,
+    FIELD_RADIUS,
+    FONT_LG,
+    FONT_MD,
+    FONT_SM,
+    FONT_TITLE,
+    FONT_XS,
+    INPUT_PILL_RADIUS,
+    MINIMIZED_RADIUS,
+    MONO,
+    PANEL,
+    PANEL_ALPHA,
+    PANEL_BORDER,
+    PANEL_BORDER_ALPHA,
+    PANEL_RADIUS,
+    POPUP_ALPHA,
+    POPUP_RADIUS,
+    ROW_RADIUS,
+    SCROLLBAR_WIDTH,
+    SEND_RADIUS,
+    SURFACE,
+    SURFACE_HOVER,
+    SURFACE_RAISED,
+    TEXT,
+    TEXT_BRIGHT,
+    TEXT_DIM,
+    TEXT_FAINT,
+    TEXT_MUTED,
+    TEXT_SECONDARY,
+    WHITE,
+    rgba,
+)
+
+_PANEL_BG = rgba(PANEL, PANEL_ALPHA)
+_PANEL_BORDER = f"1px solid {rgba(PANEL_BORDER, PANEL_BORDER_ALPHA)}"
+_ACCENT_BG = rgba(ACCENT_FILL, ACCENT_FILL_ALPHA)
+_ACCENT_BG_HOVER = rgba(ACCENT_HOVER, ACCENT_FILL_ALPHA)
 
 STYLESHEET = f"""
 QWidget#setupRoot, QWidget#guideRoot, QWidget#popupRoot {{
-    background-color: rgba(28, 28, 30, 0.9);
-    border: 1px solid rgba(42, 42, 44, 0.6);
-    border-radius: 14px;
+    background-color: {rgba(PANEL, POPUP_ALPHA)};
+    border: {_PANEL_BORDER};
+    border-radius: {POPUP_RADIUS}px;
 }}
 QWidget#minimizedRoot {{
-    background-color: rgba(28, 28, 30, 0.82);
-    border: 1px solid rgba(42, 42, 44, 0.6);
-    border-radius: 30px;
+    background-color: {_PANEL_BG};
+    border: {_PANEL_BORDER};
+    border-radius: {MINIMIZED_RADIUS}px;
 }}
 QWidget#inputPanel {{
     background: transparent;
     border: none;
 }}
 QWidget#sessionHeader {{
-    border-bottom: 1px solid #222224;
+    border-bottom: 1px solid {DIVIDER};
 }}
 QLabel#title {{
-    color: #f2f2f7;
+    color: {TEXT_BRIGHT};
     font-family: {MONO};
-    font-size: 14px;
+    font-size: {FONT_TITLE}px;
     font-weight: 600;
     letter-spacing: 0.5px;
 }}
 QLabel#subtitle {{
-    color: #636366;
+    color: {TEXT_MUTED};
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
 }}
 QLabel#stepLabel {{
-    color: #ebebf5;
-    font-size: 13px;
+    color: {TEXT};
+    font-size: {FONT_LG}px;
     padding: 2px 0;
 }}
 QLabel#sessionTitle {{
-    color: #636366;
+    color: {TEXT_MUTED};
     font-family: {MONO};
-    font-size: 10px;
+    font-size: {FONT_XS}px;
     font-weight: 600;
     letter-spacing: 0.8px;
     text-transform: uppercase;
 }}
 QLabel#error {{
-    color: #ff453a;
+    color: {DANGER};
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
 }}
 QPushButton#headerBtn {{
     background: transparent;
-    color: #48484a;
+    color: {TEXT_DIM};
     border: none;
-    font-size: 13px;
+    font-size: {FONT_LG}px;
     font-family: {MONO};
     padding: 0;
 }}
 QPushButton#headerBtn:hover {{
-    color: #ebebf5;
+    color: {TEXT};
 }}
 QFrame#userBubble {{
-    background-color: rgba(8, 110, 212, 0.78);
-    border-radius: 16px;
+    background-color: {_ACCENT_BG};
+    border-radius: {BUBBLE_RADIUS}px;
 }}
 QFrame#userBubble QLabel {{
-    color: #ffffff;
+    color: {WHITE};
 }}
 QFrame#assistantBubble {{
-    background-color: rgba(28, 28, 30, 0.82);
-    border-radius: 16px;
-    border: 1px solid #2c2c2e;
+    background-color: {_PANEL_BG};
+    border-radius: {BUBBLE_RADIUS}px;
+    border: 1px solid {SURFACE_RAISED};
 }}
 QFrame#assistantBubble QLabel {{
-    color: #ebebf5;
+    color: {TEXT};
 }}
 QTextEdit {{
-    background-color: #1c1c1e;
-    color: #ebebf5;
-    border: 1px solid #38383a;
-    border-radius: 10px;
+    background-color: {SURFACE};
+    color: {TEXT};
+    border: 1px solid {BORDER};
+    border-radius: {ROW_RADIUS}px;
     padding: 6px 10px;
     font-family: {MONO};
-    font-size: 12px;
+    font-size: {FONT_MD}px;
 }}
 QTextEdit:focus {{
-    border: 1px solid #48484a;
+    border: 1px solid {BORDER_FOCUS};
 }}
 QWidget#inputBubble {{
-    background-color: rgba(28, 28, 30, 0.82);
-    border: 1px solid rgba(42, 42, 44, 0.6);
-    /* Must stay >= half the bubble's actual height (input_bar.py's
-       _CONTROL_SIZE + bubble_row's own 4+4 margins) for fully-rounded
-       (pill/capsule) ends -- a smaller radius reads as slightly
-       rectangular once the control size grows (found live 2026-09-04). */
-    border-radius: 23px;
+    background-color: {_PANEL_BG};
+    border: {_PANEL_BORDER};
+    border-radius: {INPUT_PILL_RADIUS}px;
 }}
 QTextEdit#bareInput {{
     background: transparent;
     border: none;
     padding: 0;
-    font-size: 11px;
+    font-size: {FONT_SM}px;
 }}
 QLineEdit {{
-    background-color: #1c1c1e;
-    color: #ebebf5;
-    border: 1px solid #38383a;
-    border-radius: 8px;
+    background-color: {SURFACE};
+    color: {TEXT};
+    border: 1px solid {BORDER};
+    border-radius: {FIELD_RADIUS}px;
     padding: 8px 10px;
     font-family: {MONO};
-    font-size: 12px;
+    font-size: {FONT_MD}px;
 }}
 QLineEdit:focus {{
-    border: 1px solid #48484a;
+    border: 1px solid {BORDER_FOCUS};
 }}
 QPushButton {{
-    background-color: #2c2c2e;
-    color: #ebebf5;
-    border: 1px solid #38383a;
-    border-radius: 6px;
+    background-color: {SURFACE_RAISED};
+    color: {TEXT};
+    border: 1px solid {BORDER};
+    border-radius: {BUTTON_RADIUS}px;
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
 }}
 QPushButton:hover {{
-    background-color: #38383a;
+    background-color: {SURFACE_HOVER};
 }}
 QPushButton:disabled {{
-    color: #3a3a3c;
+    color: {TEXT_FAINT};
 }}
 QPushButton#sendBtn {{
-    background-color: rgba(10, 132, 255, 0.7);
-    color: #ffffff;
+    background-color: {_ACCENT_BG};
+    color: {WHITE};
     border: none;
-    /* Exactly half of input_bar.py's _CONTROL_SIZE (its fixed width/height)
-       for a perfect circle -- a smaller radius reads as a rounded square. */
-    border-radius: 19px;
+    border-radius: {SEND_RADIUS}px;
     font-size: 15px;
 }}
 QPushButton#sendBtn:hover {{
-    background-color: rgba(64, 156, 255, 0.7);
+    background-color: {_ACCENT_BG_HOVER};
 }}
 QPushButton#sendBtn:disabled {{
-    background-color: #2c2c2e;
-    color: #3a3a3c;
+    background-color: {SURFACE_RAISED};
+    color: {TEXT_FAINT};
 }}
 QLabel#remainingLabel {{
     background: transparent;
-    color: #636366;
+    color: {TEXT_MUTED};
     font-family: {MONO};
-    font-size: 10px;
+    font-size: {FONT_XS}px;
 }}
 QPushButton#rateBtn {{
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: {CHIP_RADIUS}px;
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
     padding: 0 6px;
 }}
 QPushButton#rateBtn:hover {{
-    background: #1c1c1e;
-    border: 1px solid #2c2c2e;
+    background: {SURFACE};
+    border: 1px solid {SURFACE_RAISED};
 }}
 QPushButton#rateBtn[selected="true"] {{
-    background: #2c2c2e;
-    border: 1px solid #0a84ff;
+    background: {SURFACE_RAISED};
+    border: 1px solid {ACCENT};
 }}
 QScrollArea, QScrollArea > QWidget > QWidget {{
     background: transparent;
@@ -175,145 +221,143 @@ QScrollArea, QScrollArea > QWidget > QWidget {{
 }}
 QScrollBar:vertical {{
     background: transparent;
-    width: 4px;
-    /* Bottom margin keeps the track clear of the backdrop panel's 18px
-    bottom-right corner radius (chat_window.py paintEvent) -- at this
-    close to the right edge, the track ran almost to the very bottom and
-    the handle visibly spilled past the rounded corner's curve when
-    scrolled all the way down (found live 2026-09-04). */
+    width: {SCROLLBAR_WIDTH}px;
+    /* Bottom margin keeps the track clear of the backdrop panel's rounded
+    bottom-right corner (PANEL_RADIUS) so the handle doesn't spill past the
+    curve when scrolled all the way down. */
     margin: 0 0 8px 0;
 }}
 QScrollBar::handle:vertical {{
     background: transparent;
-    border-radius: 2px;
+    border-radius: {SCROLLBAR_WIDTH // 2}px;
     min-height: 24px;
 }}
 QScrollBar[scrolling="true"]::handle:vertical {{
-    background: #38383a;
+    background: {SURFACE_HOVER};
 }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
     height: 0;
 }}
 QPushButton#bubble {{
-    background-color: rgba(28, 28, 30, 0.82);
-    color: white;
-    border: 1px solid rgba(42, 42, 44, 0.6);
-    border-radius: 30px;
+    background-color: {_PANEL_BG};
+    color: {WHITE};
+    border: {_PANEL_BORDER};
+    border-radius: {MINIMIZED_RADIUS}px;
     font-size: 24px;
 }}
 QPushButton#bubble:hover {{
-    background-color: rgba(44, 44, 46, 0.82);
+    background-color: {rgba(SURFACE_RAISED, PANEL_ALPHA)};
 }}
 QPushButton#danger {{
-    background-color: #2a1515;
-    color: #ff453a;
-    border: 1px solid #3a2020;
-    border-radius: 6px;
+    background-color: {DANGER_BG};
+    color: {DANGER};
+    border: 1px solid {DANGER_BORDER};
+    border-radius: {BUTTON_RADIUS}px;
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
     padding: 6px;
 }}
 QPushButton#danger:hover {{
-    background-color: #ff453a;
-    color: #ffffff;
-    border-color: #ff453a;
+    background-color: {DANGER};
+    color: {WHITE};
+    border-color: {DANGER};
 }}
 QFrame#sessionRow {{
     background: transparent;
-    border-radius: 10px;
+    border-radius: {ROW_RADIUS}px;
 }}
 QFrame#sessionRow:hover {{
-    background: #1c1c1e;
+    background: {SURFACE};
 }}
 QFrame#sessionRowActive {{
-    background: #1a2640;
-    border-radius: 10px;
+    background: {ACCENT_TINT};
+    border-radius: {ROW_RADIUS}px;
 }}
 QLabel#sessionDate {{
-    color: #ebebf5;
+    color: {TEXT};
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
     font-weight: 600;
 }}
 QLabel#sessionPreview {{
-    color: #636366;
-    font-size: 12px;
+    color: {TEXT_MUTED};
+    font-size: {FONT_MD}px;
 }}
 QLabel#sessionEmpty {{
-    color: #48484a;
+    color: {TEXT_DIM};
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
     padding: 32px;
 }}
 QPushButton#showMeBtn {{
     background: transparent;
-    border: 1px solid #38383a;
-    border-radius: 6px;
-    color: #0a84ff;
+    border: 1px solid {BORDER};
+    border-radius: {BUTTON_RADIUS}px;
+    color: {ACCENT};
     font-family: {MONO};
-    font-size: 10px;
+    font-size: {FONT_XS}px;
     font-weight: 600;
     padding: 3px 8px;
 }}
 QPushButton#showMeBtn:hover {{
-    border-color: #0a84ff;
-    background: #0f1f3a;
+    border-color: {ACCENT};
+    background: {ACCENT_TINT};
 }}
 QPushButton#showMeBtn:disabled {{
-    color: #48484a;
-    border-color: #2c2c2e;
+    color: {TEXT_DIM};
+    border-color: {SURFACE_RAISED};
 }}
 QLabel#chatPlaceholder {{
-    color: #3a3a3c;
+    color: {TEXT_FAINT};
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
     padding: 32px;
 }}
 QPushButton#primary {{
-    background-color: rgba(8, 110, 212, 0.78);
-    color: white;
+    background-color: {_ACCENT_BG};
+    color: {WHITE};
     border: none;
-    border-radius: 8px;
+    border-radius: {FIELD_RADIUS}px;
     padding: 9px;
     font-family: {MONO};
-    font-size: 12px;
+    font-size: {FONT_MD}px;
     font-weight: 600;
 }}
-QPushButton#primary:hover {{ background-color: rgba(64, 156, 255, 0.78); }}
-QPushButton#primary:disabled {{ background-color: #2c2c2e; color: #48484a; }}
+QPushButton#primary:hover {{ background-color: {_ACCENT_BG_HOVER}; }}
+QPushButton#primary:disabled {{ background-color: {SURFACE_RAISED}; color: {TEXT_DIM}; }}
 QPushButton#secondary {{
-    background-color: #2c2c2e;
-    color: #ebebf5;
-    border: 1px solid #38383a;
-    border-radius: 8px;
+    background-color: {SURFACE_RAISED};
+    color: {TEXT};
+    border: 1px solid {BORDER};
+    border-radius: {FIELD_RADIUS}px;
     padding: 9px;
     font-family: {MONO};
-    font-size: 12px;
+    font-size: {FONT_MD}px;
     font-weight: 600;
 }}
-QPushButton#secondary:hover {{ background-color: #38383a; }}
+QPushButton#secondary:hover {{ background-color: {SURFACE_HOVER}; }}
 QPushButton#ghost {{
     background: transparent;
-    color: #0a84ff;
+    color: {ACCENT};
     border: none;
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
     padding: 0;
 }}
-QPushButton#ghost:hover {{ color: #409cff; }}
+QPushButton#ghost:hover {{ color: {ACCENT_HOVER}; }}
 QPushButton#chip {{
-    background-color: #1c1c1e;
-    color: #ebebf5;
-    border: 1px solid #38383a;
-    border-radius: 8px;
+    background-color: {SURFACE};
+    color: {TEXT};
+    border: 1px solid {BORDER};
+    border-radius: {FIELD_RADIUS}px;
     padding: 7px 8px;
     font-family: {MONO};
-    font-size: 11px;
+    font-size: {FONT_SM}px;
 }}
-QPushButton#chip:hover {{ border: 1px solid #48484a; }}
+QPushButton#chip:hover {{ border: 1px solid {BORDER_FOCUS}; }}
 QPushButton#chip[selected="true"] {{
-    background-color: #0a84ff;
-    border: 1px solid #0a84ff;
-    color: white;
+    background-color: {ACCENT};
+    border: 1px solid {ACCENT};
+    color: {WHITE};
 }}
 """

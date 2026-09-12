@@ -8,6 +8,7 @@ from config import APP_SUPPORT_DIR
 from core import song_history
 from core.server_client import delete_me
 from ui.popup import Popup
+from ui.theme import DIVIDER
 
 _APP_DATA = APP_SUPPORT_DIR
 
@@ -143,7 +144,7 @@ class SettingsPanel(Popup):
         layout.addSpacing(4)
         sep = QLabel()
         sep.setFixedHeight(1)
-        sep.setStyleSheet("background: #2a2a2c;")
+        sep.setStyleSheet(f"background: {DIVIDER};")
         layout.addWidget(sep)
 
         danger_label = QLabel("DANGER ZONE")

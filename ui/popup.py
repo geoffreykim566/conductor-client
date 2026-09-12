@@ -8,6 +8,8 @@ from PySide6.QtCore import QEvent, QRect, Qt, Signal
 from PySide6.QtGui import QCursor, QGuiApplication
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
+from ui.theme import ICON_BTN_SIZE
+
 
 class Popup(QWidget):
     """Frameless, translucent, always-on-top popup with a titled header + close button.
@@ -44,7 +46,7 @@ class Popup(QWidget):
         hl.addStretch()
         close_btn = QPushButton("✕")
         close_btn.setObjectName("headerBtn")
-        close_btn.setFixedSize(20, 20)
+        close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         close_btn.clicked.connect(self._on_close)
         hl.addWidget(close_btn)
         panel_layout.addWidget(header)

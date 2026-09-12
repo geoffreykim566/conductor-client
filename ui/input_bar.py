@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from config import CONTENT_LEFT_INSET
+from ui.theme import BORDER, CONTROL_SIZE, ICON_BTN_SIZE, INPUT_PILL_PADDING
 
 
 class _ChatTextEdit(QTextEdit):
@@ -56,33 +56,19 @@ class InputBar(QWidget):
         self._drag_offset: QPoint | None = None
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(CONTENT_LEFT_INSET, 0, 0, 10)
+        root.setContentsMargins(0, 0, 0, 10)
         root.setSpacing(0)
 
         # Invisible layout container (background: transparent, ui/style.py) --
-        # no longer its own visible panel now that the bubbles backdrop panel
-        # sits right above it (redundant to draw two stacked panels, per
-        # direction). Only the #inputBubble pill inside it is actually drawn.
-        # installEventFilter below still makes clicking its blank area drag
-        # the window, same as before.
+        # only the #inputBubble pill inside it is actually drawn. The event
+        # filter makes clicking its blank area drag the window.
         self._panel = QWidget()
         self._panel.setObjectName("inputPanel")
         self._panel.installEventFilter(self)
         panel_layout = QVBoxLayout(self._panel)
-        # Zero margins -- this panel itself is invisible now (background:
-        # transparent, ui/style.py), just a layout container; the visible
-        # #inputBubble inside it is sized to fill it exactly, so it reads as
-        # the same width as the bubbles backdrop panel above (which already
-        # aligns to *this* panel's own bounds -- see chat_window.py's
-        # paintEvent) instead of being inset narrower than it.
         panel_layout.setContentsMargins(0, 0, 0, 0)
         panel_layout.setSpacing(2)
         root.addWidget(self._panel)
-        # Public alias -- ChatWindow's backdrop panel (paintEvent) aligns its
-        # own left/right edges to this panel's actual bounds, not InputBar's
-        # own wider, edge-to-edge widget (root's 70px left margin above insets
-        # this panel from InputBar's edge, to align with the chat scrollbar).
-        self.panel = self._panel
 
         # Attachment preview row (hidden when empty)
         self._attachments_row = QWidget()
@@ -98,14 +84,10 @@ class InputBar(QWidget):
         # ChatWindow.__init__), a standalone widget so it can be placed there
         # while everything else about InputBar (text/send, signals) stays
         # exactly as before.
-        _CONTROL_SIZE = 38
-
         self.controls = QWidget()
         controls_row = QHBoxLayout(self.controls)
-        # Left matches CONTENT_LEFT_INSET (same edge as the bubbles/input bar)
-        # plus a little interior padding so the first icon clears the bubbles
-        # panel's rounded corner; top clears the same corner from above. This
-        # is now the ONLY thing controlling the gap to chat_view below
+        # Left/top padding clears the bubbles panel's rounded corner. This
+        # is the ONLY thing controlling the gap to chat_view below
         # (ChatWindow's main layout has zero spacing there deliberately, see
         # ChatWindow.__init__), not stacked with layout spacing like before.
         # Bottom smaller than top despite equal-margin math suggesting they
@@ -113,18 +95,18 @@ class InputBar(QWidget):
         # margins still looked bottom-heavy (likely the row's own content,
         # e.g. label line-height, isn't perfectly vertically symmetric),
         # tuned down by feel rather than by a formula.
-        controls_row.setContentsMargins(CONTENT_LEFT_INSET + 10, 10, 12, 7)
+        controls_row.setContentsMargins(10, 10, 12, 7)
         controls_row.setSpacing(6)
 
         new_btn = QPushButton("✦")
         new_btn.setObjectName("headerBtn")
-        new_btn.setFixedSize(20, 20)
+        new_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         new_btn.clicked.connect(self.new_chat_requested)
         controls_row.addWidget(new_btn, 0, Qt.AlignVCenter)
 
         hist_btn = QPushButton("☰")
         hist_btn.setObjectName("headerBtn")
-        hist_btn.setFixedSize(20, 20)
+        hist_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         hist_btn.clicked.connect(self.history_requested)
         controls_row.addWidget(hist_btn, 0, Qt.AlignVCenter)
         self.history_button = hist_btn
@@ -140,13 +122,13 @@ class InputBar(QWidget):
 
         self._min_btn = QPushButton("—")
         self._min_btn.setObjectName("headerBtn")
-        self._min_btn.setFixedSize(20, 20)
+        self._min_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         self._min_btn.clicked.connect(self.minimize_requested)
         controls_row.addWidget(self._min_btn, 0, Qt.AlignVCenter)
 
         self._close_btn = QPushButton("✕")
         self._close_btn.setObjectName("headerBtn")
-        self._close_btn.setFixedSize(20, 20)
+        self._close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         self._close_btn.clicked.connect(self.close_requested)
         controls_row.addWidget(self._close_btn, 0, Qt.AlignVCenter)
 
@@ -156,8 +138,10 @@ class InputBar(QWidget):
         bubble = QWidget()
         bubble.setObjectName("inputBubble")
         bubble_row = QHBoxLayout(bubble)
-        bubble_row.setContentsMargins(4, 4, 4, 4)
-        bubble_row.setSpacing(4)
+        bubble_row.setContentsMargins(
+            INPUT_PILL_PADDING, INPUT_PILL_PADDING, INPUT_PILL_PADDING, INPUT_PILL_PADDING
+        )
+        bubble_row.setSpacing(INPUT_PILL_PADDING)
 
         self._text = _ChatTextEdit()
         self._text.setObjectName("bareInput")
@@ -169,13 +153,13 @@ class InputBar(QWidget):
         # concept of it) is handled manually via viewport margins below.
         self._text.document().setDefaultTextOption(QTextOption(Qt.AlignLeft))
         self._text.document().setDocumentMargin(0)
-        self._text.setFixedHeight(_CONTROL_SIZE)
+        self._text.setFixedHeight(CONTROL_SIZE)
         line_height = QFontMetrics(self._text.font()).height()
         # Bottom explicitly computed as the remainder rather than hardcoded 0
         # -- a bottom margin of 0 left the leftover space as implicit,
         # top-aligned-within-the-viewport blank room instead, which read as
         # visibly bigger than the top margin (found live 2026-09-04).
-        extra = max(0, _CONTROL_SIZE - line_height)
+        extra = max(0, CONTROL_SIZE - line_height)
         top_margin = extra // 2
         bottom_margin = extra - top_margin
         self._text.setViewportMargins(12, top_margin, 4, bottom_margin)
@@ -184,7 +168,7 @@ class InputBar(QWidget):
 
         self._send_btn = QPushButton("↑")
         self._send_btn.setObjectName("sendBtn")
-        self._send_btn.setFixedSize(_CONTROL_SIZE, _CONTROL_SIZE)
+        self._send_btn.setFixedSize(CONTROL_SIZE, CONTROL_SIZE)
         self._send_btn.clicked.connect(self._on_send)
         bubble_row.addWidget(self._send_btn)
 
@@ -204,7 +188,7 @@ class InputBar(QWidget):
         pix.loadFromData(base64.b64decode(b64), "PNG")
         thumb = QLabel()
         thumb.setPixmap(pix.scaledToHeight(40, Qt.SmoothTransformation))
-        thumb.setStyleSheet("border: 1px solid #444; border-radius: 3px;")
+        thumb.setStyleSheet(f"border: 1px solid {BORDER}; border-radius: 3px;")
         layout.addWidget(thumb)
 
         remove_btn = QPushButton("✕")

@@ -17,8 +17,6 @@ from config import APP_SUPPORT_DIR
 
 _CONFIG_PATH = APP_SUPPORT_DIR / "config.json"
 
-MONO = '"Menlo", monospace'
-
 # Styling for these dialogs comes from the app-wide stylesheet (ui/style.py),
 # applied once at the QApplication level in main.py.
 

@@ -10,14 +10,7 @@ a separate popup window -- Settings and its confirm dialogs still use
 ui/popup.py's Popup for that.
 """
 from PySide6.QtCore import QEvent, QPoint, QRect, Qt, QTimer, Signal, QUrl
-from PySide6.QtGui import (
-    QColor,
-    QDesktopServices,
-    QGuiApplication,
-    QMouseEvent,
-    QPainter,
-    QRegion,
-)
+from PySide6.QtGui import QDesktopServices, QGuiApplication, QMouseEvent, QPainter
 from PySide6.QtWidgets import (
     QApplication,
     QPushButton,
@@ -27,17 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from config import (
-    FEEDBACK_PROMPT_REMAINING_THRESHOLDS,
-    MAX_WINDOW_HEIGHT,
-    MAX_WINDOW_WIDTH,
-    MIN_WINDOW_HEIGHT,
-    MIN_WINDOW_WIDTH,
-    MINIMIZED_SIZE,
-    WINDOW_HEIGHT,
-    WINDOW_MARGIN,
-    WINDOW_WIDTH,
-)
+from config import FEEDBACK_PROMPT_REMAINING_THRESHOLDS
 from core.conversation import Conversation
 from core.llm_client import MeWorker, StreamWorker
 from core import song_history
@@ -58,6 +41,22 @@ from ui.setup_screen import (
     save_window_size,
 )
 from ui.settings_panel import SettingsPanel
+from ui.theme import (
+    MAX_WINDOW_HEIGHT,
+    MAX_WINDOW_WIDTH,
+    MIN_WINDOW_HEIGHT,
+    MIN_WINDOW_WIDTH,
+    MINIMIZED_SIZE,
+    PANEL,
+    PANEL_ALPHA,
+    PANEL_BORDER,
+    PANEL_BORDER_ALPHA,
+    PANEL_RADIUS,
+    WINDOW_HEIGHT,
+    WINDOW_MARGIN,
+    WINDOW_WIDTH,
+    qcolor,
+)
 
 _GEOMETRY_SAVE_DELAY_MS = 300
 
@@ -292,49 +291,16 @@ class ChatWindow(QWidget):
         # session).
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QColor(42, 42, 44, 153))
-        painter.setBrush(QColor(28, 28, 30, 209))
-        # Stops above the input bar rather than spanning the full window --
-        # the input bar already draws its own backing panel (#inputPanel,
-        # ui/style.py), so covering it too just doubled up as a second panel
-        # sitting behind it. Only the chat bubbles' area gets this backdrop.
-        # Left/right edges match the input bar's own visible panel (not
-        # InputBar's wider, edge-to-edge widget) -- that panel sits inset by
-        # InputBar's own left margin (aligned to the chat scrollbar), and this
-        # backdrop spilling past it on the left read as misaligned.
-        input_panel_left = self._input_bar.panel.mapTo(self, QPoint(0, 0)).x()
-        input_panel_width = self._input_bar.panel.width()
-        # A few px short of the input bar's own top edge -- previously flush
-        # (the layout's 8px spacing exists between the *widgets*, but this
-        # panel filled all the way down to the input bar's top regardless),
-        # leaving no visible gap between the two rounded panels.
-        panel_bottom = self._input_bar.y() - 4
-        panel_rect = QRect(input_panel_left, 0, input_panel_width, panel_bottom)
-        painter.drawRoundedRect(panel_rect.adjusted(0, 0, -1, -1), 18, 18)
-        super().paintEvent(event)
-        self._apply_content_mask(panel_rect)
-
-    def _apply_content_mask(self, backdrop_rect: QRect) -> None:
-        """Restrict the frameless window's clickable/draggable area to what's
-        actually painted, instead of the full (wider) window rect -- without
-        this, the dead space left of `backdrop_rect` (window is wider than the
-        visible panel so its left edge lines up with the chat scrollbar; see
-        the comment above) was still live window surface: invisible, but it
-        still ate clicks, showed a resize cursor, and raised the window.
-        Derived from the same rects paintEvent just drew, not recomputed
-        independently, so mask and paint can't drift apart.
-        """
-        input_bar_panel_rect = QRect(
-            self._input_bar.panel.mapTo(self, QPoint(0, 0)),
-            self._input_bar.panel.size(),
+        painter.setPen(qcolor(PANEL_BORDER, PANEL_BORDER_ALPHA))
+        painter.setBrush(qcolor(PANEL, PANEL_ALPHA))
+        # Spans the full window width -- the window IS the panel, nothing is
+        # laid out past its edges. Stops a few px above the input bar, which
+        # draws its own pill, so the two rounded shapes read as separate.
+        panel_rect = QRect(0, 0, self.width(), self._input_bar.y() - 4)
+        painter.drawRoundedRect(
+            panel_rect.adjusted(0, 0, -1, -1), PANEL_RADIUS, PANEL_RADIUS
         )
-        mask = QRegion(backdrop_rect).united(QRegion(input_bar_panel_rect))
-        if self._editing_size:
-            # The resize grip sits at the window's true bottom-right corner,
-            # outside both panel rects -- needs its own carve-out or Edit Size
-            # loses its handle.
-            mask = mask.united(QRegion(self._grip.geometry()))
-        self.setMask(mask)
+        super().paintEvent(event)
 
     def _set_editing_size_visual(self, editing: bool) -> None:
         self._grip.setVisible(editing)
@@ -342,15 +308,7 @@ class ChatWindow(QWidget):
 
     def _lock_native_resizing(self, width: int, height: int) -> None:
         """Pin min == max at the OS level so macOS treats this borderless
-        window as non-resizable -- otherwise (min < max, set once in
-        __init__) AppKit offers its own native resize cursor/drag right at
-        the window's true frame edge, which sits outside the visible/masked
-        panel (see paintEvent's `input_panel_left` inset) and has nothing to
-        do with Qt's own mask or click handling. Resizing here only ever
-        happens programmatically (Reset Size, or the grip during Edit Size),
-        so there's no user-facing reason for the OS to expose a native edge
-        drag at all outside that explicit mode.
-        """
+        window as non-resizable outside Edit Size."""
         self.setMinimumSize(width, height)
         self.setMaximumSize(width, height)
 

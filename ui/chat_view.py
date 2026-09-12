@@ -11,10 +11,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from config import CONTENT_LEFT_INSET, CONTENT_RIGHT_INSET
 from ui.message_widget import MessageWidget
+from ui.theme import SCROLLBAR_GUTTER
 
-MONO = '"Menlo", monospace'
 _QWIDGETSIZE_MAX = 16777215  # Qt's own constant for "no max height set"
 
 _FADE_HEIGHT = 24  # how many px the transition takes, not where it starts --
@@ -79,11 +78,11 @@ class ChatView(QWidget):
         self.setGraphicsEffect(_TopEdgeFadeEffect(self))
 
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, CONTENT_RIGHT_INSET, 0)
+        outer.setContentsMargins(0, 0, SCROLLBAR_GUTTER, 0)
         outer.setSpacing(0)
 
         # ── placeholder shown when chat is empty ──────────────────
-        self._placeholder = QLabel("")
+        self._placeholder = QLabel("Ask anything about your Logic Pro session.")
         self._placeholder.setObjectName("chatPlaceholder")
         self._placeholder.setAlignment(Qt.AlignCenter)
         self._placeholder.setWordWrap(True)
@@ -107,12 +106,7 @@ class ChatView(QWidget):
         self._container = QWidget()
         self._container.setAutoFillBackground(False)
         self._layout = QVBoxLayout(self._container)
-        # Left margin matches input_bar.py's own left inset (CONTENT_LEFT_INSET)
-        # so left-aligned assistant bubbles stay inside the bubbles backdrop
-        # panel (chat_window.py's paintEvent, which aligns to the input bar's
-        # actual panel bounds) instead of spilling past its left edge (found
-        # live 2026-09-04, screenshot feedback after that panel was narrowed).
-        self._layout.setContentsMargins(CONTENT_LEFT_INSET, 14, 0, 0)
+        self._layout.setContentsMargins(0, 14, 0, 0)
         self._layout.setSpacing(2)
         # A real widget rather than layout.addStretch()'s QSpacerItem, so it
         # can be frozen at a specific fixed height for the duration of a turn
