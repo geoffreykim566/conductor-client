@@ -10,7 +10,14 @@ a separate popup window -- Settings and its confirm dialogs still use
 ui/popup.py's Popup for that.
 """
 from PySide6.QtCore import QEvent, QPoint, QRect, Qt, QTimer, Signal, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QGuiApplication, QMouseEvent, QPainter
+from PySide6.QtGui import (
+    QColor,
+    QDesktopServices,
+    QGuiApplication,
+    QMouseEvent,
+    QPainter,
+    QRegion,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QPushButton,
@@ -140,10 +147,10 @@ class ChatWindow(QWidget):
         # (default or restored) as "saved", permanently shadowing any future
         # default-size change in config.py from then on.
         self._geometry_ready = False
-        self.setMinimumSize(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
-        self.setMaximumSize(MAX_WINDOW_WIDTH, MAX_WINDOW_HEIGHT)
+        self._unlock_native_resizing()
         saved_size = get_saved_window_size()
         self.resize(*(saved_size or (WINDOW_WIDTH, WINDOW_HEIGHT)))
+        self._lock_native_resizing(self.width(), self.height())
 
         self._conversation = Conversation()
         # Opaque server-returned turn history for the current session — round-
@@ -258,7 +265,15 @@ class ChatWindow(QWidget):
         # lives pinned near the screen's bottom-right (_anchor_to_bottom_right)
         # and that corner is the one that should stay put.
         right, bottom = self.x() + self.width(), self.y() + self.height()
-        self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        if self._editing_size:
+            # Mid-edit: leave the native size range at its already-widened
+            # (Edit Size) bounds so the grip stays usable; Save/Cancel locks
+            # it down to whatever size is current at that point.
+            self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        else:
+            self._unlock_native_resizing()
+            self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
+            self._lock_native_resizing(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.move(right - WINDOW_WIDTH, bottom - WINDOW_HEIGHT)
 
     def _on_reset_position(self) -> None:
@@ -297,19 +312,62 @@ class ChatWindow(QWidget):
         panel_rect = QRect(input_panel_left, 0, input_panel_width, panel_bottom)
         painter.drawRoundedRect(panel_rect.adjusted(0, 0, -1, -1), 18, 18)
         super().paintEvent(event)
+        self._apply_content_mask(panel_rect)
+
+    def _apply_content_mask(self, backdrop_rect: QRect) -> None:
+        """Restrict the frameless window's clickable/draggable area to what's
+        actually painted, instead of the full (wider) window rect -- without
+        this, the dead space left of `backdrop_rect` (window is wider than the
+        visible panel so its left edge lines up with the chat scrollbar; see
+        the comment above) was still live window surface: invisible, but it
+        still ate clicks, showed a resize cursor, and raised the window.
+        Derived from the same rects paintEvent just drew, not recomputed
+        independently, so mask and paint can't drift apart.
+        """
+        input_bar_panel_rect = QRect(
+            self._input_bar.panel.mapTo(self, QPoint(0, 0)),
+            self._input_bar.panel.size(),
+        )
+        mask = QRegion(backdrop_rect).united(QRegion(input_bar_panel_rect))
+        if self._editing_size:
+            # The resize grip sits at the window's true bottom-right corner,
+            # outside both panel rects -- needs its own carve-out or Edit Size
+            # loses its handle.
+            mask = mask.united(QRegion(self._grip.geometry()))
+        self.setMask(mask)
 
     def _set_editing_size_visual(self, editing: bool) -> None:
         self._grip.setVisible(editing)
         self.update()
 
+    def _lock_native_resizing(self, width: int, height: int) -> None:
+        """Pin min == max at the OS level so macOS treats this borderless
+        window as non-resizable -- otherwise (min < max, set once in
+        __init__) AppKit offers its own native resize cursor/drag right at
+        the window's true frame edge, which sits outside the visible/masked
+        panel (see paintEvent's `input_panel_left` inset) and has nothing to
+        do with Qt's own mask or click handling. Resizing here only ever
+        happens programmatically (Reset Size, or the grip during Edit Size),
+        so there's no user-facing reason for the OS to expose a native edge
+        drag at all outside that explicit mode.
+        """
+        self.setMinimumSize(width, height)
+        self.setMaximumSize(width, height)
+
+    def _unlock_native_resizing(self) -> None:
+        self.setMinimumSize(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
+        self.setMaximumSize(MAX_WINDOW_WIDTH, MAX_WINDOW_HEIGHT)
+
     def _on_edit_size_requested(self) -> None:
         self._pre_edit_size = self.size()
         self._editing_size = True
+        self._unlock_native_resizing()
         self._set_editing_size_visual(True)
 
     def _on_save_size_requested(self) -> None:
         self._editing_size = False
         self._set_editing_size_visual(False)
+        self._lock_native_resizing(self.width(), self.height())
         save_window_size(self.width(), self.height())
         self._pre_edit_size = None
 
@@ -323,6 +381,7 @@ class ChatWindow(QWidget):
         self._set_editing_size_visual(False)
         if self._pre_edit_size is not None:
             self.resize(self._pre_edit_size)
+        self._lock_native_resizing(self.width(), self.height())
         self._pre_edit_size = None
 
     # --- positioning ---
