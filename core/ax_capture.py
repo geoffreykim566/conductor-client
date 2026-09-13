@@ -14,10 +14,23 @@ from config import LOGIC_PRO_APP_NAMES
 
 # Bounds on the walk so a deeply nested window (or Logic itself) can't blow
 # up capture time or the text payload sent to the server.
-_MAX_DEPTH = 6
-_MAX_CHILDREN = 40
-_MAX_NODES_PER_WINDOW = 300
+#
+# Depth is a sanity ceiling only, never expected to bind: Logic's main window
+# bottoms out around depth 9, and the track-header Mute/Solo checkboxes sit
+# at depth 8 (found live 2026-09-12 -- the previous cap of 6 sliced off
+# exactly the Tracks header, so per-track mute state never reached the model
+# while the Inspector's channel strip at depth 6 did). Each node is one
+# synchronous round trip into Logic (~0.5 ms measured), so the node budget
+# is what bounds capture time; the char cap bounds the prompt payload.
+_MAX_DEPTH = 20
+_MAX_CHILDREN = 200
+_MAX_NODES_PER_WINDOW = 2000
 _MAX_CHARS = 12_000
+
+# Pure chrome that carries no state worth a line (a slider's thumb, Logic's
+# per-strip library badge) -- skipped so the char cap buys real content.
+_SKIP_ROLES = {"AXValueIndicator"}
+_SKIP_DESC_PREFIXES = ("library indicator",)
 
 
 def _ax_get(el, attr):
@@ -32,10 +45,38 @@ def _find_pid() -> int | None:
     return None
 
 
+def _ordered_children(el) -> list:
+    """Children in tree order, except a child described as 'Tracks' is moved
+    to the front. In the main project window the Inspector group precedes the
+    Tracks group, and a big project's channel strips would otherwise consume
+    the node/char budget before the per-track header rows (name, Mute, Solo)
+    are reached. Harmless elsewhere: no other window has a 'Tracks' child.
+    """
+    kids = list(_ax_get(el, AS.kAXChildrenAttribute) or [])[:_MAX_CHILDREN]
+    if len(kids) < 2:
+        return kids
+    first, rest = [], []
+    for c in kids:
+        (first if _ax_get(c, AS.kAXDescriptionAttribute) == "Tracks" else rest).append(c)
+    return first + rest
+
+
 def _describe(el, depth: int, lines: list[str], budget: list[int]) -> None:
     if budget[0] <= 0 or depth > _MAX_DEPTH:
         return
     role = _ax_get(el, AS.kAXRoleAttribute)
+    # Logic's AX server sometimes wedges into a state where every window
+    # attribute (AXWindows, AXMainWindow, AXFocusedWindow) and the app's
+    # own child list return the AXApplication element itself (seen live
+    # 2026-09-12 while the Mac's screen was locked -- window captures come
+    # back solid black in the same state, so a turn sent then has no usable
+    # context either way; this just keeps the AX side from being noise). Walking
+    # that is a self-referential chain of "AXApplication title='Logic Pro'"
+    # lines down to the depth ceiling, then the menu bar -- the whole char
+    # budget spent on nothing. Neither the app node nor the menu bar ever
+    # carries project state, so stop at both.
+    if role in ("AXApplication", "AXMenuBar"):
+        return
     title = _ax_get(el, AS.kAXTitleAttribute)
     desc = _ax_get(el, AS.kAXDescriptionAttribute)
     value = _ax_get(el, AS.kAXValueAttribute)
@@ -46,14 +87,17 @@ def _describe(el, depth: int, lines: list[str], budget: list[int]) -> None:
         bits.append(f"desc={desc!r}")
     if value not in (None, ""):
         bits.append(f"value={value!r}")
+    skip = role in _SKIP_ROLES or (
+        isinstance(desc, str) and desc.startswith(_SKIP_DESC_PREFIXES)
+    )
     # Pure structural nodes (no title/desc/value) aren't worth a line, but
     # still recurse into their children -- the useful state is often a few
     # hops below a plain AXGroup/AXSplitGroup wrapper.
-    if len(bits) > 1:
+    if len(bits) > 1 and not skip:
         lines.append("  " * depth + "- " + " ".join(bits))
         budget[0] -= 1
 
-    for c in list(_ax_get(el, AS.kAXChildrenAttribute) or [])[:_MAX_CHILDREN]:
+    for c in _ordered_children(el):
         _describe(c, depth + 1, lines, budget)
 
 
@@ -68,7 +112,10 @@ def capture_ax_state() -> str | None:
         if pid is None:
             return None
         app = AS.AXUIElementCreateApplication(pid)
-        windows = _ax_get(app, AS.kAXWindowsAttribute) or []
+        windows = [
+            w for w in (_ax_get(app, AS.kAXWindowsAttribute) or [])
+            if _ax_get(w, AS.kAXRoleAttribute) != "AXApplication"  # see _describe
+        ]
         if not windows:
             return None
 
