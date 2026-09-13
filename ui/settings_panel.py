@@ -8,6 +8,7 @@ from config import APP_SUPPORT_DIR
 from core import song_history
 from core.server_client import delete_me
 from ui.popup import Popup
+from ui.theme import DIVIDER
 
 _APP_DATA = APP_SUPPORT_DIR
 
@@ -53,25 +54,6 @@ class _ConfirmButton(QPushButton):
         self.style().polish(self)
 
 
-class _EditSizeButton(QPushButton):
-    """Toggles between "Edit Size" and "Save" -- emits edit_requested on the
-    first click, save_requested on the second (Save) click."""
-
-    edit_requested = Signal()
-    save_requested = Signal()
-
-    def __init__(self) -> None:
-        super().__init__("Edit Size")
-        self.setObjectName("secondary")
-        self._editing = False
-        self.clicked.connect(self._on_click)
-
-    def _on_click(self) -> None:
-        self._editing = not self._editing
-        self.setText("Save" if self._editing else "Edit Size")
-        (self.edit_requested if self._editing else self.save_requested).emit()
-
-
 class _ConfirmPopup(Popup):
     """Small centered confirm/cancel popup, used for the two Danger Zone actions."""
 
@@ -103,15 +85,11 @@ class SettingsPanel(Popup):
 
     Signals:
         history_cleared()           — user confirmed clearing all chat history
-        edit_size_requested()       — user clicked "Edit Size": show a resize border/grip
-        save_size_requested()       — user clicked "Save": commit the current size
         reset_size_requested()      — user confirmed resetting size to default
         reset_position_requested()  — user confirmed resetting position to default
     """
 
     history_cleared = Signal()
-    edit_size_requested = Signal()
-    save_size_requested = Signal()
     reset_size_requested = Signal()
     reset_position_requested = Signal()
 
@@ -127,11 +105,6 @@ class SettingsPanel(Popup):
         window_label.setObjectName("sessionTitle")
         layout.addWidget(window_label)
 
-        edit_size_btn = _EditSizeButton()
-        edit_size_btn.edit_requested.connect(self.edit_size_requested)
-        edit_size_btn.save_requested.connect(self.save_size_requested)
-        layout.addWidget(edit_size_btn)
-
         reset_size_btn = _ConfirmButton("Reset Size")
         reset_size_btn.confirmed.connect(self.reset_size_requested)
         layout.addWidget(reset_size_btn)
@@ -143,7 +116,7 @@ class SettingsPanel(Popup):
         layout.addSpacing(4)
         sep = QLabel()
         sep.setFixedHeight(1)
-        sep.setStyleSheet("background: #2a2a2c;")
+        sep.setStyleSheet(f"background: {DIVIDER};")
         layout.addWidget(sep)
 
         danger_label = QLabel("DANGER ZONE")

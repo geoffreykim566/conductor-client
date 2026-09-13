@@ -9,12 +9,13 @@ import math
 import objc  # noqa: F401 — used in _ns_window via objc_object
 
 from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QGuiApplication, QPainter, QPen
+from PySide6.QtGui import QGuiApplication, QPainter, QPen
 from PySide6.QtWidgets import QWidget
 
 from core.window_capture import _find_all_logic_pro_windows
+from ui.theme import ACCENT, WHITE, qcolor
 
-_BLUE = QColor(10, 132, 255)
+_BLUE = qcolor(ACCENT)
 
 _singleton: "OverlayWindow | None" = None
 
@@ -282,7 +283,7 @@ class OverlayWindow(QWidget):
             p.setPen(Qt.NoPen)
             p.setBrush(_BLUE)
             p.drawRoundedRect(chip, 4, 4)
-            p.setPen(QColor("#ffffff"))
+            p.setPen(qcolor(WHITE))
             p.drawText(chip, Qt.AlignCenter, self._label)
 
         p.end()

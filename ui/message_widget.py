@@ -16,7 +16,34 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from config import CONTENT_RIGHT_INSET
+from ui.theme import (
+    ACCENT,
+    ACCENT_TINT,
+    BORDER,
+    BUTTON_RADIUS,
+    CHIP_RADIUS,
+    DANGER,
+    FONT_XS,
+    ICON_BTN_SIZE,
+    MONO,
+    SCROLLBAR_GUTTER,
+    SUCCESS,
+    SUCCESS_TINT,
+    SURFACE,
+    SURFACE_RAISED,
+    TEXT,
+    TEXT_DIM,
+    TEXT_MUTED,
+    TEXT_SECONDARY,
+)
+
+_STEP_STYLE = f"QLabel {{ color: {TEXT_MUTED}; padding-left: 2px; }}"
+_STEP_ACTIVE_STYLE = f"QLabel {{ color: {TEXT}; font-weight: 600; padding-left: 2px; }}"
+_STEP_FAILED_STYLE = f"QLabel {{ color: {DANGER}; font-weight: 600; padding-left: 2px; }}"
+_HINT_STYLE = f"QLabel {{ color: {TEXT_DIM}; padding-left: 2px; }}"
+_STATUS_ERROR_STYLE = f"QLabel {{ color: {DANGER}; padding-left: 2px; margin-top: 4px; }}"
+_STATUS_INFO_STYLE = f"QLabel {{ color: {TEXT_SECONDARY}; padding-left: 2px; margin-top: 4px; }}"
+
 
 def _system_font(size: int = 13) -> QFont:
     font = QApplication.font()
@@ -60,9 +87,9 @@ class _Chip(QLabel):
             card.setWordWrap(True)
             card.setFixedWidth(220)
             card.setStyleSheet(
-                "QLabel { background-color: #1c1c1e; color: #ebebf5;"
-                " border: 1px solid #38383a; border-radius: 6px;"
-                " font-family: 'Menlo', monospace; font-size: 10px; padding: 6px 8px; }"
+                f"QLabel {{ background-color: {SURFACE}; color: {TEXT};"
+                f" border: 1px solid {BORDER}; border-radius: {BUTTON_RADIUS}px;"
+                f" font-family: {MONO}; font-size: {FONT_XS}px; padding: 6px 8px; }}"
             )
             layout.addWidget(card)
             self._popup = popup
@@ -89,15 +116,14 @@ class MessageWidget(QWidget):
 
         # Vertical stack so a rating row can sit *under* the bubble (like Claude),
         # outside the response itself.
-        # Right margin trimmed by CONTENT_RIGHT_INSET for user bubbles only --
+        # Right margin trimmed by SCROLLBAR_GUTTER for user bubbles only --
         # they're right-aligned (bubble_row below), so chat_view.py's own
         # right-side gutter (reserved for the scrollbar) lands on top of
-        # whatever's set here; assistant bubbles are left-aligned off
-        # CONTENT_LEFT_INSET instead and don't see that gutter at all, so
-        # their margin stays the plain default (found live 2026-09-04: user
-        # bubbles sat visibly further from the panel's right edge than
-        # assistant bubbles sat from its left, once uncompensated).
-        right_margin = 12 - CONTENT_RIGHT_INSET if role == "user" else 12
+        # whatever's set here; assistant bubbles are left-aligned and don't
+        # see that gutter at all (found live 2026-09-04: user bubbles sat
+        # visibly further from the panel's right edge than assistant bubbles
+        # sat from its left, once uncompensated).
+        right_margin = 12 - SCROLLBAR_GUTTER if role == "user" else 12
         outer = QVBoxLayout(self)
         outer.setContentsMargins(12, 3, right_margin, 3)
         outer.setSpacing(3)
@@ -117,7 +143,7 @@ class MessageWidget(QWidget):
             pix.loadFromData(base64.b64decode(b64), "PNG")
             thumb = QLabel()
             thumb.setPixmap(pix.scaledToWidth(240, Qt.SmoothTransformation))
-            thumb.setStyleSheet("border-radius: 6px;")
+            thumb.setStyleSheet(f"border-radius: {BUTTON_RADIUS}px;")
             bubble_layout.addWidget(thumb)
 
         self._text = text
@@ -145,7 +171,7 @@ class MessageWidget(QWidget):
     def set_status_text(self, text: str) -> None:
         """Show a dim italic placeholder during research. Cleared on first real chunk."""
         self._has_status = True
-        self._text_label.setText(f"<i style='color:#636366'>{text}</i>")
+        self._text_label.setText(f"<i style='color:{TEXT_MUTED}'>{text}</i>")
         self._text_label.setTextFormat(Qt.RichText)
 
     def append_text(self, chunk: str) -> None:
@@ -175,7 +201,7 @@ class MessageWidget(QWidget):
         self._down = QPushButton("Downvote ↓")
         for btn in (self._up, self._down):
             btn.setObjectName("rateBtn")
-            btn.setFixedHeight(20)
+            btn.setFixedHeight(ICON_BTN_SIZE)
             btn.setCursor(Qt.PointingHandCursor)
         self._up.clicked.connect(lambda: self._rate(1))
         self._down.clicked.connect(lambda: self._rate(-1))
@@ -200,22 +226,22 @@ class MessageWidget(QWidget):
     # in server-v3 today.
     _TIER_CHIP = {
         "strong": (
-            "Confidence: Strong", "#1c2a3a", "#0a84ff",
+            "Confidence: Strong", ACCENT_TINT, ACCENT,
             "Confirmed against Conductor's verified Logic Pro knowledge base.",
         ),
         "moderate": (
-            "Confidence: Moderate", "#1c3a2a", "#30d158",
+            "Confidence: Moderate", SUCCESS_TINT, SUCCESS,
             "Confirmed against Conductor's verified Logic Pro knowledge base, "
             "but not as confidently as a strong match -- usually this means "
             "the model included its own knowledge alongside it that we "
             "couldn't completely verify.",
         ),
         "research": (
-            "Research Verified", "#1c2a3a", "#0a84ff",
+            "Research Verified", ACCENT_TINT, ACCENT,
             "Backed by a live web search for up-to-date information.",
         ),
         "generic": (
-            "General Answer", "#2c2c2e", "#8e8e93",
+            "General Answer", SURFACE_RAISED, TEXT_SECONDARY,
             "The knowledge base didn't have anything for this -- treat this "
             "as general guidance from the model's own knowledge, not a "
             "confirmed answer.",
@@ -243,8 +269,8 @@ class MessageWidget(QWidget):
         label_text, bg, fg, tooltip = self._TIER_CHIP[tier]
         chip = _Chip(label_text, tooltip)
         chip.setStyleSheet(
-            f"QLabel {{ background-color: {bg}; color: {fg}; border-radius: 4px;"
-            f" font-family: 'Menlo', monospace; font-size: 10px; font-weight: 600;"
+            f"QLabel {{ background-color: {bg}; color: {fg}; border-radius: {CHIP_RADIUS}px;"
+            f" font-family: {MONO}; font-size: {FONT_XS}px; font-weight: 600;"
             f" padding: 1px 6px; }}"
         )
         chip.setFixedHeight(18)
@@ -266,12 +292,14 @@ class MessageWidget(QWidget):
             title = src.get("title") or src.get("url", "")
             if len(title) > 44:
                 title = title[:42] + "…"
-            lbl = QLabel(f'<a href="{src["url"]}" style="color:#8E8E93;text-decoration:none;">{title}</a>')
+            lbl = QLabel(
+                f'<a href="{src["url"]}" style="color:{TEXT_SECONDARY};text-decoration:none;">{title}</a>'
+            )
             lbl.setOpenExternalLinks(True)
             lbl.setFont(_system_font(10))
             lbl.setStyleSheet(
-                "QLabel { background-color: #2C2C2E; color: #8E8E93; border-radius: 4px;"
-                " padding: 2px 8px; }"
+                f"QLabel {{ background-color: {SURFACE_RAISED}; color: {TEXT_SECONDARY};"
+                f" border-radius: {CHIP_RADIUS}px; padding: 2px 8px; }}"
             )
             lbl.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
             self._bubble_layout.addWidget(lbl)
@@ -307,19 +335,19 @@ class MessageWidget(QWidget):
             lbl = QLabel(text)
             lbl.setFont(_system_font(10))
             lbl.setWordWrap(True)
-            lbl.setStyleSheet("QLabel { color: #636366; padding-left: 2px; }")
+            lbl.setStyleSheet(_STEP_STYLE)
             cl.addWidget(lbl)
             self._wt_step_labels.append(lbl)
 
         hint = QLabel("Press ↵ to run")
         hint.setFont(_system_font(9))
-        hint.setStyleSheet("QLabel { color: #48484a; padding-left: 2px; margin-top: 4px; }")
+        hint.setStyleSheet(f"QLabel {{ color: {TEXT_DIM}; padding-left: 2px; margin-top: 4px; }}")
         cl.addWidget(hint)
         self._wt_hint = hint
 
         end_hint = QLabel("Press any key to stop")
         end_hint.setFont(_system_font(9))
-        end_hint.setStyleSheet("QLabel { color: #48484a; padding-left: 2px; }")
+        end_hint.setStyleSheet(_HINT_STYLE)
         cl.addWidget(end_hint)
         self._wt_end_hint = end_hint
 
@@ -352,24 +380,18 @@ class MessageWidget(QWidget):
 
     def _wt_highlight_step(self, idx: int) -> None:
         for i, lbl in enumerate(self._wt_step_labels):
-            if i == idx:
-                lbl.setStyleSheet("QLabel { color: #ebebf5; font-weight: 600; padding-left: 2px; }")
-            else:
-                lbl.setStyleSheet("QLabel { color: #636366; padding-left: 2px; }")
+            lbl.setStyleSheet(_STEP_ACTIVE_STYLE if i == idx else _STEP_STYLE)
 
     def _wt_mark_step_failed(self, idx: int) -> None:
         for i, lbl in enumerate(self._wt_step_labels):
-            if i == idx:
-                lbl.setStyleSheet("QLabel { color: #ff453a; font-weight: 600; padding-left: 2px; }")
-            else:
-                lbl.setStyleSheet("QLabel { color: #636366; padding-left: 2px; }")
+            lbl.setStyleSheet(_STEP_FAILED_STYLE if i == idx else _STEP_STYLE)
 
     def _wt_show_permission_needed(self, msg: str | None = None) -> None:
         self._wt_status.setText(
             msg or "Needs Accessibility permission — System Settings → Privacy & "
             "Security → Accessibility, then try again."
         )
-        self._wt_status.setStyleSheet("QLabel { color: #ff453a; padding-left: 2px; margin-top: 4px; }")
+        self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
         self._wt_status.show()
 
     def _wt_run_executor(self) -> None:
@@ -398,7 +420,7 @@ class MessageWidget(QWidget):
             self._wt_active = False
             return
 
-        self._wt_status.setStyleSheet("QLabel { color: #8e8e93; padding-left: 2px; margin-top: 4px; }")
+        self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
         self._wt_status.setText("Running — hands off for a moment")
         self._wt_status.show()
 
@@ -435,7 +457,7 @@ class MessageWidget(QWidget):
         print(f"[wt] executor failed at step {idx}: {msg}")
         self._wt_teardown()
         self._wt_mark_step_failed(idx)
-        self._wt_status.setStyleSheet("QLabel { color: #ff453a; padding-left: 2px; margin-top: 4px; }")
+        self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
         self._wt_status.setText("Couldn't complete this step automatically — do it manually.")
         self._wt_status.show()
         # Card stays visible (not hidden) so the step list remains as a manual guide.

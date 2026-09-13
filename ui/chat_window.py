@@ -10,27 +10,16 @@ a separate popup window -- Settings and its confirm dialogs still use
 ui/popup.py's Popup for that.
 """
 from PySide6.QtCore import QEvent, QPoint, QRect, Qt, QTimer, Signal, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QGuiApplication, QMouseEvent, QPainter
+from PySide6.QtGui import QDesktopServices, QGuiApplication, QMouseEvent, QPainter
 from PySide6.QtWidgets import (
     QApplication,
     QPushButton,
-    QSizeGrip,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from config import (
-    FEEDBACK_PROMPT_REMAINING_THRESHOLDS,
-    MAX_WINDOW_HEIGHT,
-    MAX_WINDOW_WIDTH,
-    MIN_WINDOW_HEIGHT,
-    MIN_WINDOW_WIDTH,
-    MINIMIZED_SIZE,
-    WINDOW_HEIGHT,
-    WINDOW_MARGIN,
-    WINDOW_WIDTH,
-)
+from config import FEEDBACK_PROMPT_REMAINING_THRESHOLDS
 from core.conversation import Conversation
 from core.llm_client import MeWorker, StreamWorker
 from core import song_history
@@ -51,6 +40,22 @@ from ui.setup_screen import (
     save_window_size,
 )
 from ui.settings_panel import SettingsPanel
+from ui.theme import (
+    MAX_WINDOW_HEIGHT,
+    MAX_WINDOW_WIDTH,
+    MIN_WINDOW_HEIGHT,
+    MIN_WINDOW_WIDTH,
+    MINIMIZED_SIZE,
+    PANEL,
+    PANEL_ALPHA,
+    PANEL_BORDER,
+    PANEL_BORDER_ALPHA,
+    PANEL_RADIUS,
+    WINDOW_HEIGHT,
+    WINDOW_MARGIN,
+    WINDOW_WIDTH,
+    qcolor,
+)
 
 _GEOMETRY_SAVE_DELAY_MS = 300
 
@@ -132,13 +137,11 @@ class ChatWindow(QWidget):
         # (translucent frameless top-level + zero-margin children covering the
         # edge), direct QPainter drawing behind the children is more robust.
         self.setAttribute(Qt.WA_StyledBackground, False)
-        self._editing_size = False
-        self._pre_edit_size = None
         # Guards resizeEvent/moveEvent below from persisting geometry during
         # this constructor's own initial resize()/move() calls — without it,
         # the very first launch immediately saves whatever size was just set
         # (default or restored) as "saved", permanently shadowing any future
-        # default-size change in config.py from then on.
+        # default-size change in theme.py from then on.
         self._geometry_ready = False
         self.setMinimumSize(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
         self.setMaximumSize(MAX_WINDOW_WIDTH, MAX_WINDOW_HEIGHT)
@@ -194,16 +197,6 @@ class ChatWindow(QWidget):
         layout.addSpacing(8)
         layout.addWidget(self._input_bar)
 
-        # Only shown/interactive during Edit Size (see _on_edit_size_requested)
-        # -- resizing isn't available in normal use, only via that explicit
-        # mode, since a corner grip is easy to miss/trigger by accident
-        # against this window's fully transparent background.
-        self._grip = QSizeGrip(self)
-        self._grip.setFixedSize(16, 16)
-        self._grip.hide()
-
-        self._position_grip()
-
         self._geometry_save_timer = QTimer(self)
         self._geometry_save_timer.setSingleShot(True)
         self._geometry_save_timer.timeout.connect(self.persist_geometry)
@@ -228,17 +221,8 @@ class ChatWindow(QWidget):
         self._update_timer.start()
 
     # --- geometry ---
-    def _position_grip(self) -> None:
-        w, h = self.width(), self.height()
-        self._grip.move(w - self._grip.width(), h - self._grip.height())
-        self._grip.raise_()
-
     def resizeEvent(self, event) -> None:
-        self._position_grip()
-        # Suppressed while editing -- Edit Size's whole point is that a resize
-        # isn't committed until Save (or discarded on cancel), so the normal
-        # auto-persist-on-resize behavior would defeat that.
-        if self._geometry_ready and not self._editing_size:
+        if self._geometry_ready:
             self._geometry_save_timer.start(_GEOMETRY_SAVE_DELAY_MS)
         super().resizeEvent(event)
 
@@ -265,65 +249,25 @@ class ChatWindow(QWidget):
         clear_window_pos()
         self._anchor_to_bottom_right()
 
-    # --- edit size (Settings > Edit Size) ---
+    # --- painting ---
     def paintEvent(self, event) -> None:
         # Same look as #inputPanel (ui/style.py) -- drawn directly rather than
         # via a stylesheet rule, see the WA_StyledBackground comment in
-        # __init__. Previously only shown during Edit Size; made permanent
-        # 2026-09-04 -- with no backdrop at all, Logic Pro's own UI showed
-        # through every blank area behind the floating bubbles, which reads as
-        # chaotic given that space was never clickable anyway (found via user
-        # feedback after living with the fully transparent window for a
-        # session).
+        # __init__. Permanent since 2026-09-04 -- with no backdrop at all,
+        # Logic Pro's own UI showed through every blank area behind the
+        # floating bubbles, which read as chaotic.
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QColor(42, 42, 44, 153))
-        painter.setBrush(QColor(28, 28, 30, 209))
-        # Stops above the input bar rather than spanning the full window --
-        # the input bar already draws its own backing panel (#inputPanel,
-        # ui/style.py), so covering it too just doubled up as a second panel
-        # sitting behind it. Only the chat bubbles' area gets this backdrop.
-        # Left/right edges match the input bar's own visible panel (not
-        # InputBar's wider, edge-to-edge widget) -- that panel sits inset by
-        # InputBar's own left margin (aligned to the chat scrollbar), and this
-        # backdrop spilling past it on the left read as misaligned.
-        input_panel_left = self._input_bar.panel.mapTo(self, QPoint(0, 0)).x()
-        input_panel_width = self._input_bar.panel.width()
-        # A few px short of the input bar's own top edge -- previously flush
-        # (the layout's 8px spacing exists between the *widgets*, but this
-        # panel filled all the way down to the input bar's top regardless),
-        # leaving no visible gap between the two rounded panels.
-        panel_bottom = self._input_bar.y() - 4
-        panel_rect = QRect(input_panel_left, 0, input_panel_width, panel_bottom)
-        painter.drawRoundedRect(panel_rect.adjusted(0, 0, -1, -1), 18, 18)
+        painter.setPen(qcolor(PANEL_BORDER, PANEL_BORDER_ALPHA))
+        painter.setBrush(qcolor(PANEL, PANEL_ALPHA))
+        # Spans the full window width -- the window IS the panel, nothing is
+        # laid out past its edges. Stops a few px above the input bar, which
+        # draws its own pill, so the two rounded shapes read as separate.
+        panel_rect = QRect(0, 0, self.width(), self._input_bar.y() - 4)
+        painter.drawRoundedRect(
+            panel_rect.adjusted(0, 0, -1, -1), PANEL_RADIUS, PANEL_RADIUS
+        )
         super().paintEvent(event)
-
-    def _set_editing_size_visual(self, editing: bool) -> None:
-        self._grip.setVisible(editing)
-        self.update()
-
-    def _on_edit_size_requested(self) -> None:
-        self._pre_edit_size = self.size()
-        self._editing_size = True
-        self._set_editing_size_visual(True)
-
-    def _on_save_size_requested(self) -> None:
-        self._editing_size = False
-        self._set_editing_size_visual(False)
-        save_window_size(self.width(), self.height())
-        self._pre_edit_size = None
-
-    def _cancel_edit_size_if_active(self) -> None:
-        """Settings closed (or otherwise dismissed) mid-edit -- discard the
-        resize rather than leave the window at an unsaved size with no way
-        back to the real one."""
-        if not self._editing_size:
-            return
-        self._editing_size = False
-        self._set_editing_size_visual(False)
-        if self._pre_edit_size is not None:
-            self.resize(self._pre_edit_size)
-        self._pre_edit_size = None
 
     # --- positioning ---
     def _anchor_to_bottom_right(self) -> None:
@@ -434,11 +378,8 @@ class ChatWindow(QWidget):
             return
         self._settings_popup = SettingsPanel()
         self._settings_popup.history_cleared.connect(self._on_history_cleared)
-        self._settings_popup.edit_size_requested.connect(self._on_edit_size_requested)
-        self._settings_popup.save_size_requested.connect(self._on_save_size_requested)
         self._settings_popup.reset_size_requested.connect(self._on_reset_size)
         self._settings_popup.reset_position_requested.connect(self._on_reset_position)
-        self._settings_popup.closed.connect(self._cancel_edit_size_if_active)
         self._settings_popup.center_on_screen()
         self._settings_popup.show()
 

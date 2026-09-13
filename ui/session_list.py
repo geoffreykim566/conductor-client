@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from config import CONTENT_LEFT_INSET
+from ui.theme import ICON_BTN_SIZE
 
 
 def _format_date(session_id: str) -> str:
@@ -52,12 +52,7 @@ class SessionListPanel(QWidget):
         super().__init__()
 
         layout = QVBoxLayout(self)
-        # Left inset matches input_bar.py's/chat_view.py's own CONTENT_LEFT_INSET
-        # -- this page shares ChatWindow's painted backdrop panel (chat_window.py's
-        # paintEvent), which is itself inset from the actual window's left edge,
-        # so content here has to match or it spills into that dead space (found
-        # live 2026-09-04, screenshot feedback right after this page was embedded).
-        layout.setContentsMargins(CONTENT_LEFT_INSET, 0, 0, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         # Same header shape/object names as ui/popup.py's Popup base (which
@@ -74,7 +69,7 @@ class SessionListPanel(QWidget):
         hl.addStretch()
         close_btn = QPushButton("✕")
         close_btn.setObjectName("headerBtn")
-        close_btn.setFixedSize(20, 20)
+        close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         close_btn.clicked.connect(self.closed)
         hl.addWidget(close_btn)
         layout.addWidget(header)
@@ -98,7 +93,7 @@ class SessionListPanel(QWidget):
         self._empty_label.setAlignment(Qt.AlignCenter)
         self._empty_label.setWordWrap(True)
         self._empty_label.hide()
-        layout.addWidget(self._empty_label)
+        layout.addWidget(self._empty_label, 1)
 
     def load(self, sessions: list[dict], current_id: str | None) -> None:
         """Populate the list. sessions is [{id, messages}, ...] oldest-first."""
