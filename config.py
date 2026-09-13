@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-VERSION = "0.3.1"
+VERSION = "0.3.2"
 
 # --- App data ---
 # Own directory, separate from the shipping v1 app's "Conductor" dir, so v3
