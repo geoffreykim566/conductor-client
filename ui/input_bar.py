@@ -43,6 +43,8 @@ class InputBar(QWidget):
     Emits new_chat_requested / history_requested from their respective icons.
     """
 
+    _DEFAULT_PLACEHOLDER = "Ask anything about Logic Pro…"
+
     send = Signal(str, list)
     enter_empty = Signal()
     new_chat_requested = Signal()
@@ -145,7 +147,7 @@ class InputBar(QWidget):
 
         self._text = _ChatTextEdit()
         self._text.setObjectName("bareInput")
-        self._text.setPlaceholderText("Ask anything about Logic Pro…")
+        self._text.setPlaceholderText(self._DEFAULT_PLACEHOLDER)
         # QTextEdit's placeholder is painted from the document's default text
         # option, not the cursor-based setAlignment(). Left-aligned so both
         # the placeholder and the cursor start at the field's left edge
@@ -212,6 +214,13 @@ class InputBar(QWidget):
     def set_enabled_inputs(self, enabled: bool) -> None:
         self._text.setEnabled(enabled)
         self._send_btn.setEnabled(enabled)
+
+    def set_placeholder(self, text: str | None = None) -> None:
+        """Swap the empty-field hint; None restores the default. Used while a
+        turn is in flight ("Press Esc to cancel") -- the field is empty and
+        disabled then, so the placeholder is the one line the user still
+        reads there."""
+        self._text.setPlaceholderText(text or self._DEFAULT_PLACEHOLDER)
 
     def _on_send(self) -> None:
         text = self._text.toPlainText().strip()

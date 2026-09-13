@@ -217,6 +217,59 @@ class MessageWidget(QWidget):
         self._rate_row = row
         self._refresh_rating()
 
+    # --- research confirm (2026-09-13) ---
+    RESEARCH_PROMPT_TEXT = "Conductor wants to research the web - this can take a few minutes."
+
+    def show_research_prompt(self, on_yes: Callable[[], None], on_no: Callable[[], None]) -> None:
+        """Replace the bubble's status line with the research question and add
+        a Yes/No row under the bubble, styled like the rating row (same
+        #rateBtn pills, same height). Enter/Esc are handled by ChatWindow's
+        app-level key filter and call the same callbacks as the buttons."""
+        if self._role != "assistant" or getattr(self, "_research_row", None) is not None:
+            return
+        self.set_status_text(self.RESEARCH_PROMPT_TEXT)
+        row = QHBoxLayout()
+        row.setContentsMargins(6, 0, 0, 0)
+        row.setSpacing(4)
+        yes = QPushButton("Yes ↩")
+        no = QPushButton("No esc")
+        for btn in (yes, no):
+            btn.setObjectName("rateBtn")
+            btn.setFixedHeight(ICON_BTN_SIZE)
+            btn.setCursor(Qt.PointingHandCursor)
+        yes.clicked.connect(lambda: on_yes())
+        no.clicked.connect(lambda: on_no())
+        row.addWidget(yes)
+        sep = QLabel("·")
+        sep.setObjectName("remainingLabel")
+        row.addWidget(sep)
+        row.addWidget(no)
+        row.addStretch()
+        self._outer.addLayout(row)
+        self._research_row = row
+        self._research_widgets = (yes, sep, no)
+
+    def hide_research_prompt(self) -> None:
+        row = getattr(self, "_research_row", None)
+        if row is None:
+            return
+        for w in self._research_widgets:
+            row.removeWidget(w)
+            w.deleteLater()
+        self._outer.removeItem(row)
+        self._research_row = None
+        self._research_widgets = ()
+
+    def mark_cancelled(self) -> None:
+        """Esc mid-turn. A bubble with no real text yet just shows the
+        status-style 'Cancelled'; one that already streamed part of an
+        answer keeps it and gets the marker appended."""
+        self.hide_research_prompt()
+        if getattr(self, "_has_status", False) or not self._text:
+            self.set_status_text("Cancelled")
+        else:
+            self.append_text("\n\n[cancelled]")
+
     # tier -> (label, background, foreground, hover explanation). Confidence
     # bands computed server-side (pipeline.py's _confidence_tier) off the same
     # deterministic trace data that used to drive a literal hedge sentence

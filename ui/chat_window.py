@@ -156,6 +156,10 @@ class ChatWindow(QWidget):
         self._server_history: list[dict] | None = None
         self._worker: StreamWorker | None = None
         self._me_worker: MeWorker | None = None
+        # Set while the assistant bubble is asking "research the web?":
+        # (original message text, parked history). Enter/Esc route here
+        # first (see eventFilter) instead of cancelling.
+        self._pending_research: tuple[str, object] | None = None
         self._session_id: str | None = None
         self._settings_popup: SettingsPanel | None = None
         self._update_popup: UpdatePopup | None = None
@@ -399,14 +403,66 @@ class ChatWindow(QWidget):
         self._conversation.add_assistant("")
 
         self._input_bar.set_enabled_inputs(False)
+        self._start_worker(text, self._server_history)
 
-        self._worker = StreamWorker(text, self._server_history)
+    _BUSY_PLACEHOLDER = "Press Esc to cancel"
+    _RESEARCH_PLACEHOLDER = "Enter to research · Esc to skip"
+
+    def _start_worker(self, text: str, history: object, resume: str | None = None) -> None:
+        self._input_bar.set_placeholder(self._BUSY_PLACEHOLDER)
+        self._worker = StreamWorker(text, history, resume=resume)
         self._worker.chunk.connect(self._on_chunk)
         self._worker.status.connect(self._on_status)
         self._worker.done.connect(self._on_done)
+        self._worker.research_prompt.connect(self._on_research_prompt)
+        self._worker.cancelled.connect(self._on_cancelled)
         self._worker.error.connect(self._on_error)
         self._worker.limit_reached.connect(self._on_limit_reached)
         self._worker.start()
+
+    def _turn_in_flight(self) -> bool:
+        return self._worker is not None and self._worker.isRunning()
+
+    def cancel_turn(self) -> None:
+        """Esc while a turn is running: drop the request (the server aborts
+        its side on the disconnect) and mark the bubble. The server history
+        is left at its pre-turn value, same as the timeout fallback, so the
+        next message continues from before this one."""
+        if self._turn_in_flight():
+            self._worker.cancel()
+
+    # --- research confirm (2026-09-13) ---
+    def _on_research_prompt(self, query: str, history: object) -> None:
+        text = self._conversation.last_user().text if self._conversation.last_user() else ""
+        self._pending_research = (text, history)
+        self._input_bar.set_placeholder(self._RESEARCH_PLACEHOLDER)
+        self._chat_view.show_research_prompt(
+            lambda: self._on_research_choice(True), lambda: self._on_research_choice(False),
+        )
+
+    def _on_research_choice(self, allow: bool) -> None:
+        if self._pending_research is None:
+            return
+        text, history = self._pending_research
+        self._pending_research = None
+        self._chat_view.hide_research_prompt()
+        self._chat_view.set_assistant_status(
+            "Searching the web…" if allow else "Answering from general knowledge…"
+        )
+        self._start_worker(text, history, resume="allow_research" if allow else "deny_research")
+
+    def _on_cancelled(self) -> None:
+        self._pending_research = None
+        self._chat_view.mark_assistant_cancelled()
+        self._conversation.append_to_last_assistant("[cancelled]")
+        self._chat_view.end_assistant_message()
+        if self._session_id:
+            song_history.save_session(
+                self._session_id, self._conversation.messages(), self._server_history
+            )
+        self._input_bar.set_placeholder(None)
+        self._input_bar.set_enabled_inputs(True)
+        self._input_bar.setFocus()
 
     def _on_chunk(self, text: str) -> None:
         self._chat_view.append_to_assistant(text)
@@ -434,6 +490,7 @@ class ChatWindow(QWidget):
                 self._session_id, self._conversation.messages(), self._server_history
             )
         self._input_bar.set_remaining(remaining if remaining >= 0 else None)
+        self._input_bar.set_placeholder(None)
         self._input_bar.set_enabled_inputs(True)
         self._input_bar.setFocus()
         if remaining >= 0:
@@ -488,8 +545,23 @@ class ChatWindow(QWidget):
             self._update_popup.close()
 
     def eventFilter(self, obj, event) -> bool:
-        if (event.type() == QEvent.Type.KeyPress
-                and event.key() in (Qt.Key_Return, Qt.Key_Enter)
+        if event.type() != QEvent.Type.KeyPress:
+            return False
+        key = event.key()
+        # Research prompt showing: Enter = Yes, Esc = No. Checked before the
+        # cancel path below so Esc skips research rather than killing the
+        # turn; a second Esc (during the resumed answer) then cancels.
+        if self._pending_research is not None:
+            if key in (Qt.Key_Return, Qt.Key_Enter) and not (event.modifiers() & Qt.ShiftModifier):
+                self._on_research_choice(True)
+                return True
+            if key == Qt.Key_Escape:
+                self._on_research_choice(False)
+                return True
+        if key == Qt.Key_Escape and self._turn_in_flight():
+            self.cancel_turn()
+            return True
+        if (key in (Qt.Key_Return, Qt.Key_Enter)
                 and not (event.modifiers() & Qt.ShiftModifier)
                 and self._chat_view.has_active_walkthrough()
                 and not self._input_bar._text.toPlainText().strip()):
@@ -512,8 +584,10 @@ class ChatWindow(QWidget):
             display = "Invalid API key. Open Conductor's menu bar → Settings to reset it."
         else:
             display = msg
+        self._pending_research = None
         self._chat_view.append_to_assistant(f"\n\n[error] {display}")
         self._chat_view.end_assistant_message()
+        self._input_bar.set_placeholder(None)
         self._input_bar.set_enabled_inputs(True)
 
     def _on_limit_reached(self, limit: int = -1) -> None:
@@ -523,4 +597,5 @@ class ChatWindow(QWidget):
         )
         self._chat_view.end_assistant_message()
         self._input_bar.set_remaining(0)
+        self._input_bar.set_placeholder(None)
         self._input_bar.set_enabled_inputs(True)

@@ -6,7 +6,7 @@ key and enforces the message cap. A 402 fires `limit_reached`.
 from PySide6.QtCore import QThread, Signal
 
 from core import ax_capture, window_capture
-from core.server_client import FreeLimitReached, RegistrationThrottled, get_me, stream_chat
+from core.server_client import CancelToken, FreeLimitReached, RegistrationThrottled, get_me, stream_chat
 
 
 class StreamWorker(QThread):
@@ -18,6 +18,11 @@ class StreamWorker(QThread):
         done(str, int, str, object, object, object)  — (event_id, remaining,
                                                             source_tier, sources,
                                                             walkthrough_steps, history)
+        research_prompt(str, object)         — server parked the turn at a web_research
+                                               call: (query, history). No done follows;
+                                               start a new worker with resume= and that
+                                               history to finish the turn.
+        cancelled()                          — cancel() was called; nothing else follows
         error(str)                           — emitted with an error message on failure
         limit_reached(int)                   — message cap reached (arg is the cap, or -1 if unknown)
     """
@@ -25,13 +30,24 @@ class StreamWorker(QThread):
     chunk = Signal(str)
     status = Signal(str)
     done = Signal(str, int, str, object, object, object)
+    research_prompt = Signal(str, object)
+    cancelled = Signal()
     error = Signal(str)
     limit_reached = Signal(int)
 
-    def __init__(self, text: str, history: list[dict] | None, parent=None) -> None:
+    def __init__(self, text: str, history: list[dict] | None, resume: str | None = None,
+                 parent=None) -> None:
         super().__init__(parent)
         self._text = text
         self._history = history
+        self._resume = resume
+        self._cancel = CancelToken()
+
+    def cancel(self) -> None:
+        """Abort this turn from the UI thread (Esc). Safe to call at any point,
+        including before the request has opened; `cancelled` is emitted once
+        the thread notices, and no done/error follows it."""
+        self._cancel.cancel()
 
     def run(self) -> None:
         event_id = ""
@@ -51,12 +67,24 @@ class StreamWorker(QThread):
             ax_state = ax_capture.capture_ax_state()
         except Exception:
             ax_state = None
+        if self._cancel.is_cancelled():  # Esc during the captures above
+            self.cancelled.emit()
+            return
         try:
-            for kind, payload in stream_chat(self._text, self._history, screenshots_b64, ax_state):
+            for kind, payload in stream_chat(
+                self._text, self._history, screenshots_b64, ax_state,
+                resume=self._resume, cancel=self._cancel,
+            ):
                 if kind == "chunk":
                     self.chunk.emit(payload)
                 elif kind == "status":
                     self.status.emit(payload)
+                elif kind == "research_prompt":
+                    self.research_prompt.emit(payload.get("query", ""), payload.get("history"))
+                    return
+                elif kind == "cancelled":
+                    self.cancelled.emit()
+                    return
                 elif kind == "done":
                     event_id = payload.get("event_id", "")
                     remaining = payload.get("remaining", -1)
@@ -75,6 +103,9 @@ class StreamWorker(QThread):
             # First launch from a busy shared IP — transient, not the user's fault.
             self.error.emit("Couldn't set up your free account right now. Please try again later.")
         except Exception as e:
+            if self._cancel.is_cancelled():
+                self.cancelled.emit()
+                return
             self.error.emit(f"{type(e).__name__}: {e}")
 
 

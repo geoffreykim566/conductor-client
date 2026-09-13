@@ -187,6 +187,18 @@ class ChatView(QWidget):
         if self._current_assistant is not None:
             self._current_assistant.set_status_text(text)
 
+    def show_research_prompt(self, on_yes, on_no) -> None:
+        if self._current_assistant is not None:
+            self._current_assistant.show_research_prompt(on_yes, on_no)
+
+    def hide_research_prompt(self) -> None:
+        if self._current_assistant is not None:
+            self._current_assistant.hide_research_prompt()
+
+    def mark_assistant_cancelled(self) -> None:
+        if self._current_assistant is not None:
+            self._current_assistant.mark_cancelled()
+
     def set_assistant_tier(self, tier: str, sources: list) -> None:
         if self._current_assistant is not None:
             self._current_assistant.set_source_tier(tier)

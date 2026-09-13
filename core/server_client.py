@@ -7,6 +7,7 @@ lazily on first use; fire-and-forget calls skip silently when no token exists
 rather than burn a registration slot for a throwaway identity.
 """
 import json
+import socket
 import threading
 from typing import Iterator
 
@@ -34,6 +35,49 @@ class FreeLimitReached(Exception):
     def __init__(self, limit: int | None = None) -> None:
         super().__init__("free limit reached")
         self.limit = limit
+
+
+class CancelToken:
+    """Cross-thread cancel handle for one stream_chat() call.
+
+    The worker thread blocks inside httpx reading SSE lines; the only way to
+    unblock it promptly from the UI thread is to close the response's
+    underlying stream, which makes that read raise. `cancel()` does both:
+    flags the token (so the reader knows the raise was ours, not a network
+    fault) and closes the response if one is open yet. Dropping the
+    connection is also what tells the server to abort the turn (api.py's
+    [turn_cancelled] path) -- there's no separate cancel request.
+    """
+
+    def __init__(self) -> None:
+        self._flag = threading.Event()
+        self.response: httpx.Response | None = None
+
+    def cancel(self) -> None:
+        self._flag.set()
+        resp = self.response
+        if resp is None:
+            return
+        # shutdown() before close(): close() alone only drops the fd, and on
+        # macOS a recv() blocked in the worker thread keeps blocking after
+        # that (found 2026-09-13: the server logged the disconnect at once,
+        # the worker sat until the read timeout). SHUT_RDWR wakes the read
+        # with EOF. Works on the TLS socket in prod too (SSLSocket.shutdown
+        # forwards to the underlying socket).
+        try:
+            stream = resp.extensions.get("network_stream")
+            sock = stream.get_extra_info("socket") if stream is not None else None
+            if sock is not None:
+                sock.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass
+        try:
+            resp.close()
+        except Exception:
+            pass
+
+    def is_cancelled(self) -> bool:
+        return self._flag.is_set()
 
 
 def register() -> str:
@@ -64,6 +108,8 @@ def stream_chat(
     history: list[dict] | None,
     screenshots_b64: list[str] | None = None,
     ax_state: str | None = None,
+    resume: str | None = None,
+    cancel: CancelToken | None = None,
 ) -> Iterator[tuple[str, object]]:
     """Relay one new user turn and yield (kind, payload) as the proxy streams.
 
@@ -83,10 +129,23 @@ def stream_chat(
     reason: exact control values (checkbox state, selected dropdown item,
     a field's real contents) that a screenshot alone can get wrong.
 
+    `resume` is "allow_research" / "deny_research" for the second half of a
+    research-confirm turn: `history` is then the transcript the server's
+    "research_prompt" event handed back, and `text` is ignored server-side.
+    Every request declares research_confirm so the server parks a turn at
+    its first web_research call instead of running it.
+
+    `cancel` lets the UI thread abort this call mid-stream (see CancelToken).
+
     kind is one of:
-        "chunk" -> payload is a str of streamed text
-        "done"  -> payload is a dict {event_id, tokens_in, tokens_out, history, ...}
-        "error" -> payload is a str error message
+        "chunk"           -> payload is a str of streamed text
+        "status"          -> payload is a str progress notice
+        "research_prompt" -> payload is a dict {query, history}; the stream
+                             ends here, no "done" follows -- re-call with
+                             resume= and that history to finish the turn
+        "done"            -> payload is a dict {event_id, tokens_in, tokens_out, history, ...}
+        "cancelled"       -> the caller cancelled; nothing else follows
+        "error"           -> payload is a str error message
 
     Raises FreeLimitReached on 402 when the message cap is hit, and
     RegistrationThrottled if a needed registration is rate limited.
@@ -96,6 +155,9 @@ def stream_chat(
     # signing secret rotated), so re-register once. A loop, not recursion —
     # a misconfigured server must not turn every client into a register storm.
     for attempt in range(2):
+        if cancel is not None and cancel.is_cancelled():
+            yield ("cancelled", None)
+            return
         try:
             with httpx.stream(
                 "POST", url, headers=_headers(_ensure_token()),
@@ -104,9 +166,16 @@ def stream_chat(
                     "history": history,
                     "screenshots": screenshots_b64 or None,
                     "ax_state": ax_state,
+                    "research_confirm": True,
+                    "resume": resume,
                 },
                 timeout=120,
             ) as resp:
+                if cancel is not None:
+                    cancel.response = resp
+                    if cancel.is_cancelled():  # raced: cancelled while connecting
+                        yield ("cancelled", None)
+                        return
                 if resp.status_code == 401 and attempt == 0:
                     identity.clear_token()
                     continue
@@ -148,29 +217,37 @@ def stream_chat(
                         yield ("done", obj)
                     elif kind == "status":
                         yield ("status", obj.get("text", ""))
+                    elif kind == "research_prompt":
+                        yield ("research_prompt", obj)
+                        return
                     elif kind == "error":
                         yield ("error", obj.get("message", "error"))
                 return
-        except httpx.TimeoutException:
-            # A slow turn (most likely web_research -- server-v3's own budget
-            # for that is 150s, and a normal call there averages ~107s) can
-            # outrun this request's own timeout even though the server is
-            # still legitimately working, not hung. Rather than surface the
-            # raw exception as a scary error bubble, degrade to a plain,
-            # generic-tier answer -- same shape as any other unverified turn
-            # -- and hand back the same `history` this call was given, so the
-            # next turn continues from before this attempt rather than
-            # dropping context or replaying anything broken. Found live
-            # 2026-09-04.
-            yield (
-                "chunk",
-                "The research call I was running timed out, so I wasn't able to "
-                "get a confirmed answer for this. From general knowledge alone "
-                "I can't verify it — try asking again, or try rephrasing your "
-                "question.",
-            )
-            yield ("done", {"source_tier": "", "sources": [], "history": history})
-            return
+        except Exception as e:
+            # Our own cancel closes the stream out from under the read above,
+            # which surfaces as whichever closed-stream error httpx/httpcore
+            # raise -- report it as a cancel, not a failure. Anything else
+            # falls through to the handlers below / the caller.
+            if cancel is not None and cancel.is_cancelled():
+                yield ("cancelled", None)
+                return
+            if isinstance(e, httpx.TimeoutException):
+                yield from _timeout_fallback(history)
+                return
+            raise
+
+
+def _timeout_fallback(history: list[dict] | None) -> Iterator[tuple[str, object]]:
+    """See stream_chat's TimeoutException note (2026-09-04)."""
+    yield (
+        "chunk",
+        "The research call I was running timed out, so I wasn't able to "
+        "get a confirmed answer for this. From general knowledge alone "
+        "I can't verify it — try asking again, or try rephrasing your "
+        "question.",
+    )
+    yield ("done", {"source_tier": "", "sources": [], "history": history})
+
 
 
 def post_rating(event_id: str, rating: int) -> None:
