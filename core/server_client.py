@@ -169,7 +169,7 @@ def stream_chat(
                 "I can't verify it — try asking again, or try rephrasing your "
                 "question.",
             )
-            yield ("done", {"source_tier": "generic", "sources": [], "history": history})
+            yield ("done", {"source_tier": "", "sources": [], "history": history})
             return
 
 

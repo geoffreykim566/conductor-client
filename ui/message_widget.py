@@ -230,6 +230,14 @@ class MessageWidget(QWidget):
         moderate-confidence answer, which read as noisy on turns where it
         fired often. The badge carries the same signal passively instead.
         """
+        # Badges disabled 2026-09-12: the server-side tier is a trace rule that
+        # fires on observational answers the KB lookup had nothing to do with
+        # ("which tracks are muted" came back Moderate). The server now sends
+        # "" as well, which the check below already ignores; this early return
+        # covers the client-side timeout fallback and any old server. Chip
+        # styling/tooltips kept for when the tier can tell an observation from
+        # a recommendation.
+        return
         if tier not in self._TIER_CHIP or self._role != "assistant" or getattr(self, "_tier_row", None) is not None:
             return
         label_text, bg, fg, tooltip = self._TIER_CHIP[tier]
