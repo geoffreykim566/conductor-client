@@ -1,8 +1,11 @@
 """Input bar: pending attachment preview, new-chat/history icons, text input, send button.
 
 Also doubles as the window's drag handle — clicking and dragging any part of
-this bar's own background (not the text edit or a button) moves the window,
-since the outer window no longer has a header to drag from.
+this bar's own background (not the text edit or a button), or of .controls's
+own background (not one of its icons), moves the window, since the outer
+window has no native titlebar. .controls reads as the closest thing to one
+(icons left/right, blank space between), so it's the primary drag target in
+practice -- see the comment where it's built, below.
 """
 import base64
 
@@ -86,7 +89,22 @@ class InputBar(QWidget):
         # ChatWindow.__init__), a standalone widget so it can be placed there
         # while everything else about InputBar (text/send, signals) stays
         # exactly as before.
+        #
+        # Also the window's main drag handle -- installEventFilter below,
+        # same _drag_press/_drag_move/_drag_release as _panel uses. Until
+        # 6b28d41 (2026-09-12) that job fell to the margin outside _panel
+        # (then a real, generously-sized strip -- CONTENT_LEFT_INSET); that
+        # commit zeroed the margin out (it was ALSO an invisible dead strip
+        # past the window's visible edge, catching stray clicks -- the actual
+        # bug it fixed), silently deleting the only practical drag target and
+        # leaving users unable to move the window. Routing drag through this
+        # row's own real background instead of a separately-tracked margin
+        # means there's nothing to keep in sync by hand -- Qt's own hit
+        # testing already gives every icon/label priority over this widget,
+        # so the draggable area can't drift from the visible layout the way
+        # the old inset did.
         self.controls = QWidget()
+        self.controls.installEventFilter(self)
         controls_row = QHBoxLayout(self.controls)
         # Left/top padding clears the bubbles panel's rounded corner. This
         # is the ONLY thing controlling the gap to chat_view below
@@ -273,7 +291,7 @@ class InputBar(QWidget):
         super().mouseReleaseEvent(event)
 
     def eventFilter(self, obj, event) -> bool:
-        if obj is self._panel:
+        if obj is self._panel or obj is self.controls:
             t = event.type()
             if t == QEvent.Type.MouseButtonPress:
                 self._drag_press(event)
