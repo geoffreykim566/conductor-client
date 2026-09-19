@@ -1,0 +1,17 @@
+
+==============================================================================
+T12 reversibility via Logic Undo
+==============================================================================
+  [PASS] mute: Undo item before='Undo Remove Plug-in in Channel Strip' after='Undo Remove Plug-in in Channel Strip'; Cmd+Z reverted=True (0.03s)
+  [PASS] volume -6 dB: Undo item before='Undo Remove Plug-in in Channel Strip' after='Undo Insert Plug-in in Channel Strip'; Cmd+Z reverted=True (0.02s)
+  [PASS] rename: Undo item before='Undo Insert Plug-in in Channel Strip' after='Undo Renaming'; Cmd+Z reverted=True (0.03s)
+  [PASS] (a) search 'Channel EQ': typed='Channel EQ'; slot label ['Channel EQ']; window shows 'Channel EQ'; new windows={'Audio 1'} (0.14s)
+  [PASS] insert Channel EQ: Undo item before='Undo Renaming' after='Undo'; Cmd+Z reverted=True (0.02s)
+  [PASS] (a) search 'Channel EQ': typed='Channel EQ'; slot label ['Channel EQ']; window shows 'Channel EQ'; new windows={'Audio 1'} (0.13s)
+  [FAIL] plugin param (Peak 1 Gain +60 raw): Undo item before='Undo' after='Undo'; Cmd+Z reverted=False (3.08s)
+   state after undo: window=None loaded=[] raw=None
+   (plugin gone after undo — re-inserting Channel EQ for step 6)
+  [PASS] (a) search 'Channel EQ': typed='Channel EQ'; slot label ['Channel EQ']; window shows 'Channel EQ'; new windows={'Audio 1'} (0.14s)
+  [PASS] remove plugin: Undo item before='Undo' after='Undo Remove Plug-in in Channel Strip'; Cmd+Z reverted=True (0.02s)
+  [PASS] delete track Audio 2: Undo item before='Undo Remove Plug-in in Channel Strip' after='Undo Delete Tracks'; Cmd+Z reverted=True (0.02s)
+  final tracks: ['Track 1 “Audio 1”', 'Track 2 “Audio 2”', 'Track 3 “Deluxe Classic”'] | Audio 1 FX: [] | windows: {'Untitled - Tracks'}
