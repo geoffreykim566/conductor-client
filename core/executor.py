@@ -628,6 +628,10 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
             steps.append({"kind": "click_value_of", "label": wire["click_value_of"]})
         elif "click_text" in wire:
             steps.append({"kind": "click_text", "value": wire["click_text"]})
+        elif "ax_open_plugin" in wire:
+            steps.append({"kind": "ax_open_plugin", "value": wire["ax_open_plugin"]})
+        elif "ax_set_param" in wire:
+            steps.append({"kind": "ax_set_param", "value": dict(wire["ax_set_param"])})
 
     for i, step in enumerate(steps):
         if step["kind"] not in ("menu", "key"):
@@ -656,8 +660,16 @@ _HANDLERS = {
 }
 
 
+def _ensure_ax_handlers() -> None:
+    """AX step kinds (ax_open_plugin / ax_set_param) live in core.ax_executor,
+    which imports this module -- so register them lazily, on first run."""
+    if "ax_open_plugin" not in _HANDLERS:
+        from core.ax_executor import register
+        register(_HANDLERS)
+
+
 def run_steps(steps: list[dict], *, dry_run: bool = False,
-              choose_override: str | None = None, log=print, stop_event=None) -> None:
+              choose_override: str | None = None, log=print, stop_event=None) -> list[dict]:
     """Execute a step list; raises StepAbort at the first failed contract.
 
     A set stop_event unwinds the current step early (checked at fine
@@ -666,6 +678,8 @@ def run_steps(steps: list[dict], *, dry_run: bool = False,
     mirrors the existing between-step stop semantics, just faster to react.
     """
     opts = {"choose": choose_override}
+    ledger: list[dict] = []
+    _ensure_ax_handlers()
     for i, step in enumerate(steps, 1):
         kind = step.get("kind")
         handler = _HANDLERS.get(kind)
@@ -678,9 +692,14 @@ def run_steps(steps: list[dict], *, dry_run: bool = False,
         t0 = time.monotonic()
         log(f"step {i}/{len(steps)}")
         try:
-            handler(step, opts, log, stop_event)
+            entry = handler(step, opts, log, stop_event)
         except _Stopped:
             log("  interrupted — closing any open menus")
             _cleanup_after_interrupt(log)
-            return
+            return ledger
+        if isinstance(entry, dict):
+            ledger.append(entry)
         log(f"    ({time.monotonic() - t0:.2f}s)")
+
+    return ledger
+

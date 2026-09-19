@@ -2,7 +2,7 @@
 import shutil
 
 from PySide6.QtCore import QTimer, Signal
-from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from config import APP_SUPPORT_DIR
 from core import song_history
@@ -112,6 +112,24 @@ class SettingsPanel(Popup):
         reset_pos_btn = _ConfirmButton("Reset Position")
         reset_pos_btn.confirmed.connect(self.reset_position_requested)
         layout.addWidget(reset_pos_btn)
+
+        layout.addSpacing(4)
+        sep0 = QLabel()
+        sep0.setFixedHeight(1)
+        sep0.setStyleSheet(f"background: {DIVIDER};")
+        layout.addWidget(sep0)
+
+        actions_label = QLabel("ACTIONS")
+        actions_label.setObjectName("sessionTitle")
+        layout.addWidget(actions_label)
+
+        from core import prefs
+        auto_cb = QCheckBox("Run actions automatically")
+        auto_cb.setToolTip("Off: each action waits for Run / ↵. On: actions run as soon as "
+                           "Conductor decides them. Deletions always ask first.")
+        auto_cb.setChecked(prefs.auto_run())
+        auto_cb.toggled.connect(prefs.set_auto_run)
+        layout.addWidget(auto_cb)
 
         layout.addSpacing(4)
         sep = QLabel()

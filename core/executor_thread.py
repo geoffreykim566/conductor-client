@@ -23,12 +23,14 @@ class ExecutorThread(QThread):
     """Runs a translated step list end to end; reports progress as it goes.
 
     step_started(idx)  — about to act on step `idx` (0-based, for card highlighting).
-    finished            — every step completed and verified.
+    finished(ledger)    — every step completed and verified; `ledger` is the list of
+                           revert entries (see core.ax_executor), possibly empty.
     failed(idx, msg)    — step `idx` aborted; msg is the StepAbort text (activation
-                           failure reports as step -1, before any step ran).
+                           failure reports as step -1, before any step ran). The
+                           partial ledger is available as `.ledger` for a revert.
     """
     step_started = Signal(int)
-    finished = Signal()
+    finished = Signal(object)
     failed = Signal(int, str)
 
     def __init__(self, steps: list[dict], stop_event: threading.Event | None = None,
@@ -37,6 +39,7 @@ class ExecutorThread(QThread):
         self._steps = steps
         self._stop_flag = False
         self._stop_event = stop_event if stop_event is not None else threading.Event()
+        self.ledger: list[dict] = []
 
     def stop(self) -> None:
         self._stop_flag = True
@@ -62,7 +65,7 @@ class ExecutorThread(QThread):
             self.step_started.emit(idx)
             log = lambda msg, i=idx: print(f"[executor_thread] step {i}: {msg}")
             try:
-                run_steps([step], log=log, stop_event=self._stop_event)
+                self.ledger.extend(run_steps([step], log=log, stop_event=self._stop_event) or [])
             except StepAbort as exc:
                 self.failed.emit(idx, str(exc))
                 return
@@ -71,4 +74,30 @@ class ExecutorThread(QThread):
                 return
             if self._stop_flag or self._stop_event.is_set():
                 return
-        self.finished.emit()
+        self.finished.emit(list(self.ledger))
+
+
+class RevertThread(QThread):
+    """Applies a run's ledger in reverse (core.ax_executor.revert) off the UI thread.
+
+    done(results) — list of (entry, ok, message); never raises.
+    """
+    done = Signal(object)
+
+    def __init__(self, ledger: list[dict], parent=None) -> None:
+        super().__init__(parent)
+        self._ledger = list(ledger)
+
+    def stop(self) -> None:  # symmetry with ExecutorThread for _wt_stop_threads
+        pass
+
+    def run(self) -> None:
+        from core.ax_executor import revert
+        results = []
+        try:
+            if activate_logic():
+                time.sleep(MENU_SETTLE_S)
+            results = revert(self._ledger, log=lambda m: print(f"[revert_thread] {m}"))
+        except Exception as exc:  # noqa: BLE001
+            results = [({"label": "revert"}, False, f"{type(exc).__name__}: {exc}")]
+        self.done.emit(results)

@@ -3,7 +3,7 @@ import base64
 
 from typing import Callable
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
@@ -357,14 +357,21 @@ class MessageWidget(QWidget):
             lbl.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
             self._bubble_layout.addWidget(lbl)
 
-    def setup_walkthrough(self, steps: list) -> None:
-        """Render a walkthrough step-list card inside the bubble. Press Enter to run."""
+    def setup_walkthrough(self, steps: list, *, auto: bool = False, destructive: bool = False) -> None:
+        """Render a walkthrough/action card inside the bubble.
+
+        Card states: Ready (Run / ↵) -> Running (hands off; any real input stops)
+        -> Done (Revert / ↵ / Shift+Esc). `auto` skips Ready unless `destructive`.
+        """
         if self._role != "assistant" or not steps:
             return
         self._wt_steps = steps
         self._wt_active = False
         self._wt_workers: list = []
         self._wt_executor = None
+        self._wt_ledger: list = []
+        self._wt_state = "ready"
+        self._wt_auto = bool(auto) and not destructive
 
         card = QWidget()
         cl = QVBoxLayout(card)
@@ -383,6 +390,11 @@ class MessageWidget(QWidget):
             elif "click_text" in step:
                 val = step["click_text"]
                 text = f"{n}.  {val}" if isinstance(val, str) else f"{n}.  (current selection)"
+            elif "ax_open_plugin" in step:
+                text = f"{n}.  Open <b>{step['ax_open_plugin']}</b>"
+            elif "ax_set_param" in step:
+                p = step["ax_set_param"]
+                text = f"{n}.  {p.get('plugin', '')} · {p.get('param', '')} → <b>{p.get('value', '')}</b>"
             else:
                 continue
             lbl = QLabel(text)
@@ -391,6 +403,14 @@ class MessageWidget(QWidget):
             lbl.setStyleSheet(_STEP_STYLE)
             cl.addWidget(lbl)
             self._wt_step_labels.append(lbl)
+
+        button = QPushButton("Run")
+        button.setObjectName("primary")
+        button.setCursor(Qt.PointingHandCursor)
+        button.setFixedHeight(24)
+        button.clicked.connect(self.wt_enter)
+        cl.addWidget(button)
+        self._wt_button = button
 
         hint = QLabel("Press ↵ to run")
         hint.setFont(_system_font(9))
@@ -414,22 +434,82 @@ class MessageWidget(QWidget):
         self._wt_card = card
         self._bubble_layout.addWidget(card)
         self._wt_highlight_step(0)
+        if self._wt_auto:
+            self._wt_hint.setText("Running automatically")
+            QTimer.singleShot(0, self.wt_enter)
 
     def wt_enter(self) -> None:
-        """Called when Enter pressed with empty input while this walkthrough is active.
-
-        Enter is a one-time start signal only — once running, the executor thread
-        drives everything (which step is current, whether it succeeded, when it ends).
-        """
+        """Enter / the card button. In Ready state it starts the run; in Done
+        state it reverts. During a run it does nothing (any real input already
+        stops the run via the interrupt tap)."""
         if not hasattr(self, "_wt_steps") or not hasattr(self, "_wt_card"):
             return
         if not self._wt_card.isVisible():
             return
-        if self._wt_active:
+        state = getattr(self, "_wt_state", "ready")
+        if state == "done":
+            self.wt_revert()
+            return
+        if state != "ready" or self._wt_active:
             return
         self._wt_active = True
+        self._wt_state = "running"
         self._wt_hint.hide()
+        self._wt_button.hide()
         self._wt_run_executor()
+
+    def wt_shift_esc(self) -> None:
+        """Shift+Esc: revert the last completed run (only meaningful in Done state)."""
+        if getattr(self, "_wt_state", None) == "done":
+            self.wt_revert()
+
+    def wt_revert(self) -> None:
+        from core.executor_thread import RevertThread
+        if getattr(self, "_wt_state", None) != "done" or not getattr(self, "_wt_ledger", None):
+            return
+        self._wt_state = "reverting"
+        self._wt_button.setEnabled(False)
+        self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
+        self._wt_status.setText("Reverting — hands off for a moment")
+        self._wt_status.show()
+        worker = RevertThread(self._wt_ledger, parent=self)
+        worker.done.connect(self._wt_on_reverted)
+        self._wt_workers.append(worker)
+        worker.start()
+
+    def _wt_on_reverted(self, results) -> None:
+        self._wt_stop_threads()
+        ok = all(r[1] for r in results) if results else False
+        self._wt_ledger = []
+        self._wt_state = "reverted"
+        self._wt_button.hide()
+        self._wt_hint.hide()
+        self._wt_end_hint.hide()
+        if ok:
+            self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
+            self._wt_status.setText("Reverted")
+        else:
+            failed = "; ".join(f"{r[0].get('label', '?')}: {r[2]}" for r in results if not r[1])
+            self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
+            self._wt_status.setText(f"Couldn't revert everything — {failed}")
+        self._wt_status.show()
+
+    def _wt_show_done(self, ledger: list, note: str = "Done") -> None:
+        self._wt_ledger = list(ledger or [])
+        self._wt_state = "done"
+        self._wt_end_hint.hide()
+        self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
+        self._wt_status.setText(note)
+        self._wt_status.show()
+        if self._wt_ledger:
+            self._wt_button.setText("Revert")
+            self._wt_button.setEnabled(True)
+            self._wt_button.show()
+            self._wt_hint.setText("↵ or Shift+Esc to revert")
+            self._wt_hint.show()
+        else:
+            self._wt_button.hide()
+            self._wt_hint.hide()
 
     def _wt_highlight_step(self, idx: int) -> None:
         for i, lbl in enumerate(self._wt_step_labels):
@@ -501,18 +581,28 @@ class MessageWidget(QWidget):
         print(f"[wt] executor step_started idx={idx}")
         self._wt_highlight_step(idx)
 
-    def _wt_on_finished(self) -> None:
-        print("[wt] executor finished")
+    def _wt_on_finished(self, ledger=None) -> None:
+        print(f"[wt] executor finished; ledger={len(ledger or [])} entries")
         self._wt_teardown()
-        self._wt_card.hide()
+        if ledger:
+            self._wt_show_done(ledger, "Done")
+        else:
+            self._wt_state = "finished"
+            self._wt_card.hide()
 
     def _wt_on_failed(self, idx: int, msg: str) -> None:
         print(f"[wt] executor failed at step {idx}: {msg}")
+        partial = list(getattr(self._wt_executor, "ledger", []) or [])
         self._wt_teardown()
         self._wt_mark_step_failed(idx)
-        self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
-        self._wt_status.setText("Couldn't complete this step automatically — do it manually.")
-        self._wt_status.show()
+        if partial:
+            self._wt_show_done(partial, "Couldn't complete this step — earlier steps can be reverted.")
+            self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
+        else:
+            self._wt_state = "failed"
+            self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
+            self._wt_status.setText("Couldn't complete this step automatically — do it manually.")
+            self._wt_status.show()
         # Card stays visible (not hidden) so the step list remains as a manual guide.
 
     def _wt_stop_threads(self) -> None:

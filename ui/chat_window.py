@@ -483,7 +483,10 @@ class ChatWindow(QWidget):
                 lambda value, m=msg: self._rate_message(m, value), initial=msg.rating
             )
         if walkthrough_steps:
-            self._chat_view.setup_walkthrough_card(list(walkthrough_steps))
+            from core import prefs
+            steps = list(walkthrough_steps)
+            destructive = any(isinstance(st, dict) and st.get("destructive") for st in steps)
+            self._chat_view.setup_walkthrough_card(steps, auto=prefs.auto_run(), destructive=destructive)
         self._chat_view.end_assistant_message()
         if self._session_id:
             song_history.save_session(
@@ -560,6 +563,10 @@ class ChatWindow(QWidget):
                 return True
         if key == Qt.Key_Escape and self._turn_in_flight():
             self.cancel_turn()
+            return True
+        if (key == Qt.Key_Escape and (event.modifiers() & Qt.ShiftModifier)
+                and self._chat_view.has_active_walkthrough()):
+            self._chat_view.wt_shift_esc()
             return True
         if (key in (Qt.Key_Return, Qt.Key_Enter)
                 and not (event.modifiers() & Qt.ShiftModifier)

@@ -204,14 +204,18 @@ class ChatView(QWidget):
             self._current_assistant.set_source_tier(tier)
             self._current_assistant.set_sources(sources)
 
-    def setup_walkthrough_card(self, steps: list) -> None:
+    def setup_walkthrough_card(self, steps: list, *, auto: bool = False, destructive: bool = False) -> None:
         if self._current_assistant is not None:
-            self._current_assistant.setup_walkthrough(steps)
+            self._current_assistant.setup_walkthrough(steps, auto=auto, destructive=destructive)
             self._active_wt_widget = self._current_assistant
 
     def wt_enter(self) -> None:
         if self._active_wt_widget is not None:
             self._active_wt_widget.wt_enter()
+
+    def wt_shift_esc(self) -> None:
+        if self._active_wt_widget is not None:
+            self._active_wt_widget.wt_shift_esc()
 
     def has_active_walkthrough(self) -> bool:
         return self._active_wt_widget is not None
