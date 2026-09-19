@@ -629,7 +629,12 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
         elif "click_text" in wire:
             steps.append({"kind": "click_text", "value": wire["click_text"]})
         elif "ax_open_plugin" in wire:
-            steps.append({"kind": "ax_open_plugin", "value": wire["ax_open_plugin"]})
+            st = {"kind": "ax_open_plugin", "value": wire["ax_open_plugin"]}
+            if wire.get("new"):
+                st["new"] = True
+            if wire.get("track"):
+                st["track"] = wire["track"]
+            steps.append(st)
         elif "ax_set_param" in wire:
             steps.append({"kind": "ax_set_param", "value": dict(wire["ax_set_param"])})
 

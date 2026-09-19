@@ -24,8 +24,19 @@ LEDGER_KIND_PARAM = "param_written"
 def _mw_or_abort(app):
     mw = ax.main_window(app)
     if mw is None:
-        raise StepAbort("Logic's main Tracks window not found")
+        # Logic is running but exposes no windows: it's on another desktop/Space,
+        # minimized, or the project is closed (found live 2026-09-18).
+        raise StepAbort("Logic's project window isn't on this desktop — bring Logic Pro "
+                        "to this desktop (or un-minimize it) and press Run again")
     return mw
+
+
+def _select_track_if_named(mw, track: str | None, log) -> None:
+    if not track:
+        return
+    if not ax.select_track(mw, track):
+        raise StepAbort(f"track {track!r} not found in the Tracks area")
+    log(f"    selected track {track!r}")
 
 
 def run_ax_open_plugin(step: dict, log, stop_event=None) -> dict:
@@ -33,6 +44,7 @@ def run_ax_open_plugin(step: dict, log, stop_event=None) -> dict:
     _check_stop(stop_event)
     app = ax.app_element()
     mw = _mw_or_abort(app)
+    _select_track_if_named(mw, step.get("track"), log)
     want_new = bool(step.get("new"))
     # Default: if the plugin is already on the selected track, open its window
     # rather than adding a second instance; add only when absent or explicitly asked.
@@ -58,6 +70,7 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
     _check_stop(stop_event)
     app = ax.app_element()
     mw = _mw_or_abort(app)
+    _select_track_if_named(mw, spec.get("track"), log)
     win = ax.plugin_window_for(app, plugin)
     opened_here = False
     if win is None:
