@@ -339,13 +339,24 @@ def _norm(s: str) -> str:
     return (s or "").lower().replace(" ", "").replace("-", "")
 
 
-def plugin_window_for(app, name: str, before: set[str] | None = None):
+def plugin_windows_seen(app) -> set[tuple[str, str]]:
+    """(window title, plugin shown) for every open window -- the 'before' set for
+    plugin_window_for. Titles alone can't do this job: plugin windows are titled
+    after the TRACK, so a second plugin on the same track opens a second window
+    with an identical title (found live 2026-09-19, two 'Audio 1' windows). The
+    pair also covers Logic reusing one window and swapping the plugin inside it."""
+    return {(title(w) or "", window_plugin_name(w) or "") for w in app_windows(app)}
+
+
+def plugin_window_for(app, name: str, before: set[tuple[str, str]] | None = None):
     """Find the open plugin window for `name` (title = track name; identity = the
-    titled editor AXGroup or the trailing AXStaticText)."""
+    titled editor AXGroup or the trailing AXStaticText). `before` is a set of
+    (title, plugin) pairs from plugin_windows_seen: a window whose pair was
+    already present is not the one this call just opened."""
     for w in app_windows(app):
-        if before is not None and title(w) in before:
-            continue
         shown = window_plugin_name(w)
+        if before is not None and (title(w) or "", shown or "") in before:
+            continue
         if shown and (_norm(name) in _norm(shown) or _norm(shown) in _norm(name)):
             return w
     return None
@@ -369,7 +380,7 @@ def open_plugin_by_search(app, mw, name: str, stop_check=None) -> tuple[str, obj
     plugin window's own name, never the truncated slot label."""
     from core.executor import press
     s = selected_strip(mw)
-    before_w = window_titles(app)
+    before_w = plugin_windows_seen(app)
     before_n = loaded_names(s)
     press("Ctrl+Cmd+P")
     f, _ = wait_until(lambda: (lambda x: x if x is not None and role(x) == "AXTextField" else None)(focused(app)), timeout=2.0)
@@ -386,9 +397,12 @@ def open_plugin_by_search(app, mw, name: str, stop_check=None) -> tuple[str, obj
     new_idx = next((i for i, n in enumerate(got) if i >= len(before_n) or n != before_n[i]), len(got) - 1)
     win, _ = wait_until(lambda: plugin_window_for(app, name, before_w), timeout=4.0)
     if win is None:
-        # something loaded but it isn't the requested plugin (recency collision) -- undo it
-        remove_plugin(app, mw, got[new_idx], index=new_idx)
-        raise AxError(f"search loaded {got[new_idx]!r}, not {name!r}")
+        # Something loaded but its window doesn't show the requested plugin. Report
+        # it and leave the slot alone: the removal that used to run here silently
+        # failed when it fired on the 09-19 false mismatch (return value ignored,
+        # plugin still loaded), and on a real mismatch it would delete a plugin the
+        # caller never asked it to touch. The ledger entry is what undoes a load.
+        raise AxError(f"search loaded {got[new_idx]!r}, whose window did not come up as {name!r}")
     ensure_on_screen(win)
     return got[new_idx], win, new_idx
 
@@ -407,7 +421,7 @@ def open_loaded_plugin(app, mw, name: str, index: int | None = None):
     g = loaded_slot(selected_strip(mw), name, index)
     if g is None:
         return None
-    before_w = window_titles(app)
+    before_w = plugin_windows_seen(app)
     win = plugin_window_for(app, name)
     if win is None:
         ax_press(find_child(g, AS.kAXDescriptionAttribute, "open", "AXButton"))
