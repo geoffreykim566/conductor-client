@@ -15,9 +15,10 @@ class StreamWorker(QThread):
     Signals:
         chunk(str)                           — emitted for each piece of text streamed in
         status(str)                          — transient research-progress notice
-        done(str, int, str, object, object, object)  — (event_id, remaining,
+        done(str, int, str, object, object, object, bool)  — (event_id, remaining,
                                                             source_tier, sources,
-                                                            walkthrough_steps, history)
+                                                            walkthrough_steps, history,
+                                                            auto_run)
         research_prompt(str, object)         — server parked the turn at a web_research
                                                call: (query, history). No done follows;
                                                start a new worker with resume= and that
@@ -29,7 +30,7 @@ class StreamWorker(QThread):
 
     chunk = Signal(str)
     status = Signal(str)
-    done = Signal(str, int, str, object, object, object)
+    done = Signal(str, int, str, object, object, object, bool)
     research_prompt = Signal(str, object)
     cancelled = Signal()
     error = Signal(str)
@@ -56,6 +57,7 @@ class StreamWorker(QThread):
         sources: list = []
         walkthrough_steps: list = []
         history = None
+        auto_run = False
         # Pushed silently, like AX state -- no user-facing toggle, no attachment
         # UI. Best-effort: Logic not running / no Screen Recording permission
         # just means an empty list, never something a turn should block on.
@@ -92,11 +94,15 @@ class StreamWorker(QThread):
                     sources = payload.get("sources") or []
                     walkthrough_steps = payload.get("walkthrough_steps") or []
                     history = payload.get("history")
+                    # Server's per-turn call: may this card run without Run
+                    # (an instruction, not a question or bulk request)? Absent
+                    # from older servers -> False, i.e. always ask.
+                    auto_run = bool(payload.get("auto_run"))
                 elif kind == "error":
                     self.error.emit(str(payload))
                     return
             self.done.emit(event_id, remaining, source_tier, sources,
-                           walkthrough_steps, history)
+                           walkthrough_steps, history, auto_run)
         except FreeLimitReached as e:
             self.limit_reached.emit(e.limit if e.limit is not None else -1)
         except RegistrationThrottled:

@@ -473,7 +473,8 @@ class ChatWindow(QWidget):
 
     def _on_done(self, event_id: str = "", remaining: int = -1,
                  source_tier: str = "", sources: object = None,
-                 walkthrough_steps: object = None, history: object = None) -> None:
+                 walkthrough_steps: object = None, history: object = None,
+                 auto_run: bool = False) -> None:
         self._server_history = history
         msg = self._conversation.last_assistant()
         self._chat_view.set_assistant_tier(source_tier, sources or [])
@@ -486,7 +487,10 @@ class ChatWindow(QWidget):
             from core import prefs
             steps = list(walkthrough_steps)
             destructive = any(isinstance(st, dict) and st.get("destructive") for st in steps)
-            self._chat_view.setup_walkthrough_card(steps, auto=prefs.auto_run(), destructive=destructive)
+            # Both must agree: the user's auto-run setting (a master switch)
+            # and the server's per-turn call for this card (auto_run).
+            self._chat_view.setup_walkthrough_card(steps, auto=prefs.auto_run() and auto_run,
+                                                   destructive=destructive)
         self._chat_view.end_assistant_message()
         if self._session_id:
             song_history.save_session(
