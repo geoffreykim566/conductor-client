@@ -392,6 +392,10 @@ class MessageWidget(QWidget):
                 text = f"{n}.  {val}" if isinstance(val, str) else f"{n}.  (current selection)"
             elif "ax_open_plugin" in step:
                 text = f"{n}.  Open <b>{step['ax_open_plugin']}</b>"
+            elif "choose" in step:
+                v = step["choose"]
+                text = (f"{n}.  One step <b>{v}</b>" if v in ("larger", "smaller")
+                        else f"{n}.  Choose <b>{v}</b>")
             elif "ax_set_param" in step:
                 p = step["ax_set_param"]
                 text = f"{n}.  {p.get('plugin', '')} · {p.get('param', '')} → <b>{p.get('value', '')}</b>"

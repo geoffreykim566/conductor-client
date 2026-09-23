@@ -19,6 +19,7 @@ from core.executor import StepAbort, _check_stop
 
 LEDGER_KIND_PLUGIN = "plugin_opened"
 LEDGER_KIND_PARAM = "param_written"
+LEDGER_KIND_SETTING = "setting_chosen"   # written by core.executor._run_choose
 
 
 def _mw_or_abort(app):
@@ -192,6 +193,9 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
                 if not ok:
                     raise ax.AxError("slot menu removal failed")
                 results.append((entry, True, f"removed {entry['plugin']}"))
+            elif entry["kind"] == LEDGER_KIND_SETTING:
+                _revert_setting(entry)
+                results.append((entry, True, f"{entry.get('row') or 'setting'} back to {entry['prev']}"))
             else:
                 results.append((entry, False, f"no inverse for {entry['kind']}"))
         except Exception as exc:  # noqa: BLE001
@@ -199,6 +203,20 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
         log(f"[revert] {entry['label']}: {results[-1][2]}")
         time.sleep(0.2)
     return results
+
+
+def _revert_setting(entry: dict) -> None:
+    """Pick the old value in the same dropdown again. Try the dropdown's own
+    click first (its pane is usually still open); only if that isn't on
+    screen, replay the whole route -- some routes start with a toggle
+    shortcut (flex's Cmd+F) that would hide what's already showing."""
+    from core.executor import StepAbort as Abort, run_steps, wire_to_steps
+    route = wire_to_steps(entry["reopen"])
+    pick = {"kind": "choose", "value": entry["prev"], "row": entry.get("row")}
+    try:
+        run_steps([route[-1], pick], log=lambda m: print(f"[revert] {m}"))
+    except Abort:
+        run_steps(route + [pick], log=lambda m: print(f"[revert] {m}"))
 
 
 def register(handlers: dict) -> None:

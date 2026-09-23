@@ -20,9 +20,10 @@ Step kinds:
   click_value_of — find a settings-row LABEL, click the value blob to its
                    right (the label itself is inert text; the control beside
                    it is what takes the click).
-  choose         — a dropdown the previous step just opened: type-select the
-                   value + Return, or Escape out when value is None (the
-                   spike-safe default).
+  choose         — a dropdown the previous step just opened: pick `value` (an
+                   option, or "larger"/"smaller" = one step from the checked
+                   item) from the open menu via AX, then read the row back.
+                   Escape out when value is None (the spike-safe default).
 
 Any step may carry:
   expect  — list[str]; after acting, wait until one is visible somewhere in
@@ -525,18 +526,84 @@ def _run_click(step: dict, log, stop_event=None) -> None:
     name = hit["win"].get("kCGWindowName", "") or f"#{hit['win']['kCGWindowNumber']}"
     log(f"  {step['kind']}: {found} in window {name!r} -> click ({x:.0f}, {y:.0f})")
     _require_logic_frontmost()
+    _last_click.update(point=(x, y), shown=box.get("label") if step["kind"] == "click_value_of" else hit["text"])
     click_at(x, y, stop_event)
     time.sleep(ACTION_SETTLE_S)
     _verify_expect(step, log)
 
 
-def _run_choose(step: dict, choose_override: str | None, log, stop_event=None) -> None:
+# Where the last click_text/click_value_of landed and the value it showed --
+# what a following choose step finds its dropdown (and current value) by.
+_last_click: dict = {}
+
+
+def _num_in(text: str) -> float | None:
+    import re
+    m = re.search(r"\d+(?:\.\d+)?", text or "")
+    return float(m.group(0)) if m else None
+
+
+def _same_option(want: str, got: str) -> bool:
+    """"256" vs "256 Samples", "48 kHz" vs "48kHz", "Mono" vs "Monophonic"."""
+    w, g = (want or "").strip().lower(), (got or "").strip().lower()
+    if not w or not g:
+        return False
+    nw, ng = _num_in(w), _num_in(g)
+    if nw is not None or ng is not None:
+        return nw == ng
+    return w == g or g.startswith(w) or w.startswith(g)
+
+
+def _popup_items(log):
+    """(items, checked_index) of the dropdown the previous step opened, via AX:
+    the menu under the click point (a popup opens with the current item over
+    the button), else the focused menu. Checked = AXMenuItemMarkChar, else the
+    item matching the value the click read. (None, None) if AX can't see it."""
+    from core import ax_actions as ax
+    try:
+        app = ax.app_element()
+    except ax.AxError:
+        return None, None
+    menu, _ = ax.wait_until(lambda: ax.current_menu(app, _last_click.get("point")), timeout=1.5)
+    if menu is None:
+        return None, None
+    items = [it for it in ax.children(menu)
+             if ax.title(it) and ax.ax_get(it, "AXEnabled") is not False]
+    checked = next((i for i, it in enumerate(items) if ax.ax_get(it, "AXMenuItemMarkChar")), None)
+    if checked is None and _last_click.get("shown"):
+        checked = next((i for i, it in enumerate(items)
+                        if _same_option(_last_click["shown"], ax.title(it))), None)
+    log(f"    options: {[ax.title(it) for it in items]} (checked: "
+        f"{ax.title(items[checked]) if checked is not None else '?'})")
+    return items, checked
+
+
+def _read_back(row: str | None, want: str) -> str | None:
+    """What the row shows now: the value right of a settings label, or (a
+    click_text dropdown, no label) whether `want` itself is on screen."""
+    deadline = time.monotonic() + VERIFY_TIMEOUT_S
+    shown = None
+    while time.monotonic() < deadline:
+        if row:
+            hit = _find_text([row], include_menus=False)
+            blob = _value_blob_right_of(hit["box"], hit["words"]) if hit else None
+            shown = blob["label"] if blob else None
+        else:
+            hit = _find_text([want], include_menus=False)
+            shown = hit["text"] if hit else None
+        if shown is not None and _same_option(want, shown):
+            return shown
+        time.sleep(VERIFY_INTERVAL_S)
+    return shown
+
+
+def _run_choose(step: dict, choose_override: str | None, log, stop_event=None):
     value = step.get("value") or choose_override
     if not _wait_menu_count(1):
         if step.get("optional"):
             log("  choose: no dropdown appeared (click may have selected "
                 "directly) — skipping")
-            return
+            return None
         raise StepAbort("choose: dropdown did not open")
     if value is None:
         log("  choose: no value given — Escape out (rerun with --choose=... "
@@ -544,15 +611,60 @@ def _run_choose(step: dict, choose_override: str | None, log, stop_event=None) -
         _require_logic_frontmost()
         _post_key(_NAMED_KEYS["escape"], stop_event=stop_event)
         _wait_menus_gone()
-        return
+        return None
+    from core import ax_actions as ax
     log(f"  choose: {value}")
     _require_logic_frontmost()
-    type_select(value, stop_event)
-    time.sleep(ACTION_SETTLE_S)
-    _post_key(_NAMED_KEYS["return"], stop_event=stop_event)
+    items, checked = _popup_items(log)
+    relative = value.lower() in ("larger", "smaller")
+
+    def close(msg: str):
+        _post_key(_NAMED_KEYS["escape"], stop_event=stop_event)
+        _wait_menus_gone()
+        log(f"    {msg}")
+
+    if items is None:
+        if relative:
+            close("dropdown not readable via AX — Escaped")
+            raise StepAbort(f"choose {value!r}: couldn't read the dropdown's options")
+        # Absolute value, menu invisible to AX: type-select, verified by read-back.
+        type_select(value, stop_event)
+        time.sleep(ACTION_SETTLE_S)
+        _post_key(_NAMED_KEYS["return"], stop_event=stop_event)
+        prev, target = _last_click.get("shown"), value
+    else:
+        if relative:
+            if checked is None:
+                close("current value unknown — Escaped")
+                raise StepAbort(f"choose {value!r}: couldn't tell which option is current")
+            idx = checked + (1 if value.lower() == "larger" else -1)
+            if not 0 <= idx < len(items):
+                close(f"already at the {'largest' if value.lower() == 'larger' else 'smallest'} "
+                      f"option ({ax.title(items[checked])}) — nothing to change")
+                return None
+        else:
+            idx = next((i for i, it in enumerate(items) if _same_option(value, ax.title(it))), None)
+            if idx is None:
+                close("Escaped")
+                raise StepAbort(f"choose: {value!r} isn't in this dropdown "
+                                f"({[ax.title(it) for it in items]})")
+        prev = ax.title(items[checked]) if checked is not None else _last_click.get("shown")
+        target = ax.title(items[idx])
+        if idx == checked:
+            close(f"already set to {target} — nothing to change")
+            return None
+        ax.ax_press(items[idx])
     if not _wait_menus_gone():
-        raise StepAbort(f"choose: dropdown still open after selecting {value!r}")
-    _verify_expect(step, log)
+        close("dropdown still open after picking — Escaped")
+        raise StepAbort(f"choose: dropdown still open after selecting {target!r}")
+    shown = _read_back(step.get("row"), target)
+    if shown is None or not _same_option(target, shown):
+        raise StepAbort(f"choose: picked {target!r} but it now reads {shown!r}")
+    log(f"    {prev!r} -> {shown!r} (read back)")
+    if not step.get("reopen") or not prev:
+        return None   # nothing to go back through / to (the spike's --choose path)
+    return {"kind": "setting_chosen", "label": f"{step.get('row') or 'setting'} back to {prev}",
+            "prev": prev, "row": step.get("row"), "reopen": step["reopen"]}
 
 
 # ---------------------------------------------------------------------------
@@ -600,8 +712,9 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
     native step dicts (see module docstring for the `kind` vocabulary).
 
     Wire keys map straight to `kind`: menu_path->menu, shortcut->key,
-    click_text->click_text, click_value_of->click_value_of. Unrecognized keys
-    are dropped rather than guessed at (mirrors the server's own stance on
+    click_text->click_text, click_value_of->click_value_of, choose->choose
+    (a dropdown route's value, 2026-09-22; carries the route as `reopen` for
+    revert). Unrecognized keys are dropped rather than guessed at (mirrors the server's own stance on
     not-yet-migrated legacy path steps).
 
     `expect` is not KB-authored data — it's derived here. A `menu`/`key` step
@@ -614,9 +727,8 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
     instead.
 
     The last translated step is marked `final: True` (the state-changing
-    step gets the confirm-gate hook) — v1 KB paths never author a `choose`
-    with a real value, so the last click/menu/key step is always the
-    furthest a path goes.
+    step gets the confirm-gate hook) — the furthest a path goes, a `choose`
+    when the route picks a dropdown value.
     """
     steps: list[dict] = []
     for wire in wire_steps:
@@ -637,6 +749,13 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
             steps.append(st)
         elif "ax_set_param" in wire:
             steps.append({"kind": "ax_set_param", "value": dict(wire["ax_set_param"])})
+        elif "choose" in wire:
+            # the row to read back is the dropdown's label (click_value_of);
+            # a click_text dropdown has none -- the chosen text itself is checked
+            prev = steps[-1] if steps else {}
+            steps.append({"kind": "choose", "value": wire["choose"],
+                          "row": prev.get("label") if prev.get("kind") == "click_value_of" else None,
+                          "reopen": list(wire.get("reopen") or [])})
 
     for i, step in enumerate(steps):
         if step["kind"] not in ("menu", "key"):
@@ -696,6 +815,13 @@ def run_steps(steps: list[dict], *, dry_run: bool = False,
             continue
         t0 = time.monotonic()
         log(f"step {i}/{len(steps)}")
+        if kind != "choose" and _menu_window_count() > 0:
+            # Nothing should be open between steps; an open menu or dropdown
+            # takes every keystroke the next step posts (found live 2026-09-22:
+            # a dropdown left open by a route swallowed the plugin search's
+            # Ctrl+Cmd+P). Only a choose step expects one.
+            log("  a menu was left open — closing it first")
+            _cleanup_after_interrupt(log)
         try:
             entry = handler(step, opts, log, stop_event)
         except _Stopped:
