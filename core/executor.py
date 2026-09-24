@@ -466,6 +466,14 @@ def _cleanup_after_interrupt(log, max_presses: int = 6) -> None:
 def _run_key(step: dict, log, stop_event=None) -> None:
     log(f"  key: {step['value']}")
     _require_logic_frontmost()
+    # Many view shortcuts toggle (Cmd+F Show Flex, Option+T): if what this
+    # step exists to reveal is already on screen, pressing would hide it.
+    expect = step.get("expect")
+    if expect:
+        hit = _find_text(expect, include_menus=False)
+        if hit is not None:
+            log(f"    already showing {hit['text']!r} — skipped (it would toggle off)")
+            return
     press(step["value"], stop_event)
     time.sleep(ACTION_SETTLE_S)
     _verify_expect(step, log)
@@ -539,19 +547,21 @@ _last_click: dict = {}
 
 def _num_in(text: str) -> float | None:
     import re
-    m = re.search(r"\d+(?:\.\d+)?", text or "")
+    m = re.search(r"\d+(?:\.\d+)?", (text or "").replace(",", ""))  # "1,024"
     return float(m.group(0)) if m else None
 
 
 def _same_option(want: str, got: str) -> bool:
-    """"256" vs "256 Samples", "48 kHz" vs "48kHz", "Mono" vs "Monophonic"."""
+    """"256" vs "256 Samples", "48 kHz" vs "48kHz", "Mono" vs "Monophonic",
+    "Monophonic" vs "Flex Time - Monophonic" (Logic prefixes some menu items)."""
     w, g = (want or "").strip().lower(), (got or "").strip().lower()
     if not w or not g:
         return False
     nw, ng = _num_in(w), _num_in(g)
     if nw is not None or ng is not None:
         return nw == ng
-    return w == g or g.startswith(w) or w.startswith(g)
+    return (w == g or g.startswith(w) or w.startswith(g)
+            or g.endswith(" - " + w) or w.endswith(" - " + g))
 
 
 def _popup_items(log):
@@ -589,7 +599,9 @@ def _read_back(row: str | None, want: str) -> str | None:
             blob = _value_blob_right_of(hit["box"], hit["words"]) if hit else None
             shown = blob["label"] if blob else None
         else:
-            hit = _find_text([want], include_menus=False)
+            # the control shows "Slicing" for the menu's "Flex Time - Slicing"
+            texts = [want] + ([want.split(" - ", 1)[1]] if " - " in want else [])
+            hit = _find_text(texts, include_menus=False)
             shown = hit["text"] if hit else None
         if shown is not None and _same_option(want, shown):
             return shown
