@@ -16,7 +16,7 @@ import time
 
 from PySide6.QtCore import QThread, Signal
 
-from core.executor import MENU_SETTLE_S, StepAbort, activate_logic, run_steps
+from core.executor import MENU_SETTLE_S, StepAbort, activate_logic, run_steps, wait_logic_on_screen
 
 
 class ExecutorThread(QThread):
@@ -53,6 +53,12 @@ class ExecutorThread(QThread):
         # a race against the first step's own frontmost guard.
         if not activate_logic():
             self.failed.emit(-1, "couldn't bring Logic Pro to the front")
+            return
+        # Frontmost isn't on screen: from another desktop the windows are still
+        # sliding in, and a first capture that sees nothing misreads the screen.
+        if not wait_logic_on_screen():
+            self.failed.emit(-1, "Logic's project window isn't on this desktop — bring it "
+                                 "to this desktop and press Run again")
             return
         # NSWorkspace reports Logic frontmost before the system menu bar has
         # actually redrawn — the first capture otherwise races that redraw
@@ -95,7 +101,7 @@ class RevertThread(QThread):
         from core.ax_executor import revert
         results = []
         try:
-            if activate_logic():
+            if activate_logic() and wait_logic_on_screen():
                 time.sleep(MENU_SETTLE_S)
             results = revert(self._ledger, log=lambda m: print(f"[revert_thread] {m}"))
         except Exception as exc:  # noqa: BLE001

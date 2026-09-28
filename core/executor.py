@@ -254,6 +254,23 @@ def activate_logic(timeout: float = 3.0) -> bool:
     return False
 
 
+def wait_logic_on_screen(timeout: float = 2.0) -> bool:
+    """Whether a Logic window is on screen within `timeout`. activate_logic()
+    returns as soon as Logic is the frontmost app, but with Logic on another
+    desktop its windows are still sliding in: a capture then finds nothing, a
+    toggle pre-check reads that as "not showing" and presses the key -- which
+    closed an open Inspector (found live 2026-09-28)."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            if _find_all_logic_pro_windows():
+                return True
+        except RuntimeError:
+            pass
+        time.sleep(0.1)
+    return False
+
+
 def _require_logic_frontmost() -> None:
     owner = _frontmost_owner()
     if owner not in LOGIC_PRO_APP_NAMES:
@@ -512,6 +529,15 @@ def _run_menu(step: dict, log, stop_event=None) -> None:
 
 
 def _run_click(step: dict, log, stop_event=None) -> None:
+    # A disclosure click toggles (Region Inspector's "Region"): if what it
+    # reveals is already showing, clicking would collapse it -- same rule as
+    # _run_key.
+    expect = step.get("expect")
+    if step["kind"] == "click_text" and expect:
+        hit = _find_text(expect, include_menus=False)
+        if hit is not None:
+            log(f"  click_text: {step['value']!r} — already showing {hit['text']!r}, skipped (it would toggle off)")
+            return
     if step["kind"] == "click_text":
         texts = step["value"] if isinstance(step["value"], list) else [step["value"]]
         hit = _wait_for_text(texts)
@@ -564,7 +590,34 @@ def _same_option(want: str, got: str) -> bool:
             or g.endswith(" - " + w) or w.endswith(" - " + g))
 
 
-def _popup_items(log):
+def _exact_option(want: str, got: str) -> bool:
+    """_same_option without the loose prefix: "On" is not "On + Align Bars"
+    (Region Smart Tempo's options prefix each other)."""
+    w, g = (want or "").strip().lower(), (got or "").strip().lower()
+    if not w or not g:
+        return False
+    nw, ng = _num_in(w), _num_in(g)
+    if nw is not None or ng is not None:
+        return nw == ng
+    return w == g or g.endswith(" - " + w) or w.endswith(" - " + g)
+
+
+def _option_index(value: str, titles: list[str]) -> int | None:
+    """The option `value` means: an exact one first, else the first loose match."""
+    for same in (_exact_option, _same_option):
+        idx = next((i for i, t in enumerate(titles) if same(value, t)), None)
+        if idx is not None:
+            return idx
+    return None
+
+
+def _title_for(display: str, shows: dict | None) -> str:
+    """The menu title a control's short display stands for (Region Smart
+    Tempo shows "Bars" for "On + Align Bars"); the display itself otherwise."""
+    return next((t for t, d in (shows or {}).items() if _exact_option(d, display)), display)
+
+
+def _popup_items(log, shows: dict | None = None):
     """(items, checked_index) of the dropdown the previous step opened, via AX:
     the menu under the click point (a popup opens with the current item over
     the button), else the focused menu. Checked = AXMenuItemMarkChar, else the
@@ -581,14 +634,14 @@ def _popup_items(log):
              if ax.title(it) and ax.ax_get(it, "AXEnabled") is not False]
     checked = next((i for i, it in enumerate(items) if ax.ax_get(it, "AXMenuItemMarkChar")), None)
     if checked is None and _last_click.get("shown"):
-        checked = next((i for i, it in enumerate(items)
-                        if _same_option(_last_click["shown"], ax.title(it))), None)
+        titles = [ax.title(it) for it in items]
+        checked = _option_index(_title_for(_last_click["shown"], shows), titles)
     log(f"    options: {[ax.title(it) for it in items]} (checked: "
         f"{ax.title(items[checked]) if checked is not None else '?'})")
     return items, checked
 
 
-def _read_back(row: str | None, want: str) -> str | None:
+def _read_back(row: str | None, want: str, exact: bool = False, shows: dict | None = None) -> str | None:
     """What the row shows now: the value right of a settings label, or (a
     click_text dropdown, no label) whether `want` itself is on screen."""
     deadline = time.monotonic() + VERIFY_TIMEOUT_S
@@ -603,7 +656,7 @@ def _read_back(row: str | None, want: str) -> str | None:
             texts = [want] + ([want.split(" - ", 1)[1]] if " - " in want else [])
             hit = _find_text(texts, include_menus=False)
             shown = hit["text"] if hit else None
-        if shown is not None and _same_option(want, shown):
+        if shown is not None and (_exact_option if exact else _same_option)(want, _title_for(shown, shows)):
             return shown
         time.sleep(VERIFY_INTERVAL_S)
     return shown
@@ -627,7 +680,8 @@ def _run_choose(step: dict, choose_override: str | None, log, stop_event=None):
     from core import ax_actions as ax
     log(f"  choose: {value}")
     _require_logic_frontmost()
-    items, checked = _popup_items(log)
+    shows = step.get("shows") or {}
+    items, checked = _popup_items(log, shows)
     relative = value.lower() in ("larger", "smaller")
 
     def close(msg: str):
@@ -643,7 +697,7 @@ def _run_choose(step: dict, choose_override: str | None, log, stop_event=None):
         type_select(value, stop_event)
         time.sleep(ACTION_SETTLE_S)
         _post_key(_NAMED_KEYS["return"], stop_event=stop_event)
-        prev, target = _last_click.get("shown"), value
+        prev, target = _title_for(_last_click.get("shown"), shows), value
     else:
         if relative:
             if checked is None:
@@ -655,12 +709,12 @@ def _run_choose(step: dict, choose_override: str | None, log, stop_event=None):
                       f"option ({ax.title(items[checked])}) — nothing to change")
                 return None
         else:
-            idx = next((i for i, it in enumerate(items) if _same_option(value, ax.title(it))), None)
+            idx = _option_index(value, [ax.title(it) for it in items])
             if idx is None:
                 close("Escaped")
                 raise StepAbort(f"choose: {value!r} isn't in this dropdown "
                                 f"({[ax.title(it) for it in items]})")
-        prev = ax.title(items[checked]) if checked is not None else _last_click.get("shown")
+        prev = ax.title(items[checked]) if checked is not None else _title_for(_last_click.get("shown"), shows)
         target = ax.title(items[idx])
         if idx == checked:
             close(f"already set to {target} — nothing to change")
@@ -669,14 +723,17 @@ def _run_choose(step: dict, choose_override: str | None, log, stop_event=None):
     if not _wait_menus_gone():
         close("dropdown still open after picking — Escaped")
         raise StepAbort(f"choose: dropdown still open after selecting {target!r}")
-    shown = _read_back(step.get("row"), target)
-    if shown is None or not _same_option(target, shown):
+    # a title read from the dropdown itself must read back exactly; a typed
+    # value (menu invisible to AX) keeps the loose match
+    same = _exact_option if items is not None else _same_option
+    shown = _read_back(step.get("row"), target, exact=items is not None, shows=shows)
+    if shown is None or not same(target, _title_for(shown, shows)):
         raise StepAbort(f"choose: picked {target!r} but it now reads {shown!r}")
     log(f"    {prev!r} -> {shown!r} (read back)")
     if not step.get("reopen") or not prev:
         return None   # nothing to go back through / to (the spike's --choose path)
     return {"kind": "setting_chosen", "label": f"{step.get('row') or 'setting'} back to {prev}",
-            "prev": prev, "row": step.get("row"), "reopen": step["reopen"]}
+            "prev": prev, "row": step.get("row"), "reopen": step["reopen"], "shows": shows}
 
 
 # ---------------------------------------------------------------------------
@@ -733,8 +790,11 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
     followed by another step defaults to that next step's own anchor text
     (proof the action landed somewhere useful); a terminal `menu` step falls
     back to its own last-hop name only when that's reliably still visible
-    (see `_menu_terminal_expect`). click_text/click_value_of/choose steps
-    never get an auto `expect` — their own pre-click OCR match, or a
+    (see `_menu_terminal_expect`). A click_text step followed by a
+    click_value_of row gets that row's label (a disclosure header: skipped
+    when the row already shows); a wire-sent `expect` on a click_text is kept
+    (the server's pane-only trim). Other click_text/click_value_of/choose
+    steps never get an auto `expect` — their own pre-click OCR match, or a
     following step's structural check (menu appeared/closed), does that job
     instead.
 
@@ -751,7 +811,10 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
         elif "click_value_of" in wire:
             steps.append({"kind": "click_value_of", "label": wire["click_value_of"]})
         elif "click_text" in wire:
-            steps.append({"kind": "click_text", "value": wire["click_text"]})
+            st = {"kind": "click_text", "value": wire["click_text"]}
+            if wire.get("expect"):   # pane-only route: the dropped row it reveals
+                st["expect"] = list(wire["expect"])
+            steps.append(st)
         elif "ax_open_plugin" in wire:
             st = {"kind": "ax_open_plugin", "value": wire["ax_open_plugin"]}
             if wire.get("new"):
@@ -767,12 +830,21 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
             prev = steps[-1] if steps else {}
             steps.append({"kind": "choose", "value": wire["choose"],
                           "row": prev.get("label") if prev.get("kind") == "click_value_of" else None,
-                          "reopen": list(wire.get("reopen") or [])})
+                          "reopen": list(wire.get("reopen") or []),
+                          # menu title -> the control's shorter display ("On + Align Bars" -> "Bars")
+                          "shows": dict(wire.get("shows") or {})})
 
     for i, step in enumerate(steps):
+        nxt = steps[i + 1] if i + 1 < len(steps) else None
+        # a click that reveals a settings row (a disclosure header): the row is
+        # its expect, so it's skipped when already open. Only this pairing --
+        # a dropdown click_text's own label can equal the next step's anchor
+        # (flex: "Flex Pitch"), where skipping would be wrong.
+        if step["kind"] == "click_text" and nxt is not None and nxt["kind"] == "click_value_of":
+            step["expect"] = _anchor_text(nxt)
+            continue
         if step["kind"] not in ("menu", "key"):
             continue
-        nxt = steps[i + 1] if i + 1 < len(steps) else None
         if nxt is not None:
             expect = _anchor_text(nxt)
         elif step["kind"] == "menu":

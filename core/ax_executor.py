@@ -212,7 +212,7 @@ def _revert_setting(entry: dict) -> None:
     shortcut (flex's Cmd+F) that would hide what's already showing."""
     from core.executor import StepAbort as Abort, run_steps, wire_to_steps
     route = wire_to_steps(entry["reopen"])
-    pick = {"kind": "choose", "value": entry["prev"], "row": entry.get("row")}
+    pick = {"kind": "choose", "value": entry["prev"], "row": entry.get("row"), "shows": entry.get("shows")}
     try:
         run_steps([route[-1], pick], log=lambda m: print(f"[revert] {m}"))
     except Abort:
