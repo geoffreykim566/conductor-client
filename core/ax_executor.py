@@ -208,15 +208,27 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
 def _revert_setting(entry: dict) -> None:
     """Pick the old value in the same dropdown again. Try the dropdown's own
     click first (its pane is usually still open); only if that isn't on
-    screen, replay the whole route -- some routes start with a toggle
-    shortcut (flex's Cmd+F) that would hide what's already showing."""
-    from core.executor import StepAbort as Abort, run_steps, wire_to_steps
+    screen in Logic's front window, replay the whole route -- some routes
+    start with a toggle shortcut (flex's Cmd+F) that would hide what's
+    already showing. A pane under another window (Settings over Project
+    Settings, 2026-09-29) would take the short path's click itself."""
+    from core.executor import StepAbort as Abort, _find_text, _is_front_window, run_steps, wire_to_steps
     route = wire_to_steps(entry["reopen"])
     pick = {"kind": "choose", "value": entry["prev"], "row": entry.get("row"), "shows": entry.get("shows")}
-    try:
-        run_steps([route[-1], pick], log=lambda m: print(f"[revert] {m}"))
-    except Abort:
-        run_steps(route + [pick], log=lambda m: print(f"[revert] {m}"))
+    log = lambda m: print(f"[revert] {m}")  # noqa: E731
+    last = route[-1]
+    texts = [last["label"]] if last["kind"] == "click_value_of" else (
+        last["value"] if isinstance(last["value"], list) else [last["value"]])
+    hit = _find_text(texts, include_menus=False)
+    if hit is not None and _is_front_window(hit["win"]):
+        try:
+            run_steps([last, pick], log=log)
+            return
+        except Abort:
+            pass
+    elif hit is not None:
+        log(f"{hit['text']!r} is showing but its window isn't in front — replaying the route")
+    run_steps(route + [pick], log=log)
 
 
 def register(handlers: dict) -> None:

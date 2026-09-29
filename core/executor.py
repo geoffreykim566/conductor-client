@@ -36,7 +36,6 @@ existing Screen Recording. Every event batch is preceded by a frontmost-app
 check: if Logic Pro isn't frontmost the path aborts rather than typing into
 whatever is.
 """
-import os
 import time
 
 import Quartz
@@ -423,25 +422,20 @@ def _box_center_screen(box: dict, img_size: tuple, win_info: dict) -> tuple:
     return cx, cy
 
 
-def _uncovered(hit: dict) -> bool:
-    """Whether the window OCR found `hit` in is the topmost window at that
-    point. Window capture reads a window's contents even when another window
-    covers it, so a row "showing" in a Settings window behind the main window
-    isn't clickable. Conductor's own windows are ignored -- the forward click
-    path doesn't check them either."""
-    x, y = _box_center_screen(hit["box"], hit["img"].size, hit["win"])
-    own_pid = os.getpid()
-    wins = Quartz.CGWindowListCopyWindowInfo(
-        Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
-        Quartz.kCGNullWindowID) or []
-    for w in wins:   # front to back
-        if w.get("kCGWindowOwnerPID") == own_pid or w.get("kCGWindowLayer", 0) not in range(0, 9):
-            continue
-        b = w.get("kCGWindowBounds", {})
-        if b.get("X", 0) <= x < b.get("X", 0) + b.get("Width", 0) and \
-                b.get("Y", 0) <= y < b.get("Y", 0) + b.get("Height", 0):
-            return w.get("kCGWindowNumber") == hit["win"].get("kCGWindowNumber")
-    return False
+def _is_front_window(win: dict) -> bool:
+    """Whether `win` is Logic's front window among those on its layer.
+    Window capture reads a window's contents even when another covers it, so
+    a row "showing" in Project Settings under the Settings window isn't
+    clickable (found live 2026-09-29: the label was clear of Settings, the
+    dropdown beside it wasn't). Floating plugin windows sit on another layer
+    and don't count."""
+    try:
+        wins = _find_all_logic_pro_windows()   # front to back
+    except RuntimeError:
+        return False
+    layer = win.get("kCGWindowLayer", 0)
+    front = next((w for w in wins if w.get("kCGWindowLayer", 0) == layer), None)
+    return front is not None and front.get("kCGWindowNumber") == win.get("kCGWindowNumber")
 
 
 def _value_blob_right_of(label_box: dict, words: list[dict]) -> dict | None:
@@ -524,16 +518,18 @@ def _run_menu(step: dict, log, stop_event=None) -> None:
     if len(path) < 2:
         raise StepAbort(f"menu path needs >= 2 items, got {path!r}")
     _require_logic_frontmost()
-    # The pane is already open: the row this route leads to is on screen and
-    # nothing covers it -- reopening it is ~3 s of menu travel for nothing.
+    # The pane is already open: the row this route leads to is on screen in
+    # Logic's front window -- reopening it is ~3 s of menu travel for nothing.
     # Keyed on the row label only, never a tab name ("Audio" stays visible
     # whichever Settings tab is showing).
     row = step.get("skip_if_row")
     if row:
         hit = _find_text(row, include_menus=False)
-        if hit is not None and _uncovered(hit):
+        if hit is not None and _is_front_window(hit["win"]):
             log(f"    already showing {hit['text']!r} — skipped the menu")
             return
+        if hit is not None:
+            log(f"    {hit['text']!r} is showing but its window isn't in front — opening it by menu")
 
     _open_menubar_menu(path[0], stop_event)          # click the menu-bar title
     log(f"    open: {path[0]}")
@@ -824,10 +820,11 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
     back to its own last-hop name only when that's reliably still visible
     (see `_menu_terminal_expect`). A click_text step followed by a
     click_value_of row gets that row's label (a disclosure header: skipped
-    when the row already shows); a wire-sent `expect` on a click_text is kept
-    (the server's pane-only trim). A `menu` step also gets `skip_if_row`, the
-    label of the route's dropdown row further on: it's skipped when that row
-    is already on screen and uncovered. Other click_text/click_value_of/choose
+    when the row already shows); a wire-sent `expect` on a click_text or menu
+    is kept (the server's pane-only trim: the dropped row). A `menu` step also
+    gets `skip_if_row`, the label of the route's dropdown row further on (or
+    that wire-sent row): it's skipped when that row is already on screen and
+    uncovered. Other click_text/click_value_of/choose
     steps never get an auto `expect` — their own pre-click OCR match, or a
     following step's structural check (menu appeared/closed), does that job
     instead.
@@ -839,7 +836,11 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
     steps: list[dict] = []
     for wire in wire_steps:
         if "menu_path" in wire:
-            steps.append({"kind": "menu", "path": list(wire["menu_path"])})
+            st = {"kind": "menu", "path": list(wire["menu_path"])}
+            if wire.get("expect"):   # pane-only route: the dropped row it opens onto
+                st["expect"] = list(wire["expect"])
+                st["skip_if_row"] = list(wire["expect"])
+            steps.append(st)
         elif "shortcut" in wire:
             steps.append({"kind": "key", "value": wire["shortcut"]})
         elif "click_value_of" in wire:
@@ -877,7 +878,7 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
         if step["kind"] == "click_text" and nxt is not None and nxt["kind"] == "click_value_of":
             step["expect"] = _anchor_text(nxt)
             continue
-        if step["kind"] not in ("menu", "key"):
+        if step["kind"] not in ("menu", "key") or step.get("expect"):   # wire-sent: kept
             continue
         if step["kind"] == "menu":
             # the settings row this route leads to: showing means the pane is open
