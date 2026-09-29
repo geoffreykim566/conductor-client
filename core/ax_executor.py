@@ -200,7 +200,8 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
                 results.append((entry, False, f"no inverse for {entry['kind']}"))
         except Exception as exc:  # noqa: BLE001
             results.append((entry, False, f"{type(exc).__name__}: {exc}"))
-        log(f"[revert] {entry['label']}: {results[-1][2]}")
+        msg = results[-1][2]
+        log(f"[revert] {msg}" if msg == entry["label"] else f"[revert] {entry['label']}: {msg}")
         time.sleep(0.2)
     return results
 
