@@ -679,9 +679,9 @@ class MessageWidget(QWidget):
 
     def _wt_on_stopped(self) -> None:
         """The user pressed a key / clicked / scrolled during the run."""
-        print("[wt] run stopped by user input")
         if self._wt_state != "running":
-            return
+            return   # the tap fired after the run had already ended
+        print("[wt] run stopped by user input")
         self._wt_collect_attempt()
         try:
             from ui.overlay_window import instance as _overlay
