@@ -568,10 +568,6 @@ class ChatWindow(QWidget):
         if key == Qt.Key_Escape and self._turn_in_flight():
             self.cancel_turn()
             return True
-        if (key == Qt.Key_Escape and (event.modifiers() & Qt.ShiftModifier)
-                and self._chat_view.has_active_walkthrough()):
-            self._chat_view.wt_shift_esc()
-            return True
         if (key in (Qt.Key_Return, Qt.Key_Enter)
                 and not (event.modifiers() & Qt.ShiftModifier)
                 and self._chat_view.has_active_walkthrough()

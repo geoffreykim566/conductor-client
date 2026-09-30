@@ -213,10 +213,6 @@ class ChatView(QWidget):
         if self._active_wt_widget is not None:
             self._active_wt_widget.wt_enter()
 
-    def wt_shift_esc(self) -> None:
-        if self._active_wt_widget is not None:
-            self._active_wt_widget.wt_shift_esc()
-
     def has_active_walkthrough(self) -> bool:
         return self._active_wt_widget is not None
 

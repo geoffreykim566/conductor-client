@@ -37,12 +37,14 @@ from ui.theme import (
     TEXT_SECONDARY,
 )
 
-_STEP_STYLE = f"QLabel {{ color: {TEXT_MUTED}; padding-left: 2px; }}"
-_STEP_ACTIVE_STYLE = f"QLabel {{ color: {TEXT}; font-weight: 600; padding-left: 2px; }}"
-_STEP_FAILED_STYLE = f"QLabel {{ color: {DANGER}; font-weight: 600; padding-left: 2px; }}"
-_HINT_STYLE = f"QLabel {{ color: {TEXT_DIM}; padding-left: 2px; }}"
-_STATUS_ERROR_STYLE = f"QLabel {{ color: {DANGER}; padding-left: 2px; margin-top: 4px; }}"
-_STATUS_INFO_STYLE = f"QLabel {{ color: {TEXT_SECONDARY}; padding-left: 2px; margin-top: 4px; }}"
+_STEP_STYLE = f"QLabel {{ font-family: {MONO}; color: {TEXT_MUTED}; padding-left: 2px; }}"
+_STEP_ACTIVE_STYLE = f"QLabel {{ font-family: {MONO}; color: {TEXT}; font-weight: 600; padding-left: 2px; }}"
+_STEP_FAILED_STYLE = f"QLabel {{ font-family: {MONO}; color: {DANGER}; font-weight: 600; padding-left: 2px; }}"
+_HINT_STYLE = f"QLabel {{ font-family: {MONO}; color: {TEXT_DIM}; padding-left: 2px; }}"
+_STATUS_ERROR_STYLE = f"QLabel {{ font-family: {MONO}; color: {DANGER}; padding-left: 2px; margin-top: 4px; }}"
+_CARD_BUTTON_W = 140
+_CARD_BUTTON_H = 32
+_STATUS_INFO_STYLE = f"QLabel {{ font-family: {MONO}; color: {TEXT_SECONDARY}; padding-left: 2px; margin-top: 4px; }}"
 
 
 def _system_font(size: int = 13) -> QFont:
@@ -361,7 +363,7 @@ class MessageWidget(QWidget):
         """Render a walkthrough/action card inside the bubble.
 
         Card states: Ready (Run / ↵) -> Running (hands off; any real input stops)
-        -> Done (Revert / ↵ / Shift+Esc). `auto` skips Ready unless `destructive`.
+        -> Done (Revert / ↵). `auto` skips Ready unless `destructive`.
         """
         if self._role != "assistant" or not steps:
             return
@@ -383,27 +385,27 @@ class MessageWidget(QWidget):
         for i, step in enumerate(steps):
             n = i + 1
             if "menu_path" in step:
-                text = f"{n}.  " + " → ".join(step["menu_path"])
+                text = f"{n}. " + " → ".join(step["menu_path"])
             elif "shortcut" in step:
-                text = f"{n}.  ⌨  <b>{step['shortcut']}</b>"
+                text = f"{n}. ⌨  <b>{step['shortcut']}</b>"
             elif "click_value_of" in step:
-                text = f"{n}.  {step['click_value_of']}"
+                text = f"{n}. {step['click_value_of']}"
             elif "click_text" in step:
                 val = step["click_text"]
-                text = f"{n}.  {val}" if isinstance(val, str) else f"{n}.  (current selection)"
+                text = f"{n}. {val}" if isinstance(val, str) else f"{n}. (current selection)"
             elif "ax_open_plugin" in step:
-                text = f"{n}.  Open <b>{step['ax_open_plugin']}</b>"
+                text = f"{n}. Open <b>{step['ax_open_plugin']}</b>"
             elif "choose" in step:
                 v = step["choose"]
-                text = (f"{n}.  One step <b>{v}</b>" if v in ("larger", "smaller")
-                        else f"{n}.  Choose <b>{v}</b>")
+                text = (f"{n}. One step <b>{v}</b>" if v in ("larger", "smaller")
+                        else f"{n}. Choose <b>{v}</b>")
             elif "ax_set_param" in step:
                 p = step["ax_set_param"]
-                text = f"{n}.  {p.get('plugin', '')} · {p.get('param', '')} → <b>{p.get('value', '')}</b>"
+                text = f"{n}. {p.get('plugin', '')} · {p.get('param', '')} → <b>{p.get('value', '')}</b>"
             else:
                 continue
             lbl = QLabel(text)
-            lbl.setFont(_system_font(10))
+            lbl.setFont(_system_font(11))
             lbl.setWordWrap(True)
             lbl.setStyleSheet(_STEP_STYLE)
             cl.addWidget(lbl)
@@ -411,39 +413,41 @@ class MessageWidget(QWidget):
 
         button = QPushButton("Run")
         button.setObjectName("primary")
-        button.setCursor(Qt.PointingHandCursor)
-        button.setFixedHeight(24)
         button.clicked.connect(self.wt_enter)
         # Revert beside Try again, when a failed or stopped run changed something
         button2 = QPushButton("Revert")
         button2.setObjectName("secondary")
-        button2.setCursor(Qt.PointingHandCursor)
-        button2.setFixedHeight(24)
         button2.clicked.connect(self.wt_revert)
         button2.hide()
+        for b in (button, button2):
+            b.setCursor(Qt.PointingHandCursor)
+            b.setFixedSize(_CARD_BUTTON_W, _CARD_BUTTON_H)
+            b.setStyleSheet("padding: 0 12px;")   # the theme's 9px padding clips the label at this height
         row = QHBoxLayout()
-        row.setContentsMargins(0, 0, 0, 0)
-        row.setSpacing(6)
+        row.setContentsMargins(0, 4, 0, 0)
+        row.setSpacing(8)
+        row.addStretch(1)
         row.addWidget(button)
         row.addWidget(button2)
+        row.addStretch(1)
         cl.addLayout(row)
         self._wt_button = button
         self._wt_button2 = button2
 
         hint = QLabel("Press ↵ to run")
-        hint.setFont(_system_font(9))
-        hint.setStyleSheet(f"QLabel {{ color: {TEXT_DIM}; padding-left: 2px; margin-top: 4px; }}")
+        hint.setFont(_system_font(10))
+        hint.setStyleSheet(f"QLabel {{ font-family: {MONO}; color: {TEXT_DIM}; padding-left: 2px; margin-top: 4px; }}")
         cl.addWidget(hint)
         self._wt_hint = hint
 
         end_hint = QLabel("Press any key to stop")
-        end_hint.setFont(_system_font(9))
+        end_hint.setFont(_system_font(10))
         end_hint.setStyleSheet(_HINT_STYLE)
         cl.addWidget(end_hint)
         self._wt_end_hint = end_hint
 
         status = QLabel("")
-        status.setFont(_system_font(9))
+        status.setFont(_system_font(10))
         status.setWordWrap(True)
         status.hide()
         cl.addWidget(status)
@@ -479,12 +483,6 @@ class MessageWidget(QWidget):
         if not self._wt_run_executor():
             self._wt_active = False
             self._wt_show_retry(None)   # the permission message is already showing
-
-    def wt_shift_esc(self) -> None:
-        """Shift+Esc: revert what the last run changed (Done, or a failed/stopped
-        run that changed something), or retry a failed Revert."""
-        if getattr(self, "_wt_state", None) in ("done", "retry", "revert_failed"):
-            self.wt_revert()
 
     def wt_revert(self) -> None:
         from core.executor_thread import RevertThread
@@ -525,7 +523,7 @@ class MessageWidget(QWidget):
             self._wt_button.setText("Try again")
             self._wt_button.setEnabled(True)
             self._wt_button.show()
-            self._wt_hint.setText("↵ to try reverting again")
+            self._wt_hint.setText("Press ↵ to try reverting again")
             self._wt_hint.show()
         self._wt_status.show()
 
@@ -541,7 +539,7 @@ class MessageWidget(QWidget):
             self._wt_button.setText("Revert")
             self._wt_button.setEnabled(True)
             self._wt_button.show()
-            self._wt_hint.setText("↵ or Shift+Esc to revert")
+            self._wt_hint.setText("Press ↵ to revert")
             self._wt_hint.show()
         else:
             self._wt_button.hide()
@@ -561,10 +559,9 @@ class MessageWidget(QWidget):
         self._wt_button.show()
         if self._wt_ledger:
             self._wt_button2.show()
-            self._wt_hint.setText("↵ to try again · Shift+Esc to revert")
         else:
             self._wt_button2.hide()
-            self._wt_hint.setText("↵ to try again")
+        self._wt_hint.setText("Press ↵ to try again")
         self._wt_hint.show()
 
     def _wt_highlight_step(self, idx: int) -> None:
