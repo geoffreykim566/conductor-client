@@ -142,7 +142,8 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
     return {"kind": LEDGER_KIND_PARAM, "label": f"{after['label']} back to {before['readout']}",
             "plugin": plugin, "param": after["label"], "raw_before": before["raw"],
             "readout_before": before["readout"], "opened_window": opened_here,
-            "bool": before.get("kind") == "AXCheckBox"}
+            "bool": before.get("kind") == "AXCheckBox",
+            "enabled_band": enabled_band}   # the editor path may have switched it on before falling back here
 
 
 def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
@@ -174,10 +175,6 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
                         ax.set_view(app, win, "Controls")
                         ax.write_param_raw(win, entry["param"], float(entry["raw_before"]))
                         ax.set_view(app, win, "Editor")
-                    if entry.get("enabled_band"):
-                        _, cb = ax.editor_checkbox(win, entry["enabled_band"])
-                        if cb is not None:
-                            ax.set_editor_checkbox(cb, False)
                     results.append((entry, True, f"{entry['param']} restored"))
                 else:
                     ax.set_view(app, win, "Controls")
@@ -187,6 +184,12 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
                         got = ax.write_param_raw(win, entry["param"], float(entry["raw_before"]))
                     ax.set_view(app, win, "Editor")
                     results.append((entry, True, f"{entry['param']} -> {got['readout']}"))
+                # A band the run switched on to reach its slider goes back off,
+                # whichever path wrote the value (editor view by now).
+                if entry.get("enabled_band"):
+                    _, cb = ax.editor_checkbox(win, entry["enabled_band"])
+                    if cb is not None:
+                        ax.set_editor_checkbox(cb, False)
                 if reopened:
                     _close_window(win)
             elif entry["kind"] == LEDGER_KIND_PLUGIN:
