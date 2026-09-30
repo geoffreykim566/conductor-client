@@ -28,18 +28,24 @@ class ExecutorThread(QThread):
     failed(idx, msg)    — step `idx` aborted; msg is the StepAbort text (activation
                            failure reports as step -1, before any step ran). The
                            partial ledger is available as `.ledger` for a revert.
+
+    `start_at` skips the steps before it (a Try again). `.resume_at` is where a
+    Try again after this run should start: just past the last step that changed
+    something, since every later step re-reads Logic's state, while repeating a
+    change isn't always harmless ("one step larger", "add a second copy").
     """
     step_started = Signal(int)
     finished = Signal(object)
     failed = Signal(int, str)
 
     def __init__(self, steps: list[dict], stop_event: threading.Event | None = None,
-                 parent=None) -> None:
+                 parent=None, start_at: int = 0) -> None:
         super().__init__(parent)
         self._steps = steps
         self._stop_flag = False
         self._stop_event = stop_event if stop_event is not None else threading.Event()
         self.ledger: list[dict] = []
+        self.resume_at = start_at
 
     def stop(self) -> None:
         self._stop_flag = True
@@ -58,7 +64,7 @@ class ExecutorThread(QThread):
         # sliding in, and a first capture that sees nothing misreads the screen.
         if not wait_logic_on_screen():
             self.failed.emit(-1, "Logic's project window isn't on this desktop — bring it "
-                                 "to this desktop and press Run again")
+                                 "to this desktop and try again")
             return
         # NSWorkspace reports Logic frontmost before the system menu bar has
         # actually redrawn — the first capture otherwise races that redraw
@@ -66,12 +72,17 @@ class ExecutorThread(QThread):
         # interaction but not before this first one).
         time.sleep(MENU_SETTLE_S)
         for idx, step in enumerate(self._steps):
+            if idx < self.resume_at:
+                continue
             if self._stop_flag or self._stop_event.is_set():
                 return
             self.step_started.emit(idx)
             log = lambda msg, i=idx: print(f"[executor_thread] step {i}: {msg}")
             try:
-                self.ledger.extend(run_steps([step], log=log, stop_event=self._stop_event) or [])
+                changed = run_steps([step], log=log, stop_event=self._stop_event) or []
+                if changed:
+                    self.ledger.extend(changed)
+                    self.resume_at = idx + 1
             except StepAbort as exc:
                 self.failed.emit(idx, str(exc))
                 return

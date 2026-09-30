@@ -28,7 +28,7 @@ def _mw_or_abort(app):
         # Logic is running but exposes no windows: it's on another desktop/Space,
         # minimized, or the project is closed (found live 2026-09-18).
         raise StepAbort("Logic's project window isn't on this desktop — bring Logic Pro "
-                        "to this desktop (or un-minimize it) and press Run again")
+                        "to this desktop (or un-minimize it) and try again")
     return mw
 
 
@@ -152,10 +152,16 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
     mw = ax.main_window(app)
     for entry in reversed(ledger):
         try:
+            if entry["kind"] in (LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN):
+                _select_entry_track(mw, entry)
             if entry["kind"] == LEDGER_KIND_PARAM:
-                win = ax.plugin_window_for(app, entry["plugin"])
-                if win is None:
-                    raise ax.AxError("plugin window not open")
+                track = entry.get("track")
+                win = ax.plugin_window_for(app, entry["plugin"], track=track)
+                reopened = win is None
+                if reopened:
+                    win = ax.open_loaded_plugin(app, mw, entry["plugin"], track=track)
+                    if win is None:
+                        raise ax.AxError(f"{entry['plugin']} isn't loaded on {track or 'the selected track'}")
                 if entry.get("via") == "editor_checkbox":
                     _, cb = ax.editor_checkbox(win, entry["param"])
                     ax.set_editor_checkbox(cb, bool(entry["raw_before"]))
@@ -181,14 +187,12 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
                         got = ax.write_param_raw(win, entry["param"], float(entry["raw_before"]))
                     ax.set_view(app, win, "Editor")
                     results.append((entry, True, f"{entry['param']} -> {got['readout']}"))
+                if reopened:
+                    _close_window(win)
             elif entry["kind"] == LEDGER_KIND_PLUGIN:
-                win = ax.plugin_window_for(app, entry["plugin"])
+                win = ax.plugin_window_for(app, entry["plugin"], track=entry.get("track"))
                 if win is not None:
-                    btn = ax.find_child(win, ax.AS.kAXSubroleAttribute, "AXCloseButton") or \
-                        ax.find_child(win, ax.AS.kAXDescriptionAttribute, "close", "AXButton")
-                    if btn is not None:
-                        ax.ax_press(btn)
-                        time.sleep(0.3)
+                    _close_window(win)
                 ok = ax.remove_plugin(app, mw, entry["slot"], index=entry.get("index"))
                 if not ok:
                     raise ax.AxError("slot menu removal failed")
@@ -204,6 +208,20 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
         log(f"[revert] {msg}" if msg == entry["label"] else f"[revert] {entry['label']}: {msg}")
         time.sleep(0.2)
     return results
+
+
+def _select_entry_track(mw, entry: dict) -> None:
+    track = entry.get("track")
+    if track and not ax.select_track(mw, track):
+        raise ax.AxError(f"track {track!r} not found in the Tracks area")
+
+
+def _close_window(win) -> None:
+    btn = ax.find_child(win, ax.AS.kAXSubroleAttribute, "AXCloseButton") or \
+        ax.find_child(win, ax.AS.kAXDescriptionAttribute, "close", "AXButton")
+    if btn is not None:
+        ax.ax_press(btn)
+        time.sleep(0.3)
 
 
 def _revert_setting(entry: dict) -> None:
@@ -232,6 +250,17 @@ def _revert_setting(entry: dict) -> None:
     run_steps(route + [pick], log=log)
 
 
+def _with_track(entry: dict | None) -> dict | None:
+    """Stamp a plugin/param ledger entry with the track it was made on (the
+    selected strip after the step), so Revert can select it again -- the user
+    may have selected another track since."""
+    if isinstance(entry, dict) and "track" not in entry:
+        mw = ax.main_window(ax.app_element())
+        strip = ax.selected_strip(mw) if mw is not None else None
+        entry["track"] = ax.desc(strip) if strip is not None else None
+    return entry
+
+
 def register(handlers: dict) -> None:
-    handlers["ax_open_plugin"] = lambda step, opts, log, stop_event: run_ax_open_plugin(step, log, stop_event)
-    handlers["ax_set_param"] = lambda step, opts, log, stop_event: run_ax_set_param(step, log, stop_event)
+    handlers["ax_open_plugin"] = lambda step, opts, log, stop_event: _with_track(run_ax_open_plugin(step, log, stop_event))
+    handlers["ax_set_param"] = lambda step, opts, log, stop_event: _with_track(run_ax_set_param(step, log, stop_event))

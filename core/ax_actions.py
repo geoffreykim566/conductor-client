@@ -348,14 +348,18 @@ def plugin_windows_seen(app) -> set[tuple[str, str]]:
     return {(title(w) or "", window_plugin_name(w) or "") for w in app_windows(app)}
 
 
-def plugin_window_for(app, name: str, before: set[tuple[str, str]] | None = None):
+def plugin_window_for(app, name: str, before: set[tuple[str, str]] | None = None,
+                      track: str | None = None):
     """Find the open plugin window for `name` (title = track name; identity = the
     titled editor AXGroup or the trailing AXStaticText). `before` is a set of
     (title, plugin) pairs from plugin_windows_seen: a window whose pair was
-    already present is not the one this call just opened."""
+    already present is not the one this call just opened. `track` keeps only
+    that track's windows (the same plugin can be open on two tracks)."""
     for w in app_windows(app):
         shown = window_plugin_name(w)
         if before is not None and (title(w) or "", shown or "") in before:
+            continue
+        if track is not None and (title(w) or "") != track:
             continue
         if shown and (_norm(name) in _norm(shown) or _norm(shown) in _norm(name)):
             return w
@@ -408,24 +412,28 @@ def open_plugin_by_search(app, mw, name: str, stop_check=None) -> tuple[str, obj
 
 
 def loaded_slot(strip_el, name: str, index: int | None = None):
-    """The slot group for a loaded plugin, by index if given else by label prefix."""
+    """The slot group for a loaded plugin, by index if given and it still holds
+    that plugin, else by label prefix. The index is where the plugin landed when
+    it was added; later adds and removals shift slots, so it's only a hint."""
     groups = fx_slots(strip_el)[1]
-    if index is not None and 0 <= index < len(groups):
-        return groups[index]
     key = _norm(name)[:6]
+    if index is not None and 0 <= index < len(groups) and _norm(desc(groups[index])).startswith(key):
+        return groups[index]
     return next((g for g in groups if _norm(desc(g)).startswith(key)), None)
 
 
-def open_loaded_plugin(app, mw, name: str, index: int | None = None):
-    """Open the window of an already-loaded plugin via its slot's 'open' button."""
+def open_loaded_plugin(app, mw, name: str, index: int | None = None, track: str | None = None):
+    """Open the window of an already-loaded plugin via its slot's 'open' button.
+    `track`: the selected strip's track, so another track's open window of the
+    same plugin isn't taken for this one."""
     g = loaded_slot(selected_strip(mw), name, index)
     if g is None:
         return None
     before_w = plugin_windows_seen(app)
-    win = plugin_window_for(app, name)
+    win = plugin_window_for(app, name, track=track)
     if win is None:
         ax_press(find_child(g, AS.kAXDescriptionAttribute, "open", "AXButton"))
-        win, _ = wait_until(lambda: plugin_window_for(app, name, before_w), timeout=4.0)
+        win, _ = wait_until(lambda: plugin_window_for(app, name, before_w, track=track), timeout=4.0)
     if win is not None:
         ensure_on_screen(win)
     return win

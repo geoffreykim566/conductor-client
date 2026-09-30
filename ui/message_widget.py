@@ -369,7 +369,8 @@ class MessageWidget(QWidget):
         self._wt_active = False
         self._wt_workers: list = []
         self._wt_executor = None
-        self._wt_ledger: list = []
+        self._wt_ledger: list = []   # every change still in effect, across Try agains
+        self._wt_resume = 0          # step a Try again starts from (ExecutorThread.resume_at)
         self._wt_state = "ready"
         self._wt_auto = bool(auto) and not destructive
 
@@ -413,8 +414,21 @@ class MessageWidget(QWidget):
         button.setCursor(Qt.PointingHandCursor)
         button.setFixedHeight(24)
         button.clicked.connect(self.wt_enter)
-        cl.addWidget(button)
+        # Revert beside Try again, when a failed or stopped run changed something
+        button2 = QPushButton("Revert")
+        button2.setObjectName("secondary")
+        button2.setCursor(Qt.PointingHandCursor)
+        button2.setFixedHeight(24)
+        button2.clicked.connect(self.wt_revert)
+        button2.hide()
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(6)
+        row.addWidget(button)
+        row.addWidget(button2)
+        cl.addLayout(row)
         self._wt_button = button
+        self._wt_button2 = button2
 
         hint = QLabel("Press ↵ to run")
         hint.setFont(_system_font(9))
@@ -443,36 +457,44 @@ class MessageWidget(QWidget):
             QTimer.singleShot(0, self.wt_enter)
 
     def wt_enter(self) -> None:
-        """Enter / the card button. In Ready state it starts the run; in Done
-        state it reverts. During a run it does nothing (any real input already
-        stops the run via the interrupt tap)."""
+        """Enter / the card's main button: Run in Ready, Revert in Done, Try
+        again after a failed or stopped run or a failed Revert. During a run
+        it does nothing (any real input already stops the run via the
+        interrupt tap)."""
         if not hasattr(self, "_wt_steps") or not hasattr(self, "_wt_card"):
             return
         if not self._wt_card.isVisible():
             return
         state = getattr(self, "_wt_state", "ready")
-        if state == "done":
+        if state in ("done", "revert_failed"):
             self.wt_revert()
             return
-        if state != "ready" or self._wt_active:
+        if state not in ("ready", "retry") or self._wt_active:
             return
         self._wt_active = True
         self._wt_state = "running"
         self._wt_hint.hide()
         self._wt_button.hide()
-        self._wt_run_executor()
+        self._wt_button2.hide()
+        if not self._wt_run_executor():
+            self._wt_active = False
+            self._wt_show_retry(None)   # the permission message is already showing
 
     def wt_shift_esc(self) -> None:
-        """Shift+Esc: revert the last completed run (only meaningful in Done state)."""
-        if getattr(self, "_wt_state", None) == "done":
+        """Shift+Esc: revert what the last run changed (Done, or a failed/stopped
+        run that changed something), or retry a failed Revert."""
+        if getattr(self, "_wt_state", None) in ("done", "retry", "revert_failed"):
             self.wt_revert()
 
     def wt_revert(self) -> None:
         from core.executor_thread import RevertThread
-        if getattr(self, "_wt_state", None) != "done" or not getattr(self, "_wt_ledger", None):
+        if (getattr(self, "_wt_state", None) not in ("done", "retry", "revert_failed")
+                or not getattr(self, "_wt_ledger", None)):
             return
         self._wt_state = "reverting"
         self._wt_button.setEnabled(False)
+        self._wt_button2.hide()
+        self._wt_hint.hide()
         self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
         self._wt_status.setText("Reverting — hands off for a moment")
         self._wt_status.show()
@@ -483,25 +505,35 @@ class MessageWidget(QWidget):
 
     def _wt_on_reverted(self, results) -> None:
         self._wt_stop_threads()
-        ok = all(r[1] for r in results) if results else False
-        self._wt_ledger = []
-        self._wt_state = "reverted"
-        self._wt_button.hide()
-        self._wt_hint.hide()
+        # Keep what didn't revert (by identity: a thread-level error reports a
+        # stand-in entry, so everything not confirmed reverted stays).
+        reverted = {id(r[0]) for r in results if r[1]}
+        remaining = [e for e in self._wt_ledger if id(e) not in reverted]
+        self._wt_ledger = remaining
         self._wt_end_hint.hide()
-        if ok:
+        if not remaining:
+            self._wt_state = "reverted"
+            self._wt_button.hide()
+            self._wt_hint.hide()
             self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
             self._wt_status.setText("Reverted")
         else:
+            self._wt_state = "revert_failed"
             failed = "; ".join(f"{r[0].get('label', '?')}: {r[2]}" for r in results if not r[1])
             self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
             self._wt_status.setText(f"Couldn't revert everything — {failed}")
+            self._wt_button.setText("Try again")
+            self._wt_button.setEnabled(True)
+            self._wt_button.show()
+            self._wt_hint.setText("↵ to try reverting again")
+            self._wt_hint.show()
         self._wt_status.show()
 
     def _wt_show_done(self, ledger: list, note: str = "Done") -> None:
         self._wt_ledger = list(ledger or [])
         self._wt_state = "done"
         self._wt_end_hint.hide()
+        self._wt_button2.hide()
         self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
         self._wt_status.setText(note)
         self._wt_status.show()
@@ -514,6 +546,26 @@ class MessageWidget(QWidget):
         else:
             self._wt_button.hide()
             self._wt_hint.hide()
+
+    def _wt_show_retry(self, note: str | None, *, error: bool = True) -> None:
+        """A failed or stopped run: Try again (from `_wt_resume`, re-reading
+        Logic's state), plus Revert when something already changed."""
+        self._wt_state = "retry"
+        self._wt_end_hint.hide()
+        if note is not None:
+            self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE if error else _STATUS_INFO_STYLE)
+            self._wt_status.setText(note)
+            self._wt_status.show()
+        self._wt_button.setText("Try again")
+        self._wt_button.setEnabled(True)
+        self._wt_button.show()
+        if self._wt_ledger:
+            self._wt_button2.show()
+            self._wt_hint.setText("↵ to try again · Shift+Esc to revert")
+        else:
+            self._wt_button2.hide()
+            self._wt_hint.setText("↵ to try again")
+        self._wt_hint.show()
 
     def _wt_highlight_step(self, idx: int) -> None:
         for i, lbl in enumerate(self._wt_step_labels):
@@ -531,7 +583,9 @@ class MessageWidget(QWidget):
         self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
         self._wt_status.show()
 
-    def _wt_run_executor(self) -> None:
+    def _wt_run_executor(self) -> bool:
+        """Start a run from `_wt_resume`. False if it couldn't start (a
+        permission is missing; the message is already on the card)."""
         import threading
 
         from core.executor import check_event_permission, wire_to_steps
@@ -541,12 +595,12 @@ class MessageWidget(QWidget):
         if not check_event_permission():
             self._wt_show_permission_needed()
             self._wt_active = False
-            return
+            return False
         translated = wire_to_steps(self._wt_steps)
         if not translated:
             self._wt_show_permission_needed()
             self._wt_active = False
-            return
+            return False
 
         interrupt_tap = WalkthroughInterruptTap(parent=self)
         if not interrupt_tap.arm():
@@ -555,14 +609,16 @@ class MessageWidget(QWidget):
                 "Security → Input Monitoring, then try again."
             )
             self._wt_active = False
-            return
+            return False
 
         self._wt_status.setStyleSheet(_STATUS_INFO_STYLE)
         self._wt_status.setText("Running — hands off for a moment")
         self._wt_status.show()
+        self._wt_end_hint.show()
 
         stop_event = threading.Event()
-        executor = ExecutorThread(translated, stop_event=stop_event, parent=self)
+        executor = ExecutorThread(translated, stop_event=stop_event, parent=self,
+                                  start_at=self._wt_resume)
         executor.step_started.connect(self._wt_on_step_started)
         executor.finished.connect(self._wt_on_finished)
         executor.failed.connect(self._wt_on_failed)
@@ -576,10 +632,11 @@ class MessageWidget(QWidget):
         # to exit, and doing that synchronously inside the tap callback risks
         # macOS disabling the tap for taking too long to return.
         interrupt_tap.triggered.connect(stop_event.set)
-        interrupt_tap.triggered.connect(self._wt_end, Qt.ConnectionType.QueuedConnection)
+        interrupt_tap.triggered.connect(self._wt_on_stopped, Qt.ConnectionType.QueuedConnection)
         self._wt_interrupt_tap = interrupt_tap
 
         executor.start()
+        return True
 
     def _wt_on_step_started(self, idx: int) -> None:
         print(f"[wt] executor step_started idx={idx}")
@@ -587,27 +644,55 @@ class MessageWidget(QWidget):
 
     def _wt_on_finished(self, ledger=None) -> None:
         print(f"[wt] executor finished; ledger={len(ledger or [])} entries")
+        if self._wt_state != "running":
+            return
         self._wt_teardown()
-        if ledger:
-            self._wt_show_done(ledger, "Done")
+        # a Try again's changes join the earlier attempts'; Revert undoes all
+        # of them newest first, so a value changed twice ends at its original
+        combined = self._wt_ledger + list(ledger or [])
+        if combined:
+            self._wt_show_done(combined, "Done")
         else:
             self._wt_state = "finished"
             self._wt_card.hide()
 
+    def _wt_collect_attempt(self) -> None:
+        """Fold a stopped/failed attempt into the card: its changes join the
+        ledger, and the next Try again starts where it says."""
+        ex = self._wt_executor
+        self._wt_teardown()   # waits for the thread, so its ledger is final
+        if ex is not None:
+            self._wt_ledger = self._wt_ledger + list(ex.ledger or [])
+            self._wt_resume = ex.resume_at
+
     def _wt_on_failed(self, idx: int, msg: str) -> None:
         print(f"[wt] executor failed at step {idx}: {msg}")
-        partial = list(getattr(self._wt_executor, "ledger", []) or [])
-        self._wt_teardown()
-        self._wt_mark_step_failed(idx)
-        if partial:
-            self._wt_show_done(partial, "Couldn't complete this step — earlier steps can be reverted.")
-            self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
+        if self._wt_state != "running":
+            return
+        self._wt_collect_attempt()
+        if idx >= 0:
+            self._wt_mark_step_failed(idx)
+            note = f"Couldn't finish step {idx + 1}."
         else:
-            self._wt_state = "failed"
-            self._wt_status.setStyleSheet(_STATUS_ERROR_STYLE)
-            self._wt_status.setText("Couldn't complete this step automatically — do it manually.")
-            self._wt_status.show()
-        # Card stays visible (not hidden) so the step list remains as a manual guide.
+            note = f"Couldn't start — {msg}."   # activation: the reason is the user's fix
+        if self._wt_ledger:
+            note += " Earlier steps can be reverted."
+        # Card stays visible so the step list remains as a manual guide.
+        self._wt_show_retry(note)
+
+    def _wt_on_stopped(self) -> None:
+        """The user pressed a key / clicked / scrolled during the run."""
+        print("[wt] run stopped by user input")
+        if self._wt_state != "running":
+            return
+        self._wt_collect_attempt()
+        try:
+            from ui.overlay_window import instance as _overlay
+            _overlay().dismiss()
+        except Exception:
+            pass
+        self._wt_highlight_step(-1)
+        self._wt_show_retry("Stopped.", error=False)
 
     def _wt_stop_threads(self) -> None:
         """Synchronously stop and wait for any running walkthrough thread.
@@ -635,7 +720,7 @@ class MessageWidget(QWidget):
             self._wt_interrupt_tap = None
 
     def _wt_end(self) -> None:
-        """External/interrupt stop (any real key/click/scroll, idle) — tears down and hides the card."""
+        """External stop (app quit, chat cleared) — tears down and hides the card."""
         self._wt_teardown()
         try:
             from ui.overlay_window import instance as _overlay
