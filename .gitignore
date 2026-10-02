@@ -12,3 +12,4 @@ build/
 # Local scratch — debug scripts, captured PNGs, smoke-test builds (not for repo)
 diagnostics/
 _vision_pkg_smoke/
+.pytest_cache/

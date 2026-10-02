@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_SUPPORT="$HOME/Library/Application Support/Conductor"
+APP_SUPPORT="$HOME/Library/Application Support/Conductor-v3"
 CONFIG_FILE="$APP_SUPPORT/config.json"
 SERVER="https://api.askconductor.ai"
 
@@ -10,7 +10,7 @@ echo "Conductor Uninstaller"
 echo "---------------------"
 echo "This will remove:"
 echo "  • /Applications/Conductor.app"
-echo "  • $APP_SUPPORT  (chat history, config, and API key)"
+echo "  • $APP_SUPPORT  (config.json: identity token + preferences; history.json: chat history)"
 echo ""
 read -r -p "Continue? [y/N] " confirm
 if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
@@ -18,14 +18,14 @@ if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
   exit 0
 fi
 
-# Notify the server before wiping local files so the device_id is still readable.
+# Notify the server before wiping local files so the identity token is still readable.
 # IP-based rate limits are intentionally left intact — they live in a separate
-# table keyed by IP, not device UUID, so reinstalling doesn't reset the cap.
+# table keyed by IP, not the install's identity, so reinstalling doesn't reset the cap.
 if [ -f "$CONFIG_FILE" ] && command -v python3 &>/dev/null; then
-  DEVICE_ID=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('device_id',''))" "$CONFIG_FILE" 2>/dev/null || true)
-  if [ -n "$DEVICE_ID" ]; then
+  TOKEN=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('conductor_token',''))" "$CONFIG_FILE" 2>/dev/null || true)
+  if [ -n "$TOKEN" ]; then
     curl -sf -X DELETE "$SERVER/v3/me" \
-      -H "X-Conductor-Id: $DEVICE_ID" \
+      -H "X-Conductor-Id: $TOKEN" \
       -H "Content-Type: application/json" \
       --max-time 5 >/dev/null 2>&1 || true
     echo "✓ Notified server"
