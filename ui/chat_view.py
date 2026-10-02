@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui.message_widget import MessageWidget
+from ui.message import MessageWidget
 from ui.theme import SCROLLBAR_GUTTER
 
 _QWIDGETSIZE_MAX = 16777215  # Qt's own constant for "no max height set"
