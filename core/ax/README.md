@@ -41,6 +41,17 @@ Use the plugin window's own name (`window_plugin_name`). Plugin windows are titl
 TRACK, so two plugins on one track give two windows with the same title (2026-09-19); compare
 (title, plugin) pairs, which also covers Logic swapping the plugin inside one window.
 
+### Controls view is the universal parameter path
+Every parameter there is an `AXCell` row, and an `AXValue` write on its slider lands exactly on
+every plugin tested, third-party included. Its readouts aren't writable, so a display value is
+reached by bisecting raw (log-scaled for frequencies): slower and a visible sweep, hence the
+editor is tried first where it labels sliders (Channel EQ does, Compressor mostly doesn't).
+Plugin windows can open with the View menu off-screen; `ensure_on_screen` first.
+
+### Slot index is only a hint
+Search-and-Add inserts at the top of the strip, so slot indexes shift as plugins come and go.
+`loaded_slot` uses the add-time index only if that slot still holds the named plugin.
+
 ### Plugin load mismatch
 If a search loads something whose window doesn't come up as the requested plugin, report it and
 leave the slot alone. An auto-removal used to run here; on the 09-19 false mismatch it silently

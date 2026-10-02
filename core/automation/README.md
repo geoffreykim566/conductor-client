@@ -69,6 +69,31 @@ and swallows untagged ones. Without the tag a run would abort on its own first k
 The tap replaced an older listen-only Shift+Escape monitor: it can consume the event and
 reacts to any real input.
 
+### Unknown wire keys are dropped
+`wire_to_steps` drops a key it doesn't know rather than guessing, so an older client degrades
+silently when the server adds a step kind.
+
+### Plugin and parameter steps
+`ax_open_plugin` opens the window of a plugin already on the track and adds one only when it's
+absent or `new` is set; a second copy is only ever added on request.
+`ax_set_param` tries the editor first (double-click the labelled slider, type; a disabled band
+is switched on first and ledgered), then falls back to Controls view, then returns to Editor.
+Which path runs is per parameter: Low Cut types, High Cut never gets a text field.
+
+### Dropdown option matching
+Exact match first, then loose: Region Smart Tempo's options prefix each other ("On" vs
+"On + Align Bars"), Logic prefixes some items ("Flex Time - Monophonic" for "Monophonic"), and
+numbers compare with thousands commas stripped ("1,024"). Read-back goes through `shows`,
+since the closed control can display shorter text ("Bars").
+
+### Revert writes values back; it never presses Cmd+Z
+Logic's Undo skips Controls-view parameter writes (Cmd+Z undid the insert instead), and the
+Edit menu's Undo title lags. Plugin/param entries carry their track: Revert selects it,
+reopens a closed plugin window from its slot and closes it after, since the user may have
+moved on. A band the run switched on goes back off whichever path wrote the value. A setting
+replays its route unless the dropdown is showing in Logic's front window (same-layer check:
+Settings panels and plugin windows float at layer 3).
+
 ## Adding a step kind
 1. Map the wire key in `wire.py` (and decide its `expect` derivation).
 2. Write `_run_<kind>(step, log, stop_event)` in `runner.py` (or its own module if large),

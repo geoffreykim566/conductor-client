@@ -30,6 +30,16 @@ Qt6 aborts the process (`qFatal`) when a QThread is destroyed while running; thi
 recurring "Python crashed" reports. Anything that can delete a card (new chat, app quit) calls
 `force_end_walkthrough()`, which stops and waits for every worker.
 
+### Try again and the shared ledger
+Try again makes no server call: the card's goal hasn't changed and every step re-reads live
+state. It resumes just past the last step that changed something, so "one step larger" or a
+second-copy add isn't repeated. All attempts share one ledger and Revert runs newest first, so
+a value changed twice ends at its original. A failed Revert keeps only its failed entries.
+
+### No typed revert
+User call: "undo that" in chat is declined (server-side) and points at the card. Revert stays
+live on older cards after later turns, which is the only undo path for now.
+
 ### Tooltips
 Native tooltips render behind the frameless always-on-top window on macOS: `setToolTip()`
 showed nothing (2026-09-04). `Chip` shows its own popup at the same window level; the popup

@@ -55,6 +55,11 @@ ticks (pending layout events vary); a trailing spacer reserves scroll room befor
 becomes permanent blank space. `_FADE_HEIGHT` is 24 px (40 was tuned for an old drag header),
 and scrolling must call `update()` because viewport blits never re-run the fade effect.
 
+### Window equals the painted panel
+No inset, no `setMask`, min size < max size. A 70 px left inset once left an invisible strip
+that caught clicks and the resize cursor; with the window matching the panel, macOS's native
+borderless edge resize lands on the visible edge.
+
 ### Geometry saved only after construction
 `_geometry_ready` keeps the constructor's own resize/move from being saved, which would
 otherwise shadow any later default-size change in `theme.py`.
