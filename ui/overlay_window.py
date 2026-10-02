@@ -12,7 +12,7 @@ from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer
 from PySide6.QtGui import QGuiApplication, QPainter, QPen
 from PySide6.QtWidgets import QWidget
 
-from core.window_capture import _find_all_logic_pro_windows
+from core.capture.window_capture import find_all_logic_pro_windows
 from ui.theme import ACCENT, WHITE, qcolor
 
 _BLUE = qcolor(ACCENT)
@@ -182,7 +182,7 @@ class OverlayWindow(QWidget):
             return
 
         if self._menu_mode:
-            # Menu windows are layer 101 — not in _find_all_logic_pro_windows (layers 0/3/8).
+            # Menu windows are layer 101 — not in find_all_logic_pro_windows (layers 0/3/8).
             # The MenuWatcher owns the menu lifecycle; just keep the arrow on top.
             self._reorder_to_front()
             self.update()
@@ -190,7 +190,7 @@ class OverlayWindow(QWidget):
 
         try:
             target_num = self._win_info.get("kCGWindowNumber")
-            wins = _find_all_logic_pro_windows()
+            wins = find_all_logic_pro_windows()
             match = next((w for w in wins if w.get("kCGWindowNumber") == target_num), None)
             if match is None:
                 self.hide()

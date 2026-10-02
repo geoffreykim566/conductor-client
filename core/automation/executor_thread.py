@@ -1,22 +1,23 @@
-"""QThread wrapper around core.executor.run_steps — the executor's UI-facing thread.
-
-Mirrors core.walkthrough_poller.WalkthroughPoller's stop()+wait() teardown discipline
-(Qt6 aborts the process if a QThread is destroyed while still running) but drives a
-one-shot act->verify run instead of a continuous poll: step_started fires right before
-each step's action, finished/failed report the terminal outcome.
+"""QThreads that run a step list (ExecutorThread) or a revert (RevertThread) off the UI thread.
 
 Stop is preemptive: a shared threading.Event (stop_event) is threaded into
 run_steps(), which checks it at fine granularity inside the low-level
-posting functions (per character, per menu hop), not just once between
-whole steps — see core.interrupt_tap.WalkthroughInterruptTap, which sets it
-the instant any real (non-Conductor) key/click/scroll lands during a run.
+posting functions (per character, per menu hop), not just between whole
+steps -- interrupt_tap.WalkthroughInterruptTap sets it the instant any real
+(non-Conductor) key/click/scroll lands during a run. Owners must stop() and
+wait() before destroying these: Qt6 aborts the process if a QThread is
+destroyed while running.
 """
 import threading
 import time
 
 from PySide6.QtCore import QThread, Signal
 
-from core.executor import MENU_SETTLE_S, StepAbort, activate_logic, run_steps, wait_logic_on_screen
+from core.automation.errors import StepAbort
+from core.automation.logic_focus import activate_logic, wait_logic_on_screen
+from core.automation.revert import revert
+from core.automation.runner import run_steps
+from core.automation.timing import MENU_SETTLE_S
 
 
 class ExecutorThread(QThread):
@@ -24,7 +25,7 @@ class ExecutorThread(QThread):
 
     step_started(idx)  — about to act on step `idx` (0-based, for card highlighting).
     finished(ledger)    — every step completed and verified; `ledger` is the list of
-                           revert entries (see core.ax_executor), possibly empty.
+                           revert entries (see revert.py), possibly empty.
     failed(idx, msg)    — step `idx` aborted; msg is the StepAbort text (activation
                            failure reports as step -1, before any step ran). The
                            partial ledger is available as `.ledger` for a revert.
@@ -68,8 +69,7 @@ class ExecutorThread(QThread):
             return
         # NSWorkspace reports Logic frontmost before the system menu bar has
         # actually redrawn — the first capture otherwise races that redraw
-        # (see executor.py's MENU_SETTLE_S, used after every later menu-bar
-        # interaction but not before this first one).
+        # (timing.MENU_SETTLE_S, used after every later menu-bar interaction).
         time.sleep(MENU_SETTLE_S)
         for idx, step in enumerate(self._steps):
             if idx < self.resume_at:
@@ -95,7 +95,7 @@ class ExecutorThread(QThread):
 
 
 class RevertThread(QThread):
-    """Applies a run's ledger in reverse (core.ax_executor.revert) off the UI thread.
+    """Applies a run's ledger in reverse (revert.revert) off the UI thread.
 
     done(results) — list of (entry, ok, message); never raises.
     """
@@ -105,11 +105,10 @@ class RevertThread(QThread):
         super().__init__(parent)
         self._ledger = list(ledger)
 
-    def stop(self) -> None:  # symmetry with ExecutorThread for _wt_stop_threads
+    def stop(self) -> None:  # symmetry with ExecutorThread for the card's _stop_threads
         pass
 
     def run(self) -> None:
-        from core.ax_executor import revert
         results = []
         try:
             if activate_logic() and wait_logic_on_screen():

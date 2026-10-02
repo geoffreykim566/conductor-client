@@ -20,10 +20,11 @@ from PySide6.QtWidgets import (
 )
 
 from config import FEEDBACK_PROMPT_REMAINING_THRESHOLDS
-from core.conversation import Conversation
-from core.llm_client import MeWorker, StreamWorker
-from core import song_history
-from core.server_client import post_rating_async
+from core.net.account import post_rating_async
+from core.net.llm_client import MeWorker, StreamWorker
+from core.net.update_checker import UpdateChecker
+from core.state import prefs, song_history
+from core.state.conversation import Conversation
 from ui.chat_view import ChatView
 from ui.input_bar import InputBar
 from ui.session_list import SessionListPanel
@@ -109,8 +110,6 @@ class _MinimizedBubble(QWidget):
                 self._press_pos = None
                 self._dragging = False
         return super().eventFilter(obj, event)
-
-
 
 
 class ChatWindow(QWidget):
@@ -484,7 +483,6 @@ class ChatWindow(QWidget):
                 lambda value, m=msg: self._rate_message(m, value), initial=msg.rating
             )
         if walkthrough_steps:
-            from core import prefs
             steps = list(walkthrough_steps)
             destructive = any(isinstance(st, dict) and st.get("destructive") for st in steps)
             # Both must agree: the user's auto-run setting (a master switch)
@@ -533,7 +531,6 @@ class ChatWindow(QWidget):
 
     # --- update check ---
     def _start_update_check(self) -> None:
-        from core.update_checker import UpdateChecker
         self._update_checker = UpdateChecker()
         self._update_checker.update_available.connect(self._on_update_available)
         self._update_checker.start()

@@ -12,8 +12,8 @@ a = Analysis(
         'PIL._tkinter_finder',
         'Quartz',
         'AppKit',
-        'Vision',  # Apple Vision OCR (S3b); dynamic pyobjc import PyInstaller can't see
-        'ApplicationServices',  # AX state capture (ax_capture.py); same dynamic-import issue
+        'Vision',  # Apple Vision OCR (core/capture/ocr_vision.py); dynamic pyobjc import PyInstaller can't see
+        'ApplicationServices',  # AX (core/ax); same dynamic-import issue
     ],
     hookspath=[],
     hooksconfig={},

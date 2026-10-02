@@ -16,6 +16,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from core.automation import (
+    ExecutorThread,
+    RevertThread,
+    WalkthroughInterruptTap,
+    check_event_permission,
+    wire_to_steps,
+)
 from ui.theme import (
     ACCENT,
     ACCENT_TINT,
@@ -485,7 +492,6 @@ class MessageWidget(QWidget):
             self._wt_show_retry(None)   # the permission message is already showing
 
     def wt_revert(self) -> None:
-        from core.executor_thread import RevertThread
         if (getattr(self, "_wt_state", None) not in ("done", "retry", "revert_failed")
                 or not getattr(self, "_wt_ledger", None)):
             return
@@ -585,9 +591,6 @@ class MessageWidget(QWidget):
         permission is missing; the message is already on the card)."""
         import threading
 
-        from core.executor import check_event_permission, wire_to_steps
-        from core.executor_thread import ExecutorThread
-        from core.interrupt_tap import WalkthroughInterruptTap
 
         if not check_event_permission():
             self._wt_show_permission_needed()

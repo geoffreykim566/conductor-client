@@ -5,7 +5,7 @@ Lifted from the July 2026 diagnostics (see the archived
 actually tested things"). Every test in this directory:
 
   1. brings Logic Pro to the front via `activate_logic()` and then HARD-GATES on
-     `_frontmost_owner()` — never trusts the activation call alone;
+     `frontmost_owner()` — never trusts the activation call alone;
   2. captures a baseline window set and aborts (never guesses) on unexpected
      state;
   3. re-checks frontmost after every action;
@@ -31,7 +31,8 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from config import LOGIC_PRO_APP_NAMES  # noqa: E402
-from core.executor import _frontmost_owner, activate_logic, press  # noqa: E402
+from core.automation.logic_focus import activate_logic, frontmost_owner  # noqa: E402
+from core.events.keyboard import press  # noqa: E402
 
 CANNOT_COMPLETE = -25204
 
@@ -139,7 +140,7 @@ def focused(app):
 
 
 def assert_frontmost(context: str):
-    owner = _frontmost_owner()
+    owner = frontmost_owner()
     if owner not in LOGIC_PRO_APP_NAMES:
         raise AbortRun(f"Logic Pro not frontmost at {context!r} — frontmost is {owner!r}")
 

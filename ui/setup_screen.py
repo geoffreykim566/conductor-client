@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from config import APP_SUPPORT_DIR
+from core.net.account import put_me_async
 
 _CONFIG_PATH = APP_SUPPORT_DIR / "config.json"
 
@@ -119,7 +120,6 @@ def reset_feedback_for_new_version() -> None:
         _write_config(data)
 
 
-
 class CenteredDialog(QWidget):
     """Frameless, translucent, centered-on-screen dialog with no header bar or
     close button -- the setup-screen aesthetic (bold centered title, plain
@@ -154,7 +154,6 @@ class CenteredDialog(QWidget):
             screen.center().x() - width // 2,
             screen.center().y() - height // 2,
         )
-
 
 
 def has_screen_recording_permission() -> bool:
@@ -421,7 +420,6 @@ class QuestionsDialog(CenteredDialog):
         self._highlight(btn, store)
 
     def _submit(self) -> None:
-        from core.server_client import put_me_async
         put_me_async(experience=self._experience, role=self._role)
         self._finish()
 

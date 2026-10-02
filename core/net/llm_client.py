@@ -1,16 +1,19 @@
-"""QThread worker that streams a Claude response and emits Qt signals.
+"""QThread workers that run server calls off the UI thread: a chat turn, and usage fetch.
 
-Every message is relayed through the Conductor proxy, which holds the central
+Every message is relayed through the Conductor server, which holds the model
 key and enforces the message cap. A 402 fires `limit_reached`.
 """
 from PySide6.QtCore import QThread, Signal
 
-from core import ax_capture, window_capture
-from core.server_client import CancelToken, FreeLimitReached, RegistrationThrottled, get_me, stream_chat
+from core.ax import state_capture
+from core.capture import window_capture
+from core.net.account import get_me
+from core.net.auth import RegistrationThrottled
+from core.net.chat_stream import CancelToken, FreeLimitReached, stream_chat
 
 
 class StreamWorker(QThread):
-    """Worker that streams an Anthropic response via the Conductor proxy.
+    """Worker that streams one chat turn via the Conductor server.
 
     Signals:
         chunk(str)                           — emitted for each piece of text streamed in
@@ -66,7 +69,7 @@ class StreamWorker(QThread):
         except Exception:
             screenshots_b64 = []
         try:
-            ax_state = ax_capture.capture_ax_state()
+            ax_state = state_capture.capture_ax_state()
         except Exception:
             ax_state = None
         if self._cancel.is_cancelled():  # Esc during the captures above

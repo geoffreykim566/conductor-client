@@ -1,9 +1,7 @@
-"""Apple Vision OCR backend (production, client-side — Vision is macOS-local).
+"""Apple Vision OCR: a PIL image in, word dicts in top-left pixel space out.
 
-Promoted from server/diagnostics/_ocr_vision.py after S3b proved parity (conf 100
-across 5 plugins, both tesseract misses recovered). Returns word dicts
-[{text,left,top,width,height,conf}] in top-left pixel space — the shape the S2
-matching layer (core/matching.py) consumes.
+Returns [{text,left,top,width,height,conf}] -- the shape
+core.automation.fuzzy_match consumes.
 
 Vision returns boxes NORMALIZED (0..1) with a BOTTOM-LEFT origin; we convert to
 top-left pixels here so everything downstream sees one convention:

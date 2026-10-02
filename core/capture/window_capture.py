@@ -14,7 +14,7 @@ from config import (
 )
 
 
-def _find_all_logic_pro_windows() -> list[dict]:
+def find_all_logic_pro_windows() -> list[dict]:
     """Return all on-screen Quartz window-info dicts owned by Logic Pro, or raise."""
     window_list = Quartz.CGWindowListCopyWindowInfo(
         Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
@@ -51,7 +51,7 @@ def _find_all_logic_pro_windows() -> list[dict]:
     return matches
 
 
-def _capture_one_bestres(win_info: dict) -> Image.Image | None:
+def capture_one_bestres(win_info: dict) -> Image.Image | None:
     """Capture a single window at best-res. Returns None on failure."""
     b = win_info["kCGWindowBounds"]
     rect = Quartz.CGRectMake(b["X"], b["Y"], b["Width"], b["Height"])
@@ -74,7 +74,7 @@ def capture_all_plugin_windows() -> list[tuple[Image.Image, dict]]:
     coordinate issue that affects the composite LLM-vision capture (C2).
     """
     try:
-        wins = _find_all_logic_pro_windows()
+        wins = find_all_logic_pro_windows()
     except RuntimeError:
         return []
     # Plugin editor windows have no kCGWindowName. Secondary Logic dialogs (e.g.
@@ -93,7 +93,7 @@ def capture_all_plugin_windows() -> list[tuple[Image.Image, dict]]:
         b = w["kCGWindowBounds"]
         if b.get("Width", 0) < 100 or b.get("Height", 0) < 100:
             continue
-        img = _capture_one_bestres(w)
+        img = capture_one_bestres(w)
         if img is not None:
             result.append((img, w))
     return result
@@ -105,13 +105,13 @@ def capture_window_bestres() -> tuple[Image.Image, dict]:
     For multi-window locate use capture_all_plugin_windows() instead — it searches
     all open editors and picks by OCR identity rather than window area.
     """
-    wins = _find_all_logic_pro_windows()
+    wins = find_all_logic_pro_windows()
     floats = [w for w in wins if w.get("kCGWindowLayer") == 8] or wins
     target = min(
         floats,
         key=lambda w: w["kCGWindowBounds"]["Width"] * w["kCGWindowBounds"]["Height"],
     )
-    img = _capture_one_bestres(target)
+    img = capture_one_bestres(target)
     if img is None:
         raise RuntimeError(
             "Failed to capture Logic Pro window. Grant Screen Recording permission "
@@ -121,19 +121,11 @@ def capture_window_bestres() -> tuple[Image.Image, dict]:
 
 
 def capture_context_images_b64() -> list[str]:
-    """Capture every open Logic Pro window as its own base64 PNG, for pushing
-    live visual context into a chat turn (see prompt.py's "Look at what's
-    actually on screen" section, previously live instruction with nothing
-    behind it -- v3-log.md, 2026-09-03).
+    """Capture every open Logic Pro window as its own base64 JPEG, for pushing
+    live visual context into a chat turn.
 
-    Deliberately per-window, not v1's single union-bounding-rect composite
-    (window_capture.py's old capture_fl_studio_window): that approach has a
-    documented, never-fixed bug where a plugin editor on a different display
-    than the main window balloons the union rect into a mostly-empty canvas
-    and degrades what the model can actually read off it. Per-window capture
-    sidesteps that entirely (same reasoning as the old OCR locate path) and
-    shows each plugin editor at native clarity instead of shrunk into a
-    shared canvas.
+    Deliberately per-window, not one union-rect composite (see README
+    "Per-window capture"): each plugin editor stays at native clarity.
 
     Largest windows first (main project window typically dominates), capped
     at MAX_CONTEXT_WINDOWS so a session with several plugin editors open
@@ -142,7 +134,7 @@ def capture_context_images_b64() -> list[str]:
     pushed context, never something a turn should block or error on.
     """
     try:
-        wins = _find_all_logic_pro_windows()
+        wins = find_all_logic_pro_windows()
     except RuntimeError:
         return []
     wins = sorted(
@@ -154,7 +146,7 @@ def capture_context_images_b64() -> list[str]:
     images_b64 = []
     for w in wins:
         try:
-            img = _capture_one_bestres(w)
+            img = capture_one_bestres(w)
         except Exception:
             continue
         if img is None:
@@ -165,8 +157,9 @@ def capture_context_images_b64() -> list[str]:
             new_size = (int(img.width * scale), int(img.height * scale))
             img = img.resize(new_size, Image.LANCZOS)
         buf = io.BytesIO()
-        # JPEG, not PNG -- see config.SCREENSHOT_JPEG_QUALITY for the live
-        # incident. CGImage captures carry an alpha channel JPEG can't encode.
+        # JPEG, not PNG (see README "JPEG screenshots"). CGImage captures
+        # carry an alpha channel JPEG can't encode.
+
         img.convert("RGB").save(buf, format="JPEG", quality=SCREENSHOT_JPEG_QUALITY)
         b64 = base64.b64encode(buf.getvalue()).decode("ascii")
         if len(b64) > MAX_SCREENSHOT_B64_CHARS:
@@ -195,7 +188,7 @@ def capture_menubar_strip() -> tuple[Image.Image, float] | None:
     """
     display_id = Quartz.CGMainDisplayID()
     try:
-        wins = _find_all_logic_pro_windows()
+        wins = find_all_logic_pro_windows()
         if wins:
             main_win = max(wins, key=lambda w: w["kCGWindowBounds"]["Width"] * w["kCGWindowBounds"]["Height"])
             b = main_win["kCGWindowBounds"]

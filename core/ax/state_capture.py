@@ -2,8 +2,8 @@
 windows/dialogs as text, for live per-turn context alongside screenshots.
 
 Passive only -- reads whatever's already open, no menu presses, no clicks,
-no navigation. Mirrors window_capture.py's pattern: pushed silently every
-turn (see llm_client.py), fails soft to None on any error (Logic not
+no navigation. Mirrors capture/window_capture.py's pattern: pushed silently
+every turn (see core/net/llm_client.py), fails soft to None on any error (Logic not
 running, Accessibility permission not granted, an AX call failing) -- never
 raises, this is best-effort context and must never block a turn.
 """
@@ -15,13 +15,10 @@ from config import LOGIC_PRO_APP_NAMES
 # Bounds on the walk so a deeply nested window (or Logic itself) can't blow
 # up capture time or the text payload sent to the server.
 #
-# Depth is a sanity ceiling only, never expected to bind: Logic's main window
-# bottoms out around depth 9, and the track-header Mute/Solo checkboxes sit
-# at depth 8 (found live 2026-09-12 -- the previous cap of 6 sliced off
-# exactly the Tracks header, so per-track mute state never reached the model
-# while the Inspector's channel strip at depth 6 did). Each node is one
-# synchronous round trip into Logic (~0.5 ms measured), so the node budget
-# is what bounds capture time; the char cap bounds the prompt payload.
+# Depth is a sanity ceiling only (track-header Mute/Solo sit at depth 8; see
+# README "AX state capture depth"). Each node is one synchronous round trip
+# into Logic (~0.5 ms), so the node budget bounds capture time; the char cap
+# bounds the prompt payload.
 _MAX_DEPTH = 20
 _MAX_CHILDREN = 200
 _MAX_NODES_PER_WINDOW = 2000
@@ -65,16 +62,8 @@ def _describe(el, depth: int, lines: list[str], budget: list[int]) -> None:
     if budget[0] <= 0 or depth > _MAX_DEPTH:
         return
     role = _ax_get(el, AS.kAXRoleAttribute)
-    # Logic's AX server sometimes wedges into a state where every window
-    # attribute (AXWindows, AXMainWindow, AXFocusedWindow) and the app's
-    # own child list return the AXApplication element itself (seen live
-    # 2026-09-12 while the Mac's screen was locked -- window captures come
-    # back solid black in the same state, so a turn sent then has no usable
-    # context either way; this just keeps the AX side from being noise). Walking
-    # that is a self-referential chain of "AXApplication title='Logic Pro'"
-    # lines down to the depth ceiling, then the menu bar -- the whole char
-    # budget spent on nothing. Neither the app node nor the menu bar ever
-    # carries project state, so stop at both.
+    # Neither node carries project state, and a wedged AX server returns the
+    # app element as its own child (see README "Wedged AX server") -- stop at both.
     if role in ("AXApplication", "AXMenuBar"):
         return
     title = _ax_get(el, AS.kAXTitleAttribute)

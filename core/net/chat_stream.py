@@ -1,11 +1,4 @@
-"""HTTP client for the Conductor proxy server.
-
-Chat is relayed through the proxy (which holds the central key); ratings and
-profile calls are plain REST. Every request carries a server-minted identity
-token as the X-Conductor-Id header. User-facing calls (chat, get_me) register
-lazily on first use; fire-and-forget calls skip silently when no token exists
-rather than burn a registration slot for a throwaway identity.
-"""
+"""Stream one chat turn from POST /v3/chat as (kind, payload) events."""
 import json
 import socket
 import threading
@@ -14,15 +7,8 @@ from typing import Iterator
 import httpx
 
 from config import SERVER_BASE_URL
-from core import identity
-
-
-class RegistrationThrottled(Exception):
-    """The server is rate limiting new registrations from this IP (HTTP 429).
-
-    Happens on first launch behind a busy shared/CGNAT IP. Transient — the
-    user should try again later; nothing is wrong with their install.
-    """
+from core.net.auth import ensure_token, headers
+from core.state import identity
 
 
 class FreeLimitReached(Exception):
@@ -58,12 +44,9 @@ class CancelToken:
         resp = self.response
         if resp is None:
             return
-        # shutdown() before close(): close() alone only drops the fd, and on
-        # macOS a recv() blocked in the worker thread keeps blocking after
-        # that (found 2026-09-13: the server logged the disconnect at once,
-        # the worker sat until the read timeout). SHUT_RDWR wakes the read
-        # with EOF. Works on the TLS socket in prod too (SSLSocket.shutdown
-        # forwards to the underlying socket).
+        # shutdown() before close(): on macOS close() alone leaves a blocked
+        # recv() blocking until the read timeout (see README "Cancelling a
+        # stream"); SHUT_RDWR wakes it with EOF, on the TLS socket too.
         try:
             stream = resp.extensions.get("network_stream")
             sock = stream.get_extra_info("socket") if stream is not None else None
@@ -78,29 +61,6 @@ class CancelToken:
 
     def is_cancelled(self) -> bool:
         return self._flag.is_set()
-
-
-def register() -> str:
-    """Mint a fresh identity from the server and persist its token.
-
-    Raises RegistrationThrottled on 429 (per-IP registration cap).
-    """
-    r = httpx.post(f"{SERVER_BASE_URL}/v3/register", timeout=30)
-    if r.status_code == 429:
-        raise RegistrationThrottled()
-    r.raise_for_status()
-    token = r.json()["conductor_id"]
-    identity.save_token(token)
-    return token
-
-
-def _ensure_token() -> str:
-    """Stored token, or register on first need."""
-    return identity.get_token() or register()
-
-
-def _headers(token: str) -> dict:
-    return {"X-Conductor-Id": token, "Content-Type": "application/json"}
 
 
 def stream_chat(
@@ -124,7 +84,7 @@ def stream_chat(
     so screenshots aren't resent on every later turn.
 
     `ax_state` is the same kind of fresh, per-turn-only context (see
-    core.ax_capture) — a text dump of currently open Logic windows/dialogs'
+    core.ax.state_capture) — a text dump of currently open Logic windows/dialogs'
     Accessibility state, pushed alongside the screenshots for the same
     reason: exact control values (checkbox state, selected dropdown item,
     a field's real contents) that a screenshot alone can get wrong.
@@ -160,7 +120,7 @@ def stream_chat(
             return
         try:
             with httpx.stream(
-                "POST", url, headers=_headers(_ensure_token()),
+                "POST", url, headers=headers(ensure_token()),
                 json={
                     "message": text,
                     "history": history,
@@ -193,10 +153,8 @@ def stream_chat(
                     # Oversized / rejected body — e.g. a single message past the
                     # server's length cap, which the rolling window can't trim away.
                     # Surface a clean message instead of a raw HTTPStatusError,
-                    # but keep the server's actual detail in our log: the 422
-                    # body names which validator fired, and until 2026-09-09
-                    # it was discarded here, leaving a live incident (an
-                    # oversized screenshot) to be reconstructed by hand.
+                    # but keep the server's detail in our log: the 422 body
+                    # names which validator fired.
                     resp.read()
                     try:
                         detail = resp.json().get("detail")
@@ -238,7 +196,8 @@ def stream_chat(
 
 
 def _timeout_fallback(history: list[dict] | None) -> Iterator[tuple[str, object]]:
-    """See stream_chat's TimeoutException note (2026-09-04)."""
+    """Stand-in turn when /v3/chat times out: a canned reply, history unchanged."""
+
     yield (
         "chunk",
         "The research call I was running timed out, so I wasn't able to "
@@ -247,82 +206,3 @@ def _timeout_fallback(history: list[dict] | None) -> Iterator[tuple[str, object]
         "question.",
     )
     yield ("done", {"source_tier": "", "sources": [], "history": history})
-
-
-
-def post_rating(event_id: str, rating: int) -> None:
-    """rating is 1 (thumbs up) or -1 (thumbs down)."""
-    token = identity.get_token()
-    if token is None:
-        return  # never registered — there is no event of ours to rate
-    r = httpx.post(
-        f"{SERVER_BASE_URL}/v3/ratings",
-        headers=_headers(token),
-        json={"event_id": event_id, "rating": rating},
-        timeout=30,
-    )
-    r.raise_for_status()
-
-
-def post_rating_async(event_id: str, rating: int) -> None:
-    """Fire-and-forget post_rating on a daemon thread."""
-    def _run() -> None:
-        try:
-            post_rating(event_id, rating)
-        except Exception:
-            pass
-
-    threading.Thread(target=_run, daemon=True).start()
-
-
-def get_me() -> dict:
-    """Fetch this user's profile + free-tier usage (free_used, free_limit, remaining)."""
-    for attempt in range(2):  # one retry on 401, same rationale as stream_chat
-        r = httpx.get(f"{SERVER_BASE_URL}/v3/me", headers=_headers(_ensure_token()), timeout=30)
-        if r.status_code == 401 and attempt == 0:
-            identity.clear_token()
-            continue
-        r.raise_for_status()
-        return r.json()
-
-
-def put_me(
-    experience: str | None = None,
-    role: str | None = None,
-) -> None:
-    """Upsert onboarding answers."""
-    token = identity.get_token()
-    if token is None:
-        return  # fire-and-forget — don't burn a registration just for this
-    body = {
-        k: v
-        for k, v in {
-            "experience": experience,
-            "role": role,
-        }.items()
-        if v is not None
-    }
-    r = httpx.put(f"{SERVER_BASE_URL}/v3/me", headers=_headers(token), json=body, timeout=30)
-    r.raise_for_status()
-
-
-def put_me_async(**kwargs) -> None:
-    """Fire-and-forget put_me on a daemon thread so the UI never blocks on it."""
-    def _run() -> None:
-        try:
-            put_me(**kwargs)
-        except Exception:
-            pass
-
-    threading.Thread(target=_run, daemon=True).start()
-
-
-def delete_me() -> None:
-    """Mark this install as uninstalled. Best-effort — never raises."""
-    token = identity.get_token()
-    if token is None:
-        return  # never registered — no server-side user to mark
-    try:
-        httpx.delete(f"{SERVER_BASE_URL}/v3/me", headers=_headers(token), timeout=5)
-    except Exception:
-        pass

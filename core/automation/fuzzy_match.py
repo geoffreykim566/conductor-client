@@ -1,38 +1,6 @@
-"""Menu-detection helpers: find Logic Pro popup menus and fuzzy-match items in them.
-
-Pure functions only — `core.executor` calls these directly for its one-shot,
-act-then-verify captures. (Earlier this module also held a stateful, per-step
-MenuWatcher QThread, then `core.walkthrough_poller`'s continuous classification
-loop; both are gone now that the executor drives Logic itself instead of
-watching a human do it — see executor-build-log.md, 2026-07-13/14.)
-"""
+"""Fuzzy-find a target phrase in an OCR word list (pure; no screen access)."""
 import re
 
-import Quartz
-
-from config import LOGIC_PRO_APP_NAMES
-
-
-# ---------------------------------------------------------------------------
-# Window helpers
-
-def _find_logic_menu_windows() -> list[dict]:
-    """Return all on-screen Logic Pro popup menu windows (layer 101)."""
-    window_list = Quartz.CGWindowListCopyWindowInfo(
-        Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
-        Quartz.kCGNullWindowID,
-    )
-    return [
-        w for w in window_list
-        if w.get("kCGWindowLayer") == 101
-        and w.get("kCGWindowOwnerName", "") in LOGIC_PRO_APP_NAMES
-        and w.get("kCGWindowBounds", {}).get("Width", 0) > 20
-        and w.get("kCGWindowBounds", {}).get("Height", 0) > 20
-    ]
-
-
-# ---------------------------------------------------------------------------
-# Fuzzy matching
 
 def _norm(s: str) -> str:
     return re.sub(r"[^\w]", "", s.lower())
@@ -67,7 +35,7 @@ def _tokens_match(target_toks: list[str], candidate_toks: list[str]) -> bool:
     return True
 
 
-def _fuzzy_match_menu_item(target: str, words: list[dict]) -> dict | None:
+def fuzzy_match_menu_item(target: str, words: list[dict]) -> dict | None:
     """Find `target` text in an OCR word list; return a bounding-box dict or None.
 
     Row-clusters words by y-proximity, then slides a token window along each row

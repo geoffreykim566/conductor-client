@@ -5,8 +5,8 @@ from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from config import APP_SUPPORT_DIR
-from core import song_history
-from core.server_client import delete_me
+from core.net.account import delete_me
+from core.state import prefs, song_history
 from ui.popup import Popup
 from ui.theme import DIVIDER
 
@@ -123,7 +123,6 @@ class SettingsPanel(Popup):
         actions_label.setObjectName("sessionTitle")
         layout.addWidget(actions_label)
 
-        from core import prefs
         auto_cb = QCheckBox("Run actions automatically")
         auto_cb.setToolTip("Off: each action waits for Run / ↵. On: actions run as soon as "
                            "Conductor decides them. Deletions always ask first.")

@@ -24,7 +24,7 @@ class Message:
 
 
 class Conversation:
-    """In-memory ordered list of messages, formatted for the Anthropic API."""
+    """In-memory ordered list of messages for the chat UI and session persistence."""
 
     def __init__(self) -> None:
         self._messages: list[Message] = []
