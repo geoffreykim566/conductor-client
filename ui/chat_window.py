@@ -25,12 +25,7 @@ from core.net.llm_client import MeWorker, StreamWorker
 from core.net.update_checker import UpdateChecker
 from core.state import prefs, song_history
 from core.state.conversation import Conversation
-from ui.chat_view import ChatView
-from ui.input_bar import InputBar
-from ui.session_list import SessionListPanel
-from ui.setup_screen import (
-    FeedbackDialog,
-    UpdatePopup,
+from core.state.prefs import (
     clear_window_pos,
     clear_window_size,
     get_saved_window_pos,
@@ -40,6 +35,11 @@ from ui.setup_screen import (
     save_window_pos,
     save_window_size,
 )
+from ui.chat_view import ChatView
+from ui.input_bar import InputBar
+from ui.session_list import SessionListPanel
+from ui.onboarding.feedback_dialog import FeedbackDialog
+from ui.onboarding.update_popup import UpdatePopup
 from ui.settings_panel import SettingsPanel
 from ui.theme import (
     MAX_WINDOW_HEIGHT,

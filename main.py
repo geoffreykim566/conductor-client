@@ -5,18 +5,13 @@ from PySide6.QtCore import QEvent
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QMenuBar
 
-from ui.setup_screen import (
-    DisclaimerScreen,
-    InputMonitoringScreen,
-    PermissionScreen,
-    QuestionsDialog,
-    has_input_monitoring_permission,
-    has_screen_recording_permission,
-    is_questions_asked,
-    is_setup_complete,
-    mark_setup_complete,
-)
+from core.state.prefs import is_questions_asked, is_setup_complete, mark_setup_complete
 from ui.chat_window import ChatWindow
+from ui.onboarding.disclaimer_screen import DisclaimerScreen
+from ui.onboarding.input_monitoring_screen import InputMonitoringScreen
+from ui.onboarding.permissions import has_input_monitoring_permission, has_screen_recording_permission
+from ui.onboarding.questions_dialog import QuestionsDialog
+from ui.onboarding.screen_recording_screen import PermissionScreen
 from ui.style import STYLESHEET
 
 
@@ -50,7 +45,7 @@ def _check_server(url: str) -> None:
     try:
         httpx.get(url, timeout=2)
     except httpx.ConnectError:
-        print(f"[conductor] WARNING: server unreachable at {url} — is Docker running? `docker compose -f docker-compose.local.yml up -d` inside server/")
+        print(f"[conductor] WARNING: server unreachable at {url} — is Docker running? `docker compose up -d --build` inside server-v3/")
     except Exception:
         pass  # any other error (e.g. 404, 401) means the server is up
 
