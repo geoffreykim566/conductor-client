@@ -90,19 +90,10 @@ class InputBar(QWidget):
         # while everything else about InputBar (text/send, signals) stays
         # exactly as before.
         #
-        # Also the window's main drag handle -- installEventFilter below,
-        # same _drag_press/_drag_move/_drag_release as _panel uses. Until
-        # 6b28d41 (2026-09-12) that job fell to the margin outside _panel
-        # (then a real, generously-sized strip -- CONTENT_LEFT_INSET); that
-        # commit zeroed the margin out (it was ALSO an invisible dead strip
-        # past the window's visible edge, catching stray clicks -- the actual
-        # bug it fixed), silently deleting the only practical drag target and
-        # leaving users unable to move the window. Routing drag through this
-        # row's own real background instead of a separately-tracked margin
-        # means there's nothing to keep in sync by hand -- Qt's own hit
-        # testing already gives every icon/label priority over this widget,
-        # so the draggable area can't drift from the visible layout the way
-        # the old inset did.
+        # Also the window's main drag handle (installEventFilter below, same
+        # _drag_* handlers as _panel). Qt's hit testing gives every icon/label
+        # priority over the row's background, so the draggable area can't
+        # drift from the visible layout (see README "Window drag handle").
         self.controls = QWidget()
         self.controls.installEventFilter(self)
         controls_row = QHBoxLayout(self.controls)
@@ -110,11 +101,8 @@ class InputBar(QWidget):
         # is the ONLY thing controlling the gap to chat_view below
         # (ChatWindow's main layout has zero spacing there deliberately, see
         # ChatWindow.__init__), not stacked with layout spacing like before.
-        # Bottom smaller than top despite equal-margin math suggesting they
-        # should read the same -- found live 2026-09-04 that equal numeric
-        # margins still looked bottom-heavy (likely the row's own content,
-        # e.g. label line-height, isn't perfectly vertically symmetric),
-        # tuned down by feel rather than by a formula.
+        # Bottom smaller than top on purpose: equal margins looked
+        # bottom-heavy, so it's tuned by eye rather than by formula.
         controls_row.setContentsMargins(10, 10, 12, 7)
         controls_row.setSpacing(6)
 
@@ -175,10 +163,9 @@ class InputBar(QWidget):
         self._text.document().setDocumentMargin(0)
         self._text.setFixedHeight(CONTROL_SIZE)
         line_height = QFontMetrics(self._text.font()).height()
-        # Bottom explicitly computed as the remainder rather than hardcoded 0
-        # -- a bottom margin of 0 left the leftover space as implicit,
-        # top-aligned-within-the-viewport blank room instead, which read as
-        # visibly bigger than the top margin (found live 2026-09-04).
+        # Bottom explicitly computed as the remainder rather than hardcoded 0:
+        # a 0 bottom left the leftover as blank room that read bigger than the top.
+
         extra = max(0, CONTROL_SIZE - line_height)
         top_margin = extra // 2
         bottom_margin = extra - top_margin

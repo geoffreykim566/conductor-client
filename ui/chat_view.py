@@ -1,9 +1,7 @@
 """Scrolling chat history view."""
 from PySide6.QtCore import QPoint, Qt, QTimer
-from PySide6.QtGui import QColor, QLinearGradient, QPainter
 from PySide6.QtWidgets import (
     QApplication,
-    QGraphicsEffect,
     QLabel,
     QScrollArea,
     QSizePolicy,
@@ -12,20 +10,11 @@ from PySide6.QtWidgets import (
 )
 
 from ui.message import MessageWidget
+from ui.top_fade_effect import TopEdgeFadeEffect
 from ui.theme import SCROLLBAR_GUTTER
 
 _QWIDGETSIZE_MAX = 16777215  # Qt's own constant for "no max height set"
 
-_FADE_HEIGHT = 24  # how many px the transition takes, not where it starts --
-# it always starts at chat_view's own top edge (confirmed live 2026-09-04:
-# exactly 44px from the window top, right below the controls row). A bigger
-# number stretches the same 0%->100% transition further down, it doesn't move
-# the start point higher; kept small for a fast, snappy fade right under the
-# controls instead of a slow one bleeding deep into the second bubble.
-# (2026-09-04) -- 40 was tuned for the old drag-header, and stayed too tight
-# a transition once controls moved: bubbles read as fully visible right up to
-# the last ~40px before chat_view's own top edge, well below the controls'
-# bottom border, instead of visibly fading out sooner.
 _SCROLLBAR_IDLE_MS = 600  # how long after the last scroll before the handle fades back out
 # Fraction of the viewport height a new turn's user message is anchored to
 # from the top, leaving the remainder below for the response to render into.
@@ -37,45 +26,12 @@ _SCROLLBAR_IDLE_MS = 600  # how long after the last scroll before the handle fad
 _TURN_ANCHOR_FRACTION = 1 / 3
 
 
-class _TopEdgeFadeEffect(QGraphicsEffect):
-    """Fades the widget's own rendered content to nothing at its top edge —
-    erases pixel alpha rather than painting a color over it, so what's
-    revealed is the window's real transparency (Logic Pro/desktop showing
-    through), not a tinted overlay."""
-
-    def draw(self, painter: QPainter) -> None:
-        result_pair = self.sourcePixmap(Qt.CoordinateSystem.LogicalCoordinates)
-        if isinstance(result_pair, tuple):
-            pixmap, offset = result_pair
-        else:
-            pixmap, offset = result_pair, QPoint(0, 0)
-        if pixmap.isNull():
-            painter.drawPixmap(offset, pixmap)
-            return
-
-        fade_h = min(_FADE_HEIGHT, pixmap.height())
-        if fade_h <= 0:
-            painter.drawPixmap(offset, pixmap)
-            return
-
-        result = pixmap.copy()
-        p = QPainter(result)
-        gradient = QLinearGradient(0, 0, 0, fade_h)
-        gradient.setColorAt(0.0, QColor(0, 0, 0, 0))
-        gradient.setColorAt(1.0, QColor(0, 0, 0, 255))
-        p.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
-        p.fillRect(0, 0, result.width(), fade_h, gradient)
-        p.end()
-
-        painter.drawPixmap(offset, result)
-
-
 class ChatView(QWidget):
     """Scrollable column of MessageWidget bubbles with an empty-state placeholder."""
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setGraphicsEffect(_TopEdgeFadeEffect(self))
+        self.setGraphicsEffect(TopEdgeFadeEffect(self))
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, SCROLLBAR_GUTTER, 0)
@@ -178,10 +134,8 @@ class ChatView(QWidget):
         # No re-scroll per chunk (deliberate) -- the view holds still for the
         # whole turn once the anchor lands; a response that outgrows the
         # reserved space just extends past the visible bottom instead of
-        # dragging the top further up as it grows. A brief "follow the
-        # response's growth" mechanic was tried and removed 2026-09-04 --
-        # unnecessary once _apply_turn_anchor reliably reserves real room
-        # below the anchor for every turn, not just the first.
+        # dragging the top further up as it grows (_apply_turn_anchor
+        # reserves room below the anchor every turn).
 
     def set_assistant_status(self, text: str) -> None:
         if self._current_assistant is not None:
@@ -240,11 +194,9 @@ class ChatView(QWidget):
         # The *trailing* spacer's floor is released here, though — it was
         # only ever a temporary streaming buffer (room for the response to
         # render into, reserved fresh every turn by _apply_turn_anchor), not
-        # something that needs to survive after the turn is done. Left
-        # un-reset, it persisted as permanent scrollable blank space below
-        # the last message (found live 2026-09-04, screenshot: content in
-        # the top third of the panel, empty space scrollable all the way
-        # down from there).
+        # something that needs to survive after the turn is done; left
+        # un-reset it becomes permanent scrollable blank space below the
+        # last message.
         self._trailing_spacer.setMinimumHeight(0)
 
     def clear(self) -> None:
@@ -293,11 +245,9 @@ class ChatView(QWidget):
         bar.style().unpolish(bar)
         bar.style().polish(bar)
         self._scrollbar_hide_timer.start(_SCROLLBAR_IDLE_MS)
-        # QScrollArea scrolls its viewport by blitting directly, which never
-        # asks ChatView's own QGraphicsEffect (_TopEdgeFadeEffect) to
-        # recompute -- without this, the fade stayed frozen at whatever it
-        # last rendered instead of following newly-scrolled-in content (found
-        # live 2026-09-04: changing _FADE_HEIGHT had no visible effect at all).
+        # QScrollArea scrolls its viewport by blitting, which never asks
+        # ChatView's QGraphicsEffect (TopEdgeFadeEffect) to recompute;
+        # without this the fade stays frozen on the old content.
         self.update()
 
     def _hide_scrollbar(self) -> None:
@@ -335,39 +285,19 @@ class ChatView(QWidget):
         guess), so this produces the identical target regardless of how the
         leading spacer got to its current size.
 
-        A same-shaped "just measure the widget and grow the spacer if
-        short" version was tried and reverted 2026-09-04: it never SHRINKS
-        the spacer, but the very first message needs exactly that -- before
-        any turn, the idle/resting spacer sits large on purpose (the
-        flush-at-bottom look for a short conversation, see its own comment
-        above), and shrinking it down to the target fraction is what pulls
-        the first message up to the anchor position at all. Growing-only
-        left it pinned at that large natural size, anchoring at the very
-        bottom instead.
+        The spacer must be able to SHRINK as well as grow: the idle spacer
+        sits large on purpose, and shrinking it is what pulls the first
+        message up to the anchor.
 
-        Both measurements below (widget_top up front, bar.maximum() at the
-        end) are wrapped in processEvents() rather than a guessed number of
-        QTimer.singleShot(0, ...) defers -- a fixed tick count worked for a
-        turn or two and then silently didn't (found live 2026-09-04: message
-        3 landed at the bottom again after 1 and 2 were both correct), since
-        how many pending layout events are actually queued varies with how
-        much the prior turn's response just resized while streaming.
-        processEvents() drains whatever's actually pending instead of
-        guessing how many ticks that takes.
+        Measurements are wrapped in processEvents() rather than a guessed
+        number of singleShot(0) defers: how many layout events are pending
+        varies with how much the previous response resized while streaming.
 
-        _trailing_spacer's minimum height is (re)claimed every turn to
-        guarantee real scroll room exists below the new message *before* the
-        scrollbar math below runs -- found live 2026-09-04 (turn 2 onward):
-        once _flex_spacer is already floored at 0 from a prior turn, this
-        method's only lever left is bar.setValue(), which needs
-        bar.maximum() to already reach target_scroll. At this exact instant
-        the new assistant bubble is still empty, so without a reserve the
-        real scrollable range is whatever tiny amount of content happens to
-        sit below the new message -- setValue() silently clamps to that too-
-        small max, landing the message far lower than intended, then gets
-        re-clamped again a beat later as the range keeps changing (the
-        flicker-then-snap-to-bottom). Same fix shape as _flex_spacer, mirrored
-        below the content instead of above it."""
+        _trailing_spacer's minimum height is (re)claimed every turn so real
+        scroll room exists below the new message before bar.setValue() runs;
+        otherwise setValue() clamps to a too-small maximum and the message
+        lands low, then snaps. See README "Turn anchoring" for the history."""
+
         QApplication.processEvents()
         viewport_h = self._scroll.viewport().height()
         target_position = int(viewport_h * _TURN_ANCHOR_FRACTION)

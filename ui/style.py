@@ -32,7 +32,6 @@ from ui.theme import (
     PANEL_ALPHA,
     PANEL_BORDER,
     PANEL_BORDER_ALPHA,
-    PANEL_RADIUS,
     POPUP_ALPHA,
     POPUP_RADIUS,
     ROW_RADIUS,
@@ -46,7 +45,6 @@ from ui.theme import (
     TEXT_DIM,
     TEXT_FAINT,
     TEXT_MUTED,
-    TEXT_SECONDARY,
     WHITE,
     rgba,
 )

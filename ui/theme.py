@@ -1,8 +1,7 @@
 """Single source of truth for every UI token: colors, type, geometry.
 
 Anything visual that more than one widget/stylesheet rule shares lives here
-and nowhere else, so two places can't drift apart (the 2026-09 window/panel
-mismatch came from a left inset hand-copied into four files). One-off values
+and nowhere else, so two places can't drift apart. One-off values
 that only one widget uses can stay local to that widget.
 
 Colors are role-named hex strings; use rgba()/qcolor() below when a rule

@@ -208,7 +208,6 @@ class OverlayWindow(QWidget):
     def _ns_window(self):
         """Return the backing NSWindow via pyobjc, or None on failure."""
         try:
-            from ctypes import c_void_p
             view = objc.objc_object(c_void_p=int(self.winId()))
             return view.window()
         except Exception:
