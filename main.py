@@ -7,9 +7,14 @@ from PySide6.QtWidgets import QApplication, QMenuBar
 
 from core.state.prefs import is_questions_asked, is_setup_complete, mark_setup_complete
 from ui.chat_window import ChatWindow
+from ui.onboarding.accessibility_screen import AccessibilityScreen
 from ui.onboarding.disclaimer_screen import DisclaimerScreen
 from ui.onboarding.input_monitoring_screen import InputMonitoringScreen
-from ui.onboarding.permissions import has_input_monitoring_permission, has_screen_recording_permission
+from ui.onboarding.permissions import (
+    has_accessibility_permission,
+    has_input_monitoring_permission,
+    has_screen_recording_permission,
+)
 from ui.onboarding.questions_dialog import QuestionsDialog
 from ui.onboarding.screen_recording_screen import PermissionScreen
 from ui.style import STYLESHEET
@@ -63,6 +68,8 @@ def main() -> None:
         _show_permission(app)
     elif not has_input_monitoring_permission():
         _show_input_monitoring(app)
+    elif not has_accessibility_permission():
+        _show_accessibility(app)
     else:
         _onboarded(app)
 
@@ -80,6 +87,8 @@ def _on_permission_done(perm: PermissionScreen, app: ConductorApp) -> None:
     perm.close()
     if not has_input_monitoring_permission():
         _show_input_monitoring(app)
+    elif not has_accessibility_permission():
+        _show_accessibility(app)
     else:
         _onboarded(app)
 
@@ -92,6 +101,21 @@ def _show_input_monitoring(app: ConductorApp) -> None:
 
 
 def _on_input_monitoring_done(screen: InputMonitoringScreen, app: ConductorApp) -> None:
+    screen.close()
+    if not has_accessibility_permission():
+        _show_accessibility(app)
+    else:
+        _onboarded(app)
+
+
+def _show_accessibility(app: ConductorApp) -> None:
+    screen = AccessibilityScreen()
+    app._screen = screen
+    screen.finished.connect(lambda: _on_accessibility_done(screen, app))
+    screen.show()
+
+
+def _on_accessibility_done(screen: AccessibilityScreen, app: ConductorApp) -> None:
     screen.close()
     _onboarded(app)
 

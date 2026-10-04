@@ -27,8 +27,8 @@ python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-dev.txt
 CONDUCTOR_SERVER_URL=http://127.0.0.1:8000 .venv/bin/python main.py   # against a local server-v3
 ```
 For a local server run `docker compose up -d --build` inside `server-v3/`. On first launch macOS
-asks for Screen Recording and Input Monitoring; running actions also needs Accessibility. In dev
-these are granted to the terminal / Python binary, not to Conductor.app.
+asks for Screen Recording, Input Monitoring and Accessibility (the last is needed to run actions).
+In dev these are granted to the terminal / Python binary, not to Conductor.app.
 
 ## Tests
 - Unit: `.venv/bin/python -m pytest` (scoped to `tests/unit` by `pytest.ini`; no Logic needed).
@@ -48,7 +48,9 @@ are listed in the spec's `hiddenimports`.
 `~/Library/Application Support/Conductor-v3/`:
 - `config.json` - identity token, preferences, window geometry, onboarding/feedback flags.
 - `history.json` - all chat sessions.
-Settings -> Uninstall (or `uninstall.sh`) notifies the server and deletes this folder.
+Settings -> Uninstall notifies the server, deletes this folder and resets the app's three macOS
+permissions (`tccutil`, scoped to the bundle id), so a reinstall replays the setup screens.
+`uninstall.sh` notifies the server and deletes this folder only; it doesn't reset permissions.
 
 ## Releasing
 Only through the `release-client` skill (bump `VERSION`, build/sign/notarize, publish on

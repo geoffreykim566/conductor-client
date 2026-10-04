@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QPus
 from config import APP_SUPPORT_DIR
 from core.net.account import delete_me
 from core.state import prefs, song_history
+from ui.onboarding.permissions import reset_permissions
 from ui.popup import Popup
 from ui.theme import DIVIDER
 
@@ -164,7 +165,7 @@ class SettingsPanel(Popup):
 
     def _ask_uninstall(self) -> None:
         self._confirm_popup = _ConfirmPopup(
-            "Deletes all data and quits. Drag Conductor.app to Trash to finish.",
+            "Deletes all data, resets permissions and quits. Drag Conductor.app to Trash to finish.",
             self._confirm_uninstall,
         )
         self._confirm_popup.center_on_screen()
@@ -173,4 +174,5 @@ class SettingsPanel(Popup):
     def _confirm_uninstall(self) -> None:
         delete_me()
         shutil.rmtree(_APP_DATA, ignore_errors=True)
+        reset_permissions()
         QApplication.quit()
