@@ -343,6 +343,12 @@ QPushButton#ghost {{
     padding: 0;
 }}
 QPushButton#ghost:hover {{ color: {ACCENT_HOVER}; }}
+QCheckBox {{
+    color: {TEXT};
+    font-family: {MONO};
+    font-size: {FONT_MD}px;
+    spacing: 8px;
+}}
 QPushButton#chip {{
     background-color: {SURFACE};
     color: {TEXT};
