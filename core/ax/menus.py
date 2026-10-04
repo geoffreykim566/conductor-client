@@ -5,7 +5,9 @@ import time
 
 from core.ax.app import focused
 from core.ax.mouse import click_at
-from core.ax.primitives import SETTLE_S, AxError, ax_press, center, children, element_at, parent, role, title, wait_until
+from core.ax.primitives import (
+    SETTLE_S, AxError, ax_get, ax_press, center, children, element_at, parent, role, title, wait_until,
+)
 from core.events.keyboard import press
 
 
@@ -64,6 +66,28 @@ def drill(menu, path: list[str], prefer_terminal=("Stereo", "Mono")) -> None:
                 raise AxError(f"terminal {hop!r} opened an empty submenu")
             ax_press(pick)
             time.sleep(SETTLE_S)
+
+
+def menubar_item(app, path: list[str]):
+    """The AXMenuItem at `path` in Logic's menu bar ("Record", "Low Latency
+    Monitoring Mode"), or None. Readable while the menu is closed."""
+    node = ax_get(app, "AXMenuBar")
+    for hop in path:
+        if node is None:
+            return None
+        if role(node) != "AXMenuBar":   # a bar item / item holds its menu as an AXMenu child
+            node = next((c for c in children(node) if role(c) == "AXMenu"), None)
+            if node is None:
+                return None
+        node = next((c for c in children(node) if (title(c) or "").strip() == hop.strip()), None)
+    return node
+
+
+def menu_item_checked(app, path: list[str]) -> bool | None:
+    """Whether a menu-bar item shows a checkmark (a toggle that's on), or None
+    if the item isn't found. A plain command reads False, like an off toggle."""
+    item = menubar_item(app, path)
+    return None if item is None else bool(ax_get(item, "AXMenuItemMarkChar"))
 
 
 def dismiss_menus(app) -> None:

@@ -10,7 +10,7 @@ the passive per-turn AX text dump sent to the server as context.
 - `search.py` - `find_child`, `find_anywhere`, `find_all`.
 - `app.py` - Logic's pid / app element / windows / main window; raise and keep windows on screen.
 - `mouse.py` - tagged synthetic clicks; `press_or_click` (AXPress, then a real click).
-- `menus.py` - the open AXMenu, open a popup button's menu, drill by titles, dismiss.
+- `menus.py` - the open AXMenu, open a popup button's menu, drill by titles, dismiss; read a menu-bar item's checkmark.
 - `channel_strip.py` - a track's strip, its FX slots, the slot holding a plugin.
 - `plugin_windows.py` - which window shows which plugin.
 - `plugins.py` - add a plugin by search, open a loaded one, remove one.

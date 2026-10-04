@@ -79,3 +79,15 @@ def test_anchor_text():
 def test_menu_terminal_expect_strips_ellipsis():
     assert _menu_terminal_expect(["File", "Project Settings", "Smart Tempo…"]) == ["Smart Tempo"]
     assert _menu_terminal_expect(["Settings"]) is None
+
+
+def test_menu_toggle_entry_only_when_checkmark_flips():
+    from core.automation.ax_steps import LEDGER_KIND_TOGGLE
+    from core.automation.runner import menu_toggle_entry
+    path = ["Record", "Low Latency Monitoring Mode"]
+    entry = menu_toggle_entry(path, False, True)
+    assert entry == {"kind": LEDGER_KIND_TOGGLE, "label": "Low Latency Monitoring Mode back off",
+                     "path": path, "before": False}
+    assert menu_toggle_entry(path, True, False)["label"] == "Low Latency Monitoring Mode back on"
+    assert menu_toggle_entry(path, False, False) is None   # a plain command: no checkmark either way
+    assert menu_toggle_entry(path, None, True) is None     # item not found before

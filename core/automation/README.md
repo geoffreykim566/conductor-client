@@ -94,6 +94,14 @@ moved on. A band the run switched on goes back off whichever path wrote the valu
 replays its route unless the dropdown is showing in Logic's front window (same-layer check:
 Settings panels and plugin windows float at layer 3).
 
+### Menu toggles are ledgered by their checkmark
+A terminal menu item can be a toggle (Low Latency Monitoring Mode, Bypass All Control
+Surfaces) that leaves nothing on screen. `_run_menu` reads the item's `AXMenuItemMarkChar`
+through the menu bar (readable while the menu is closed) before and after; a flip is
+ledgered. Revert re-reads first and clicks again only if the mark isn't already back, so a
+toggle the user flipped themselves isn't flipped the wrong way. A plain command (New Tracks…)
+has no mark either side and gets no entry.
+
 ## Adding a step kind
 1. Map the wire key in `wire.py` (and decide its `expect` derivation).
 2. Write `_run_<kind>(step, log, stop_event)` in `runner.py` (or its own module if large),

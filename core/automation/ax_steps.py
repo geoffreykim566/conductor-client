@@ -19,6 +19,7 @@ from core.events.stop import check_stop
 LEDGER_KIND_PLUGIN = "plugin_opened"
 LEDGER_KIND_PARAM = "param_written"
 LEDGER_KIND_SETTING = "setting_chosen"   # written by dropdowns.run_choose
+LEDGER_KIND_TOGGLE = "menu_toggled"      # written by runner._run_menu
 
 
 def _mw_or_abort(app):

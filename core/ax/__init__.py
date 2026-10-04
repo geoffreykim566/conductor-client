@@ -15,7 +15,7 @@ from core.ax.app import (
     window_titles,
 )
 from core.ax.mouse import click_at, double_click_at, press_or_click
-from core.ax.menus import current_menu, dismiss_menus, drill, open_menu_of
+from core.ax.menus import current_menu, dismiss_menus, drill, menu_item_checked, menubar_item, open_menu_of
 from core.ax.channel_strip import fx_slots, loaded_names, loaded_slot, selected_strip, strip
 from core.ax.plugin_windows import plugin_window_for, plugin_windows_seen, window_plugin_name
 from core.ax.plugins import open_loaded_plugin, open_plugin_by_search, remove_plugin
@@ -58,6 +58,8 @@ __all__ = [
     "logic_pid",
     "main_window",
     "match_param",
+    "menu_item_checked",
+    "menubar_item",
     "norm",
     "num",
     "OFF",

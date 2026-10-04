@@ -8,7 +8,8 @@ check, so a path aborts rather than typing into another app.
 """
 import time
 
-from core.automation.ax_steps import run_ax_open_plugin, run_ax_set_param, with_track
+from core import ax
+from core.automation.ax_steps import LEDGER_KIND_TOGGLE, run_ax_open_plugin, run_ax_set_param, with_track
 from core.automation.dropdowns import last_click, run_choose
 from core.automation.errors import StepAbort
 from core.automation.logic_focus import require_logic_frontmost
@@ -62,7 +63,23 @@ def _run_key(step: dict, log, stop_event=None) -> None:
     _verify_expect(step, log)
 
 
-def _run_menu(step: dict, log, stop_event=None) -> None:
+def _menu_checked(path: list[str]) -> bool | None:
+    try:
+        return ax.menu_item_checked(ax.app_element(), path)
+    except ax.AxError:
+        return None
+
+
+def menu_toggle_entry(path: list[str], before: bool | None, after: bool | None) -> dict | None:
+    """Ledger entry for a menu item whose checkmark the step flipped (Low
+    Latency Monitoring Mode); None for a plain command or no flip."""
+    if before is None or after is None or before == after:
+        return None
+    return {"kind": LEDGER_KIND_TOGGLE, "label": f"{path[-1]} back {'on' if before else 'off'}",
+            "path": list(path), "before": before}
+
+
+def _run_menu(step: dict, log, stop_event=None) -> dict | None:
     path = step["path"]
     log(f"  menu: {' > '.join(path)}")
     if len(path) < 2:
@@ -81,6 +98,7 @@ def _run_menu(step: dict, log, stop_event=None) -> None:
         if hit is not None:
             log(f"    {hit['text']!r} is showing but its window isn't in front — opening it by menu")
 
+    before = _menu_checked(path)
     open_menubar_menu(path[0], stop_event)          # click the menu-bar title
     log(f"    open: {path[0]}")
     time.sleep(MENU_SETTLE_S)
@@ -104,6 +122,14 @@ def _run_menu(step: dict, log, stop_event=None) -> None:
     post_key(NAMED_KEYS["return"], stop_event=stop_event)
     wait_menus_gone()
     _verify_expect(step, log)
+    # A toggle item (checkmark flipped) is ledgered so Revert can flip it back.
+    if before is None:
+        return None
+    after, _ = ax.wait_until(lambda: (c := _menu_checked(path)) is not None and c != before, timeout=1.0)
+    entry = menu_toggle_entry(path, before, not before if after else before)
+    if entry:
+        log(f"    toggled {path[-1]} {'off' if before else 'on'}")
+    return entry
 
 
 def _run_click(step: dict, log, stop_event=None) -> None:

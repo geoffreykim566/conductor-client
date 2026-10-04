@@ -9,7 +9,7 @@ import time
 import ApplicationServices as AS
 
 from core import ax
-from core.automation.ax_steps import LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN, LEDGER_KIND_SETTING
+from core.automation.ax_steps import LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN, LEDGER_KIND_SETTING, LEDGER_KIND_TOGGLE
 from core.automation.errors import StepAbort
 from core.automation.ocr_find import find_text, is_front_window
 from core.automation.runner import run_steps
@@ -73,6 +73,8 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
             elif entry["kind"] == LEDGER_KIND_SETTING:
                 _revert_setting(entry)
                 results.append((entry, True, f"{entry.get('row') or 'setting'} back to {entry['prev']}"))
+            elif entry["kind"] == LEDGER_KIND_TOGGLE:
+                results.append((entry, True, _revert_toggle(app, entry)))
             else:
                 results.append((entry, False, f"no inverse for {entry['kind']}"))
         except Exception as exc:  # noqa: BLE001
@@ -95,6 +97,23 @@ def _close_window(win) -> None:
     if btn is not None:
         ax.ax_press(btn)
         time.sleep(0.3)
+
+
+def _revert_toggle(app, entry: dict) -> str:
+    """Click the menu item again, unless its checkmark is already back (the
+    user switched it themselves): a blind replay would flip it the wrong way."""
+    path, before = entry["path"], entry["before"]
+    state = "on" if before else "off"
+    now = ax.menu_item_checked(app, path)
+    if now is None:
+        raise ax.AxError(f"menu item {' > '.join(path)} not found")
+    if now == before:
+        return f"{path[-1]} was already {state}"
+    run_steps([{"kind": "menu", "path": path}], log=lambda m: print(f"[revert] {m}"))
+    back, _ = ax.wait_until(lambda: ax.menu_item_checked(app, path) == before, timeout=1.0)
+    if not back:
+        raise ax.AxError(f"{path[-1]} didn't switch back {state}")
+    return f"{path[-1]} back {state}"
 
 
 def _revert_setting(entry: dict) -> None:
