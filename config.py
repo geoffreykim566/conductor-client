@@ -5,7 +5,7 @@ Stays at the repo root: build.sh and conductor.spec import it as top-level `conf
 import os
 from pathlib import Path
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 
 # --- App data ---
 # Own directory, separate from the legacy v1 app's "Conductor" dir, so the two
