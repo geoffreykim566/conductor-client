@@ -3,6 +3,8 @@ import subprocess
 
 import Quartz
 
+from core.events.tag import check_event_permission
+
 BUNDLE_ID = "com.conductor.logicpro"  # must match bundle_identifier in conductor.spec
 _TCC_SERVICES = ("ScreenCapture", "ListenEvent", "Accessibility")
 
@@ -16,8 +18,8 @@ def has_input_monitoring_permission() -> bool:
 
 
 def has_accessibility_permission() -> bool:
-    """Same check as `core.events.tag.check_event_permission` (the card's Run gate)."""
-    return bool(Quartz.CGPreflightPostEventAccess())
+    """The card's Run gate, without the prompt, so setup and Run always agree."""
+    return check_event_permission(prompt=False)
 
 
 def reset_permissions() -> None:

@@ -3,6 +3,7 @@
 Every event Conductor posts carries SYNTHETIC_EVENT_TAG so the interrupt tap
 (core.automation.interrupt_tap) can tell our keystrokes from real user input.
 """
+import ApplicationServices as AS
 import Quartz
 
 
@@ -18,12 +19,14 @@ def tag_synthetic(event) -> None:
 
 
 def check_event_permission(prompt: bool = True) -> bool:
-    """True if synthetic-event posting is allowed (Accessibility granted)."""
-    preflight = getattr(Quartz, "CGPreflightPostEventAccess", None)
-    if preflight is None:
-        return True  # too old to check — attempt and observe
-    if preflight():
+    """True if synthetic-event posting is allowed (Accessibility granted).
+
+    Uses AXIsProcessTrusted, which reads the live state: CGPreflightPostEventAccess kept
+    returning False in the running process after the user toggled Accessibility on (seen
+    live 2026-10-04), and CGRequestPostEventAccess showed no prompt. With `prompt`, macOS
+    shows its "control this computer" dialog with a button to open the settings."""
+    if AS.AXIsProcessTrusted():
         return True
     if prompt:
-        Quartz.CGRequestPostEventAccess()
+        AS.AXIsProcessTrustedWithOptions({AS.kAXTrustedCheckOptionPrompt: True})
     return False

@@ -5,7 +5,7 @@ is tagged as Conductor's own, and posting loops check a cooperative stop flag be
 a run can be interrupted mid-step.
 
 ## Files
-- `tag.py` - `SYNTHETIC_EVENT_TAG`, `tag_synthetic()`, `check_event_permission()` (Accessibility preflight).
+- `tag.py` - `SYNTHETIC_EVENT_TAG`, `tag_synthetic()`, `check_event_permission()` (live Accessibility check).
 - `stop.py` - `Stopped` and `check_stop(stop_event)`.
 - `keyboard.py` - US-ANSI keycode tables, `parse_shortcut`, `post_key`, `press`, `type_select`.
 - `mouse.py` - `click_at(x, y)` in global screen points (top-left origin, same as kCGWindowBounds).
@@ -19,6 +19,12 @@ ellipsis stripped; spaces are typed because NSMenu's incremental search uses the
 ### Why tag every event
 `core.automation.interrupt_tap` swallows any untagged key/click/scroll during a run. An
 untagged synthetic event would abort the run on its own first keystroke.
+
+### Accessibility is checked with AXIsProcessTrusted
+`CGPreflightPostEventAccess` stayed False in the running app after the user switched
+Accessibility on (macOS had written the grant; seen live 2026-10-04), so setup sat on "Waiting
+for approval". `AXIsProcessTrusted` reads the live state and needs no relaunch. The prompt is
+`AXIsProcessTrustedWithOptions`; `CGRequestPostEventAccess` showed none.
 
 ### Stop is cooperative
 `Stopped` is raised from inside posting loops (per character, per menu hop), not between

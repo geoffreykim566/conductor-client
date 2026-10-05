@@ -36,7 +36,8 @@ this session.
 ### Accessibility is in setup, and still checked on Run
 It was once asked only when a card's Run was first clicked (`check_event_permission`), so a
 new user hit a system dialog mid-card (seen live, 2026-10-04). Setup now asks up front, using
-the same `CGPreflightPostEventAccess` check. The Run-time check stays for users who skip.
+the same live check (`core.events.tag.check_event_permission`, see core/events README). The
+Run-time check stays for users who skip.
 
 ## Adding a screen
 Subclass `CenteredDialog(width, height)`, build `QVBoxLayout(self.body)`, use object names

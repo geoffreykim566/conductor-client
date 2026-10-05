@@ -1,8 +1,8 @@
 """Request Accessibility access (needed to click and type in Logic Pro when a card runs)."""
-import Quartz
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+from core.events.tag import check_event_permission
 from ui.onboarding.centered_dialog import CenteredDialog
 from ui.onboarding.permissions import has_accessibility_permission
 
@@ -61,7 +61,7 @@ class AccessibilityScreen(CenteredDialog):
         layout.addLayout(skip_row)
 
     def _on_grant(self) -> None:
-        Quartz.CGRequestPostEventAccess()
+        check_event_permission()  # shows macOS's Accessibility prompt
         self._btn.setEnabled(False)
         self._btn.setText("Waiting for approval…")
         self._status.setText("Toggle Conductor on in System Settings, then return here.")
