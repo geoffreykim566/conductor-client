@@ -13,8 +13,8 @@ VERSION = "0.4.1"
 APP_SUPPORT_DIR = Path.home() / "Library" / "Application Support" / "Conductor-v3"
 
 # --- Server (proxy backend) ---
-# Real deployed server-v3 API. Override CONDUCTOR_SERVER_URL for local dev
-# against a docker-compose server-v3 instance instead.
+# Real deployed server API. Override CONDUCTOR_SERVER_URL for local dev
+# against a docker-compose server instance instead.
 SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "https://api.askconductor.ai")
 
 # --- Updates ---
@@ -38,6 +38,6 @@ MAX_CONTEXT_WINDOWS = 4
 # JPEG, not PNG (see core/capture/README.md "JPEG screenshots"). Stay >= 70
 # to keep small scale text crisp.
 SCREENSHOT_JPEG_QUALITY = 80
-# Mirror of server-v3 api.py's _MAX_SCREENSHOT_CHARS. Anything still over it
+# Mirror of server api.py's _MAX_SCREENSHOT_CHARS. Anything still over it
 # after JPEG encoding is skipped client-side rather than sent to be dropped.
 MAX_SCREENSHOT_B64_CHARS = 2 * 1024 * 1024

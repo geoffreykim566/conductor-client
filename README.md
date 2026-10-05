@@ -12,7 +12,7 @@ Python 3, PySide6 for UI, pyobjc for Quartz / Accessibility / Vision, packaged w
 - `core/ax/` - Accessibility toolkit for Logic Pro; per-turn AX state dump.
 - `core/capture/` - window capture and Vision OCR.
 - `core/automation/` - walkthrough executor: wire translation, step runner, revert, interrupt tap.
-- `core/net/` - server-v3 API, chat streaming, update check, worker threads.
+- `core/net/` - server API, chat streaming, update check, worker threads.
 - `core/state/` - config.json, chat history, conversation model.
 - `ui/` - chat window and its parts; `ui/message/` bubbles + walkthrough card; `ui/onboarding/` dialogs.
 - `tests/unit/` - pytest; `tests/ax_mechanics/` - live Logic Pro experiments.
@@ -24,9 +24,9 @@ Each folder has a README with its files, flow, quirks, and how to extend it.
 ```
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python main.py                                          # against https://api.askconductor.ai
-CONDUCTOR_SERVER_URL=http://127.0.0.1:8000 .venv/bin/python main.py   # against a local server-v3
+CONDUCTOR_SERVER_URL=http://127.0.0.1:8000 .venv/bin/python main.py   # against a local server
 ```
-For a local server run `docker compose up -d --build` inside `server-v3/`. On first launch macOS
+For a local server run `docker compose up -d --build` inside `server/`. On first launch macOS
 asks for Screen Recording, Input Monitoring and Accessibility (the last is needed to run actions).
 In dev these are granted to the terminal / Python binary, not to Conductor.app.
 

@@ -14,7 +14,7 @@ actually tested things"). Every test in this directory:
      (menu chain reports ok, nothing opens) and false failure
      (`kAXErrorCannotComplete` -25204 while the menu actually opens).
 
-Run from the client-v3 root:  PYTHONUNBUFFERED=1 .venv/bin/python -m tests.ax_mechanics.<test>
+Run from the client root:  PYTHONUNBUFFERED=1 .venv/bin/python -m tests.ax_mechanics.<test>
 """
 from __future__ import annotations
 

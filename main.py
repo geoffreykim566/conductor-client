@@ -1,4 +1,4 @@
-"""Conductor-client-v3 — entry point."""
+"""Conductor client — entry point."""
 import sys
 
 from PySide6.QtCore import QEvent
@@ -50,7 +50,7 @@ def _check_server(url: str) -> None:
     try:
         httpx.get(url, timeout=2)
     except httpx.ConnectError:
-        print(f"[conductor] WARNING: server unreachable at {url} — is Docker running? `docker compose up -d --build` inside server-v3/")
+        print(f"[conductor] WARNING: server unreachable at {url} — is Docker running? `docker compose up -d --build` inside server/")
     except Exception:
         pass  # any other error (e.g. 404, 401) means the server is up
 

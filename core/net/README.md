@@ -1,6 +1,6 @@
 # core/net
 
-Everything that talks to the network: the Conductor server-v3 API (identity, chat streaming,
+Everything that talks to the network: the Conductor server API (identity, chat streaming,
 ratings, profile) and GitHub Releases for update checks, plus the QThread workers that run
 those calls off the UI thread.
 
@@ -22,7 +22,7 @@ opaque: whatever the last `done` event carried is sent back verbatim next turn.
 with `resume="allow_research"|"deny_research"`), `done`, `cancelled`, `error`. 402 raises
 `FreeLimitReached`; 413/422 become a friendly error (detail logged); a timeout yields a canned reply.
 
-Set `CONDUCTOR_SERVER_URL` (e.g. `http://127.0.0.1:8000`) to hit a local server-v3.
+Set `CONDUCTOR_SERVER_URL` (e.g. `http://127.0.0.1:8000`) to hit a local server.
 
 ## Quirks & why
 ### Cancelling a stream

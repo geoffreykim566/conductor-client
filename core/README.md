@@ -8,7 +8,7 @@ and local state. Nothing in core/ imports ui/.
 - `ax/` - Accessibility toolkit for Logic Pro, plus the per-turn AX state dump.
 - `capture/` - Logic window capture and Apple Vision OCR.
 - `automation/` - the walkthrough executor: translate, run, verify, revert; its QThreads and interrupt tap.
-- `net/` - server-v3 API, chat streaming, update check, and the QThread workers for them.
+- `net/` - server API, chat streaming, update check, and the QThread workers for them.
 - `state/` - config.json (token, prefs, flags), chat history, the in-memory conversation.
 
 ## How it works

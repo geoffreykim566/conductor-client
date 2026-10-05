@@ -1,1 +1,1 @@
-"""Talking to the Conductor server-v3 API and GitHub Releases."""
+"""Talking to the Conductor server API and GitHub Releases."""

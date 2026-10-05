@@ -1,10 +1,10 @@
 # AX execution-mechanics suite — results
 
 **Run:** 2026-09-18, Logic Pro **12.3.1**, macOS Darwin 25.5, scratch project "Untitled"
-(Audio 1, Audio 2, one software-instrument track), client-v3 venv Python with Accessibility +
+(Audio 1, Audio 2, one software-instrument track), client venv Python with Accessibility +
 Input Monitoring + Screen Recording granted. Scripts: `tests/ax_mechanics/t*.py`, toolkit
 `_ax_common.py`, screenshots in `evidence/`. Run with
-`PYTHONUNBUFFERED=1 .venv/bin/python -m tests.ax_mechanics.<test>` from `client-v3/`.
+`PYTHONUNBUFFERED=1 .venv/bin/python -m tests.ax_mechanics.<test>` from `client/`.
 
 Rule applied throughout: an AX action's return code is never evidence. Every PASS re-reads the
 resulting AX state (fresh element lookup, settle loop) and, where noted, a screenshot.

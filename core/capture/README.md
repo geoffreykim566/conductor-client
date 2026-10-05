@@ -28,7 +28,7 @@ read. Per-window keeps each editor at native clarity.
 
 ### JPEG screenshots
 PNG blew the server's per-image cap: Logic's Compressor in its Studio VCA skin came out ~2.7M
-base64 chars as a 1568px PNG, over server-v3's 2M cap, so every turn 422'd while it was open
+base64 chars as a 1568px PNG, over the server's 2M cap, so every turn 422'd while it was open
 (2026-09-09, v0.3.0). Vision cost depends on pixel dimensions, not bytes; quality 80 is ~340K
 chars with every label legible. Keep `SCREENSHOT_JPEG_QUALITY` >= 70. Anything still over
 `MAX_SCREENSHOT_B64_CHARS` is skipped client-side with a log line.
