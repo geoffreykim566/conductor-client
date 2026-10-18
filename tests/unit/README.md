@@ -13,6 +13,7 @@ fine headless) but never needs Logic Pro, a QApplication, permissions, or the ne
 - `test_ax_pure.py` - `norm`, readout `num`, parameter-name `match_param`.
 - `test_state.py` - config_store, identity, prefs, song_history, Conversation.
 - `test_update_checker.py` - version parsing.
+- `test_stream_worker.py` - `StreamWorker`: a server error event shows `ASSISTANT_UNAVAILABLE`, not raw text.
 
 ## How it works
 Run `.venv/bin/python -m pip install -r requirements-dev.txt` once, then

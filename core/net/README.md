@@ -21,6 +21,9 @@ opaque: whatever the last `done` event carried is sent back verbatim next turn.
 `stream_chat` yields `(kind, payload)`: `chunk`, `status`, `research_prompt` (stream ends; resume
 with `resume="allow_research"|"deny_research"`), `done`, `cancelled`, `error`. 402 raises
 `FreeLimitReached`; 413/422 become a friendly error (detail logged); a timeout yields a canned reply.
+A server `error` event (the turn failed server-side, e.g. the model API refused the call) is printed
+as `[server_error]` and shown as `ASSISTANT_UNAVAILABLE`, never raw: the old 401 mapping told users
+to reset an API key they no longer have (BYOK is gone; the server holds the key).
 
 Set `CONDUCTOR_SERVER_URL` (e.g. `http://127.0.0.1:8000`) to hit a local server.
 

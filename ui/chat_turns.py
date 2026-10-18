@@ -115,13 +115,8 @@ class ChatTurnsMixin:
             self._maybe_show_feedback_prompt(remaining)
 
     def _on_error(self, msg: str) -> None:
-        msg_lower = msg.lower()
-        if any(word in msg_lower for word in ("401", "unauthorized", "authentication", "invalid x-api-key", "invalid api")):
-            display = "Invalid API key. Open Conductor's menu bar → Settings to reset it."
-        else:
-            display = msg
         self._pending_research = None
-        self._chat_view.append_to_assistant(f"\n\n[error] {display}")
+        self._chat_view.append_to_assistant(f"\n\n[error] {msg}")
         self._chat_view.end_assistant_message()
         self._input_bar.set_placeholder(None)
         self._input_bar.set_enabled_inputs(True)
