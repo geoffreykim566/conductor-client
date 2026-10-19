@@ -10,7 +10,7 @@ from ui.theme import ICON_BTN_SIZE
 class ResearchPromptMixin:
     """Needs `self._role`, `self._outer` and `set_status_text()` from MessageWidget."""
 
-    RESEARCH_PROMPT_TEXT = "Conductor wants to research the web - this can take a few minutes."
+    RESEARCH_PROMPT_TEXT = "Conductor wants to research the web - this can take up to a minute."
 
     def show_research_prompt(self, on_yes: Callable[[], None], on_no: Callable[[], None]) -> None:
         """Replace the bubble's status line with the research question and add
