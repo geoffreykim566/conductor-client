@@ -35,7 +35,9 @@ as `[server_error]`, never shown (the old raw text once told users to reset an A
 - `busy`: a 429 (the server's per-IP limit) or the event says so (OpenAI's shared rate limit).
 - `retry`: anything else, including an older server's raw `message` and any exception here.
 
-The server sends `kind`; the texts live here. The server refunds a failed turn's free message, so
+Shown as `[Error 429] <text>` (`error_text`): the code is the native HTTP status, OpenAI's or ours,
+sent by the server as `code`; with no response to read (offline, timeout, a client-side bug) it's just
+`[Error]` (user call, 10-19: a report still pins the cause). The server sends `kind`; the texts live here. The server refunds a failed turn's free message, so
 `_on_error` refreshes the counter (`ui/chat_turns.py`). A cancel isn't refunded.
 
 ### Cancelling a stream

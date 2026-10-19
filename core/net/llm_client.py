@@ -9,7 +9,7 @@ from core.ax import state_capture
 from core.capture import window_capture
 from core.net.account import get_me
 from core.net.auth import RegistrationThrottled
-from core.net.chat_stream import ERROR_TEXT, CancelToken, FreeLimitReached, stream_chat
+from core.net.chat_stream import CancelToken, FreeLimitReached, error_text, stream_chat
 
 
 class StreamWorker(QThread):
@@ -110,13 +110,13 @@ class StreamWorker(QThread):
             self.limit_reached.emit(e.limit if e.limit is not None else -1)
         except RegistrationThrottled:
             # First launch from a busy shared IP — transient, not the user's fault.
-            self.error.emit("Couldn't set up your free account right now. Please try again later.")
+            self.error.emit("[Error] Couldn't set up your free account right now. Please try again later.")
         except Exception as e:
             if self._cancel.is_cancelled():
                 self.cancelled.emit()
                 return
             print(f"[server_error] {type(e).__name__}: {e}")
-            self.error.emit(ERROR_TEXT["retry"])
+            self.error.emit(error_text("retry"))
 
 
 class MeWorker(QThread):

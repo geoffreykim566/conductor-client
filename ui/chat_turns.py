@@ -116,7 +116,7 @@ class ChatTurnsMixin:
 
     def _on_error(self, msg: str) -> None:
         self._pending_research = None
-        self._chat_view.append_to_assistant(f"\n\n[error] {msg}")
+        self._chat_view.show_assistant_error(msg)
         self._chat_view.end_assistant_message()
         self._input_bar.set_placeholder(None)
         self._input_bar.set_enabled_inputs(True)

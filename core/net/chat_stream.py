@@ -21,6 +21,11 @@ ERROR_TEXT = {
 }
 
 
+def error_text(kind: str, code: int | None = None) -> str:
+    """'[Error 429] Too many messages…': the native HTTP status when there is one."""
+    return f"[Error{f' {code}' if code else ''}] {ERROR_TEXT[kind]}"
+
+
 class FreeLimitReached(Exception):
     """Raised when the proxy rejects a chat for exceeding the message cap (HTTP 402).
 
@@ -115,7 +120,7 @@ def stream_chat(
                              resume= and that history to finish the turn
         "done"            -> payload is a dict {event_id, tokens_in, tokens_out, history, ...}
         "cancelled"       -> the caller cancelled; nothing else follows
-        "error"           -> payload is the str to show the user (ERROR_TEXT)
+        "error"           -> payload is the str to show the user (error_text)
 
     Raises FreeLimitReached on 402 when the message cap is hit, and
     RegistrationThrottled if a needed registration is rate limited.
@@ -171,13 +176,14 @@ def stream_chat(
                     except Exception:
                         detail = resp.text[:500]
                     print(f"[server_client] {resp.status_code} from /v3/chat: {detail}")
-                    yield ("error", "That message was too long to send. Try shortening it, or start a new chat.")
+                    yield ("error", f"[Error {resp.status_code}] That message was too long to send. "
+                                    "Try shortening it, or start a new chat.")
                     return
                 if resp.status_code in (429, 503):
                     # 429: the server's per-IP rate limit; 503: its daily budget breaker.
                     resp.read()
                     print(f"[server_error] {resp.status_code} from /v3/chat: {resp.text[:500]}")
-                    yield ("error", ERROR_TEXT["busy" if resp.status_code == 429 else "down"])
+                    yield ("error", error_text("busy" if resp.status_code == 429 else "down", resp.status_code))
                     return
                 resp.raise_for_status()
                 for line in resp.iter_lines():
@@ -197,7 +203,8 @@ def stream_chat(
                     elif kind == "error":
                         # An older server sends only a raw `message`: print it, show "retry".
                         print(f"[server_error] {obj}")
-                        yield ("error", ERROR_TEXT.get(obj.get("kind"), ERROR_TEXT["retry"]))
+                        kind = obj.get("kind") if obj.get("kind") in ERROR_TEXT else "retry"
+                        yield ("error", error_text(kind, obj.get("code")))
                 return
         except Exception as e:
             # Our own cancel closes the stream out from under the read above,
@@ -212,7 +219,7 @@ def stream_chat(
                 return
             if isinstance(e, httpx.ConnectError):  # offline, or the server is down
                 print(f"[server_error] {type(e).__name__}: {e}")
-                yield ("error", ERROR_TEXT["offline"])
+                yield ("error", error_text("offline"))
                 return
             raise
 

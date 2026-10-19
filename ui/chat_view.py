@@ -149,6 +149,10 @@ class ChatView(QWidget):
         if self._current_assistant is not None:
             self._current_assistant.hide_research_prompt()
 
+    def show_assistant_error(self, text: str) -> None:
+        if self._current_assistant is not None:
+            self._current_assistant.show_error(text)
+
     def mark_assistant_cancelled(self) -> None:
         if self._current_assistant is not None:
             self._current_assistant.mark_cancelled()

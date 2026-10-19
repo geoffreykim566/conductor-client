@@ -97,6 +97,15 @@ class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
         else:
             self.append_text("\n\n[cancelled]")
 
+    def show_error(self, text: str) -> None:
+        """A failed turn. It replaces the status line; text already streamed keeps it, with the
+        error under a blank line (always adding the gap left blank lines above the error)."""
+        self.hide_research_prompt()
+        if getattr(self, "_has_status", False) or not self._text:
+            self.append_text(text)
+        else:
+            self.append_text(f"\n\n{text}")
+
     def setup_walkthrough(self, steps: list, *, auto: bool = False, destructive: bool = False) -> None:
         """Render a walkthrough/action card inside the bubble (see WalkthroughCard)."""
         if self._role != "assistant" or not steps:
