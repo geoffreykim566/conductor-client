@@ -21,13 +21,23 @@ opaque: whatever the last `done` event carried is sent back verbatim next turn.
 `stream_chat` yields `(kind, payload)`: `chunk`, `status`, `research_prompt` (stream ends; resume
 with `resume="allow_research"|"deny_research"`), `done`, `cancelled`, `error`. 402 raises
 `FreeLimitReached`; 413/422 become a friendly error (detail logged); a timeout yields a canned reply.
-A server `error` event (the turn failed server-side, e.g. the model API refused the call) is printed
-as `[server_error]` and shown as `ASSISTANT_UNAVAILABLE`, never raw: the old 401 mapping told users
-to reset an API key they no longer have (BYOK is gone; the server holds the key).
+Every other failure becomes one of four fixed texts in `ERROR_TEXT` (Errors, below).
 
 Set `CONDUCTOR_SERVER_URL` (e.g. `http://127.0.0.1:8000`) to hit a local server.
 
 ## Quirks & why
+### Errors
+A failed turn tells the user only whose side it's on and whether to retry; the raw cause is printed
+as `[server_error]`, never shown (the old raw text once told users to reset an API key they don't have).
+- `offline`: `ConnectError`, i.e. no internet, or our server is down (the client can't tell which).
+- `down`: the server's error event says so (OpenAI out of credit, key rejected, outage), or a 503
+  (the daily budget breaker).
+- `busy`: a 429 (the server's per-IP limit) or the event says so (OpenAI's shared rate limit).
+- `retry`: anything else, including an older server's raw `message` and any exception here.
+
+The server sends `kind`; the texts live here. The server refunds a failed turn's free message, so
+`_on_error` refreshes the counter (`ui/chat_turns.py`). A cancel isn't refunded.
+
 ### Cancelling a stream
 Esc must unblock a worker stuck in an SSE read. `CancelToken.cancel()` flags the token and
 closes the response; the dropped connection is what tells the server to abort the turn.

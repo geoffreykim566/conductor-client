@@ -9,11 +9,7 @@ from core.ax import state_capture
 from core.capture import window_capture
 from core.net.account import get_me
 from core.net.auth import RegistrationThrottled
-from core.net.chat_stream import CancelToken, FreeLimitReached, stream_chat
-
-# Shown for any server-side turn failure (e.g. the model API rejecting the call).
-# The raw text is printed, never shown: it named an "API key" the user doesn't have.
-ASSISTANT_UNAVAILABLE = "Conductor's assistant is unavailable right now. Please try again in a few minutes."
+from core.net.chat_stream import ERROR_TEXT, CancelToken, FreeLimitReached, stream_chat
 
 
 class StreamWorker(QThread):
@@ -106,8 +102,7 @@ class StreamWorker(QThread):
                     # from older servers -> False, i.e. always ask.
                     auto_run = bool(payload.get("auto_run"))
                 elif kind == "error":
-                    print(f"[server_error] {payload}")
-                    self.error.emit(ASSISTANT_UNAVAILABLE)
+                    self.error.emit(payload)
                     return
             self.done.emit(event_id, remaining, source_tier, sources,
                            walkthrough_steps, history, auto_run)
@@ -120,7 +115,8 @@ class StreamWorker(QThread):
             if self._cancel.is_cancelled():
                 self.cancelled.emit()
                 return
-            self.error.emit(f"{type(e).__name__}: {e}")
+            print(f"[server_error] {type(e).__name__}: {e}")
+            self.error.emit(ERROR_TEXT["retry"])
 
 
 class MeWorker(QThread):

@@ -11,6 +11,16 @@ from core.net.auth import ensure_token, headers
 from core.state import identity
 
 
+# What the user is told when a turn fails; the cause is only printed. `kind` comes from the
+# server's error event, or from the status / connection failure here (README: Errors).
+ERROR_TEXT = {
+    "offline": "Couldn't reach Conductor. Check your internet connection; if it's working, Conductor may be down.",
+    "down": "Conductor is down right now. Please try again later.",
+    "busy": "Too many messages at once. Please wait a minute and try again.",
+    "retry": "Something went wrong on Conductor's end. Please try again in a minute.",
+}
+
+
 class FreeLimitReached(Exception):
     """Raised when the proxy rejects a chat for exceeding the message cap (HTTP 402).
 
@@ -105,7 +115,7 @@ def stream_chat(
                              resume= and that history to finish the turn
         "done"            -> payload is a dict {event_id, tokens_in, tokens_out, history, ...}
         "cancelled"       -> the caller cancelled; nothing else follows
-        "error"           -> payload is a str error message
+        "error"           -> payload is the str to show the user (ERROR_TEXT)
 
     Raises FreeLimitReached on 402 when the message cap is hit, and
     RegistrationThrottled if a needed registration is rate limited.
@@ -163,6 +173,12 @@ def stream_chat(
                     print(f"[server_client] {resp.status_code} from /v3/chat: {detail}")
                     yield ("error", "That message was too long to send. Try shortening it, or start a new chat.")
                     return
+                if resp.status_code in (429, 503):
+                    # 429: the server's per-IP rate limit; 503: its daily budget breaker.
+                    resp.read()
+                    print(f"[server_error] {resp.status_code} from /v3/chat: {resp.text[:500]}")
+                    yield ("error", ERROR_TEXT["busy" if resp.status_code == 429 else "down"])
+                    return
                 resp.raise_for_status()
                 for line in resp.iter_lines():
                     if not line.startswith("data: "):
@@ -179,7 +195,9 @@ def stream_chat(
                         yield ("research_prompt", obj)
                         return
                     elif kind == "error":
-                        yield ("error", obj.get("message", "error"))
+                        # An older server sends only a raw `message`: print it, show "retry".
+                        print(f"[server_error] {obj}")
+                        yield ("error", ERROR_TEXT.get(obj.get("kind"), ERROR_TEXT["retry"]))
                 return
         except Exception as e:
             # Our own cancel closes the stream out from under the read above,
@@ -191,6 +209,10 @@ def stream_chat(
                 return
             if isinstance(e, httpx.TimeoutException):
                 yield from _timeout_fallback(history)
+                return
+            if isinstance(e, httpx.ConnectError):  # offline, or the server is down
+                print(f"[server_error] {type(e).__name__}: {e}")
+                yield ("error", ERROR_TEXT["offline"])
                 return
             raise
 

@@ -120,6 +120,7 @@ class ChatTurnsMixin:
         self._chat_view.end_assistant_message()
         self._input_bar.set_placeholder(None)
         self._input_bar.set_enabled_inputs(True)
+        self._refresh_remaining()  # the server refunds a failed turn's message
 
     def _on_limit_reached(self, limit: int = -1) -> None:
         used = f"all {limit}" if limit and limit > 0 else "up all your"
