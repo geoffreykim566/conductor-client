@@ -67,6 +67,16 @@ per-track mute state never reached the model (2026-09-12). Depth is now a sanity
 (20); the node budget bounds capture time (~0.5 ms per node) and the char cap bounds payload.
 The Tracks group is walked first so a big Inspector can't eat the budget.
 
+### Plug-in knob values in the dump
+The model gets each slider's `AXValueDescription`, not raw `AXValue`: raw numbers made it guess
+conversions ("Threshold 61 on the slider (~-20 dB)", 10-12). Channel EQ's editor gives real units.
+The Compressor editor gives only knob travel: every readout is a % equal to raw's place in its
+range ("34 %" for raw 40 of 0–119), so a % that matches that is sent as `position=34%` and any
+other % as a real value (live 10-19). The server prompt says `position=` isn't a setting; Sol
+calls `read_plugin_values` for the real one. The Compressor editor names only Threshold in
+`AXDescription`; the rest are named from `AXHelp` ("Ratio knob and field. ..."). No per-knob
+note on `position=`: with two plug-in windows open the dump is already near its 12k cap.
+
 ### Wedged AX server
 With the Mac's screen locked, Logic's AX server returned the AXApplication element for every
 window attribute and as its own child (2026-09-12), so the walk produced a self-referential

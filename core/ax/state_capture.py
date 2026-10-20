@@ -7,6 +7,8 @@ every turn (see core/net/llm_client.py), fails soft to None on any error (Logic 
 running, Accessibility permission not granted, an AX call failing) -- never
 raises, this is best-effort context and must never block a turn.
 """
+import re
+
 import ApplicationServices as AS
 from AppKit import NSWorkspace
 
@@ -58,6 +60,37 @@ def _ordered_children(el) -> list:
     return first + rest
 
 
+_HELP_NAME = re.compile(r"^(.+?)\s+(?:knob and field|knob|field|pop-up menu|button)\b", re.I)
+_NAMED_BY_HELP = {"AXSlider", "AXPopUpButton", "AXCheckBox"}
+
+
+def _help_name(help_text) -> str | None:
+    """A control's name from its AXHelp ("Ratio knob and field. Set ..."): the Compressor
+    editor names only Threshold in AXDescription (README "Plug-in knob values")."""
+    if not isinstance(help_text, str):
+        return None
+    m = _HELP_NAME.match(help_text.strip())
+    return m.group(1) if m else None
+
+
+def _slider_value(raw, lo, hi, shown) -> str | None:
+    """value='-19.5 dB' for a real readout; position=N% when the readout is only how far the
+    knob is turned (a % equal to raw's place in its range, or one that can't be checked). The
+    server prompt says what position= means; no note per knob, the dump is capped."""
+    text = shown.strip() if isinstance(shown, str) else ""
+    if not text:
+        return None
+    if text.endswith("%"):
+        try:
+            pct = float(text[:-1])
+            travel = (float(raw) - float(lo)) / (float(hi) - float(lo)) * 100
+        except (TypeError, ValueError, ZeroDivisionError):
+            return f"position={text.replace(' ', '')}"
+        if abs(pct - travel) <= 1:
+            return f"position={pct:g}%"
+    return f"value={text!r}"
+
+
 def _describe(el, depth: int, lines: list[str], budget: list[int]) -> None:
     if budget[0] <= 0 or depth > _MAX_DEPTH:
         return
@@ -69,12 +102,20 @@ def _describe(el, depth: int, lines: list[str], budget: list[int]) -> None:
     title = _ax_get(el, AS.kAXTitleAttribute)
     desc = _ax_get(el, AS.kAXDescriptionAttribute)
     value = _ax_get(el, AS.kAXValueAttribute)
+    if not desc and not title and role in _NAMED_BY_HELP:
+        desc = _help_name(_ax_get(el, "AXHelp"))
+    readout = None
+    if role == "AXSlider" and value not in (None, ""):
+        readout = _slider_value(value, _ax_get(el, "AXMinValue"), _ax_get(el, "AXMaxValue"),
+                                _ax_get(el, "AXValueDescription"))
     bits = [str(role or "?")]
     if title:
         bits.append(f"title={title!r}")
     if desc and desc != title:
         bits.append(f"desc={desc!r}")
-    if value not in (None, ""):
+    if readout:
+        bits.append(readout)
+    elif value not in (None, ""):
         bits.append(f"value={value!r}")
     skip = role in _SKIP_ROLES or (
         isinstance(desc, str) and desc.startswith(_SKIP_DESC_PREFIXES)
