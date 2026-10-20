@@ -1,0 +1,23 @@
+skip 'Auto Gain': AXPopUpButton
+skip 'Distortion': AXPopUpButton
+skip 'Circuit Type': AXPopUpButton
+skip 'Limiter On': AXCheckBox
+skip 'Auto Release': AXCheckBox
+skip 'State': AXPopUpButton
+skip 'Mode': AXPopUpButton
+skip 'View Select': AXPopUpButton
+[studio_vca] sweeping 12 params: Threshold 0..100 (now 61.0), Ratio 0..85 (now 54.0), Attack 0..100 (now 0.0), Release 0..119 (now 0.0), Make Up 0..110 (now 40.0), Knee 0..10 (now 7.0), Limiter Threshold 0..100 (now 100.0), Frequency 0..123 (now 105.0), Q 0..20 (now 6.0), Mix 0..200 (now 200.0), Input Gain 0..120 (now 60.0), Output Gain 0..120 (now 60.0)
+  Threshold: 101 steps in 3.9s, raw mismatches=0; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps in 3.3s, raw mismatches=0; '1.0:1' .. '30.0:1'
+  Attack: 101 steps in 3.9s, raw mismatches=0; '0.0 ms' .. '200.0 ms'
+  Release: 120 steps in 4.6s, raw mismatches=0; '5.0 ms' .. '5000.0 ms'
+  Make Up: 111 steps in 4.2s, raw mismatches=0; '-20.0 dB' .. '50.0 dB'
+  Knee: 11 steps in 0.4s, raw mismatches=0; '0.0' .. '1.0'
+  Limiter Threshold: 101 steps in 3.9s, raw mismatches=0; '-10.0 dB' .. '0.0 dB'
+  Frequency: 124 steps in 4.8s, raw mismatches=0; '16.352 Hz' .. '19912 Hz'
+  Q: 21 steps in 0.8s, raw mismatches=0; '0.50' .. '5.00'
+  Mix: 201 steps in 9.1s, raw mismatches=0; '0.0 %' .. '100.0 %'
+  Input Gain: 121 steps in 5.5s, raw mismatches=0; '-30.0 dB' .. '+30.0 dB'
+  Output Gain: 121 steps in 5.4s, raw mismatches=0; '-30.0 dB' .. '+30.0 dB'
+[studio_vca] restored; mismatches: none
+wrote /private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/table_studio_vca.json

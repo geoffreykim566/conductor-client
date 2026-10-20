@@ -1,0 +1,43 @@
+[Classic VCA]
+  Threshold: 101 steps; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps; '1.0:1' .. '30.0:1'
+  Make Up: 111 steps; '-20.0 dB' .. '50.0 dB'
+  Limiter Threshold: 101 steps; '-10.0 dB' .. '0.0 dB'
+  Frequency: 124 steps; '16.352 Hz' .. '19912 Hz'
+  Q: 21 steps; '0.50' .. '5.00'
+  Mix: 201 steps; '0.0 %' .. '100.0 %'
+  Input Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  Output Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  restored; mismatches: none
+  wrote /private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/table_classic_vca.json (circuit_type='Classic VCA')
+[Vintage VCA]
+  Threshold: 101 steps; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps; '1.0:1' .. '30.0:1'
+  Attack: 101 steps; '0.0 ms' .. '200.0 ms'
+  Release: 120 steps; '5.0 ms' .. '5000.0 ms'
+  Make Up: 111 steps; '-20.0 dB' .. '50.0 dB'
+  Knee: 11 steps; '0.0' .. '1.0'
+  Limiter Threshold: 101 steps; '-10.0 dB' .. '0.0 dB'
+  Frequency: 124 steps; '16.352 Hz' .. '19912 Hz'
+  Q: 21 steps; '0.50' .. '5.00'
+  Mix: 201 steps; '0.0 %' .. '100.0 %'
+  Input Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  Output Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  restored; mismatches: none
+  wrote /private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/table_vintage_vca.json (circuit_type='Vintage VCA')
+[Vintage Opto]
+  Threshold: 101 steps; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps; '1.0:1' .. '30.0:1'
+  Attack: 101 steps; '0.0 ms' .. '200.0 ms'
+  Release: 120 steps; '5.0 ms' .. '5000.0 ms'
+  Make Up: 111 steps; '-20.0 dB' .. '50.0 dB'
+  Knee: 11 steps; '0.0' .. '1.0'
+  Limiter Threshold: 101 steps; '-10.0 dB' .. '0.0 dB'
+  Frequency: 124 steps; '16.352 Hz' .. '19912 Hz'
+  Q: 21 steps; '0.50' .. '5.00'
+  Mix: 201 steps; '0.0 %' .. '100.0 %'
+  Input Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  Output Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  restored; mismatches: none
+  wrote /private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/table_vintage_opto.json (circuit_type='Vintage Opto')
+final circuit Studio VCA: True

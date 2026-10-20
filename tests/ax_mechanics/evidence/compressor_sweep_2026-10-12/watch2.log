@@ -1,0 +1,543 @@
+
+===== 20:49:59
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:50:49
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+
+===== 20:51:23
+### Audio 1
+  ?                        raw=61.0    [0..100] shown='-19.5 dB'
+  help:Threshold           raw=61.0    [0.0..100.0] shown=None sib=['Threshold:', '-19.5 dB']
+  ?                        raw=54.0    [0..85] shown='8.7:1'
+  help:Ratio               raw=54.0    [0.0..85.0] shown=None sib=['Ratio:', '8.7:1']
+  ?                        raw=0.0     [0..100] shown='0.0 ms'
+  help:Attack              raw=0.0     [0.0..100.0] shown=None sib=['Attack:', '0.0 ms']
+  ?                        raw=40.0    [0..119] shown='51.0 ms'
+  help:Release             raw=40.0    [0.0..119.0] shown=None sib=['Release:', '51.0 ms']
+  ?                        raw=40.0    [0..110] shown='0.0 dB'
+  help:Make Up             raw=40.0    [0.0..110.0] shown=None sib=['Make Up:', '0.0 dB']
+  ?                        raw=7.0     [0..9223372036854775807] shown='0.7'
+  ?                        raw=1.0     [0..9223372036854775807] shown='RMS'
+  ?                        raw=100.0   [0..100] shown='0.0 dB'
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown=None sib=['Limiter Threshold:', '0.0 dB']
+  ?                        raw=105.0   [0..123] shown='7040.0 Hz'
+  help:Frequency           raw=105.0   [0.0..123.0] shown=None sib=['Frequency:', '7040.0 Hz']
+  ?                        raw=6.0     [0..20] shown='1.00'
+  help:Q knob and          raw=6.0     [0.0..20.0] shown=None sib=['Q:', '1.00']
+  ?                        raw=48.0    [0..9223372036854775807] shown='0.0 dB'
+  ?                        raw=200.0   [0..200] shown='100.0 %'
+  help:Mix                 raw=200.0   [0.0..200.0] shown=None sib=['Mix:', '100.0 %']
+  ?                        raw=0.0     [0..9223372036854775807] shown='0.0 dB'
+  ?                        raw=60.0    [0..120] shown='0.0 dB'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown=None sib=['Input Gain:', '0.0 dB']
+  ?                        raw=60.0    [0..120] shown='0.0 dB'
+  help:Output Gain         raw=60.0    [0.0..120.0] shown=None sib=['Output Gain:', '0.0 dB']
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:51:25
+
+
+===== 20:51:26
+### Audio 1
+  ?                        raw=61.0    [0..100] shown='-19.5 dB'
+  help:Threshold           raw=61.0    [0.0..100.0] shown=None sib=['Threshold:', '-19.5 dB']
+  ?                        raw=54.0    [0..85] shown='8.7:1'
+  help:Ratio               raw=54.0    [0.0..85.0] shown=None sib=['Ratio:', '8.7:1']
+  ?                        raw=0.0     [0..100] shown='0.0 ms'
+  help:Attack              raw=0.0     [0.0..100.0] shown=None sib=['Attack:', '0.0 ms']
+  ?                        raw=40.0    [0..119] shown='51.0 ms'
+  help:Release             raw=40.0    [0.0..119.0] shown=None sib=['Release:', '51.0 ms']
+  ?                        raw=40.0    [0..110] shown='0.0 dB'
+  help:Make Up             raw=40.0    [0.0..110.0] shown=None sib=['Make Up:', '0.0 dB']
+  ?                        raw=7.0     [0..9223372036854775807] shown='0.7'
+  ?                        raw=1.0     [0..9223372036854775807] shown='RMS'
+  ?                        raw=100.0   [0..100] shown='0.0 dB'
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown=None sib=['Limiter Threshold:', '0.0 dB']
+  ?                        raw=105.0   [0..123] shown='7040.0 Hz'
+  help:Frequency           raw=105.0   [0.0..123.0] shown=None sib=['Frequency:', '7040.0 Hz']
+  ?                        raw=6.0     [0..20] shown='1.00'
+  help:Q knob and          raw=6.0     [0.0..20.0] shown=None sib=['Q:', '1.00']
+  ?                        raw=48.0    [0..9223372036854775807] shown='0.0 dB'
+  ?                        raw=200.0   [0..200] shown='100.0 %'
+  help:Mix                 raw=200.0   [0.0..200.0] shown=None sib=['Mix:', '100.0 %']
+  ?                        raw=0.0     [0..9223372036854775807] shown='0.0 dB'
+  ?                        raw=60.0    [0..120] shown='0.0 dB'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown=None sib=['Input Gain:', '0.0 dB']
+  ?                        raw=60.0    [0..120] shown='0.0 dB'
+  help:Output Gain         raw=60.0    [0.0..120.0] shown=None sib=['Output Gain:', '0.0 dB']
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:53:18
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:53:19
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Knee                raw=7.0     [0.0..10.0] shown='70 %'
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:53:53
+### Audio 1
+  ?                        raw=61.0    [0..100] shown='-19.5 dB'
+  help:Threshold           raw=61.0    [0.0..100.0] shown=None sib=['Threshold:', '-19.5 dB']
+  ?                        raw=54.0    [0..85] shown='8.7:1'
+  help:Ratio               raw=54.0    [0.0..85.0] shown=None sib=['Ratio:', '8.7:1']
+  ?                        raw=0.0     [0..100] shown='0.0 ms'
+  help:Attack              raw=0.0     [0.0..100.0] shown=None sib=['Attack:', '0.0 ms']
+  ?                        raw=40.0    [0..119] shown='51.0 ms'
+  help:Release             raw=40.0    [0.0..119.0] shown=None sib=['Release:', '51.0 ms']
+  ?                        raw=40.0    [0..110] shown='0.0 dB'
+  help:Make Up             raw=40.0    [0.0..110.0] shown=None sib=['Make Up:', '0.0 dB']
+  ?                        raw=7.0     [0..10] shown='0.7'
+  help:Knee                raw=7.0     [0.0..10.0] shown=None sib=['Knee:', '0.7']
+  ?                        raw=100.0   [0..100] shown='0.0 dB'
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown=None sib=['Limiter Threshold:', '0.0 dB']
+  ?                        raw=105.0   [0..123] shown='7040.0 Hz'
+  help:Frequency           raw=105.0   [0.0..123.0] shown=None sib=['Frequency:', '7040.0 Hz']
+  ?                        raw=6.0     [0..20] shown='1.00'
+  help:Q knob and          raw=6.0     [0.0..20.0] shown=None sib=['Q:', '1.00']
+  ?                        raw=48.0    [0..9223372036854775807] shown='0.0 dB'
+  ?                        raw=200.0   [0..200] shown='100.0 %'
+  help:Mix                 raw=200.0   [0.0..200.0] shown=None sib=['Mix:', '100.0 %']
+  ?                        raw=0.0     [0..9223372036854775807] shown='0.0 dB'
+  ?                        raw=60.0    [0..120] shown='0.0 dB'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown=None sib=['Input Gain:', '0.0 dB']
+  ?                        raw=60.0    [0..120] shown='0.0 dB'
+  help:Output Gain         raw=60.0    [0.0..120.0] shown=None sib=['Output Gain:', '0.0 dB']
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:53:55
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Knee                raw=7.0     [0.0..10.0] shown='70 %'
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:53:56
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'Threshold', 'Mix', 'Output Gain']
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:53:58
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Knee                raw=7.0     [0.0..10.0] shown='70 %'
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:53:59
+
+
+===== 20:54:01
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Knee                raw=7.0     [0.0..10.0] shown='70 %'
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+
+===== 20:54:38
+
+
+===== 20:54:41
+### Audio 1
+  help:Mix                 raw=200.0   [0.0..200.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Distortion          raw=0.0     [0.0..3.0] shown='0 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Limiter Threshold   raw=100.0   [0.0..100.0] shown='100 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Output Gain         raw=60.0    [0.0..120.0] shown='50 %' sib=['ON', 'THRESHOLD', 'MIX', 'OUTPUT GAIN']
+  help:Knee                raw=7.0     [0.0..10.0] shown='70 %'
+  help:Release             raw=40.0    [0.0..119.0] shown='34 %'
+  help:Input Gain          raw=60.0    [0.0..120.0] shown='50 %'
+  help:Attack              raw=0.0     [0.0..100.0] shown='0 %'
+  help:Make Up             raw=40.0    [0.0..110.0] shown='36 %'
+  help:Ratio               raw=54.0    [0.0..85.0] shown='64 %'
+  Threshold                raw=61.0    [0.0..100.0] shown='61 %'
+### Audio 1
+  Low Cut Frequency        raw=0.0     [0.0..1050.0] shown='20.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Order            raw=1.0     [0.0..5.0] shown='12 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Cut Q                raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Frequency      raw=200.0   [0.0..1050.0] shown='75.0 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Gain           raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Low Shelf Q              raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Frequency         raw=250.0   [0.0..1050.0] shown='100 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 1 Q                 raw=33.0    [0.0..127.0] shown='0.60 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Frequency         raw=375.0   [0.0..1050.0] shown='250 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 2 Q                 raw=20.0    [0.0..127.0] shown='0.30 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Frequency         raw=604.0   [0.0..1050.0] shown='1040 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 3 Q                 raw=26.0    [0.0..127.0] shown='0.41 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Frequency         raw=725.0   [0.0..1050.0] shown='2500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Gain              raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Peak 4 Q                 raw=13.0    [0.0..127.0] shown='0.20 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Frequency     raw=900.0   [0.0..1050.0] shown='7500 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Gain          raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Shelf Q             raw=40.0    [0.0..52.0] shown='1.00 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Frequency       raw=1050.0  [0.0..1050.0] shown='20000 Hz' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Order           raw=3.0     [0.0..5.0] shown='24 dB/Oct' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  High Cut Q               raw=36.0    [0.0..127.0] shown='0.71 ' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+  Gain                     raw=240.0   [0.0..480.0] shown='0.0 dB' sib=['Low Cut', 'Low Shelf', 'Peak 1', 'Peak 2']
+watch done

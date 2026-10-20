@@ -1,0 +1,58 @@
+[Vintage FET]
+  Threshold: 101 steps; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps; '1.0:1' .. '30.0:1'
+  Attack: 101 steps; '0.0 ms' .. '200.0 ms'
+  Release: 120 steps; '5.0 ms' .. '5000.0 ms'
+  Make Up: 111 steps; '-20.0 dB' .. '50.0 dB'
+  Knee: 11 steps; '0.0' .. '1.0'
+  Limiter Threshold: 101 steps; '-10.0 dB' .. '0.0 dB'
+  Frequency: 124 steps; '16.352 Hz' .. '19912 Hz'
+  Q: 21 steps; '0.50' .. '5.00'
+  Mix: 201 steps; '0.0 %' .. '100.0 %'
+  Input Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  Output Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  restored; mismatches: none
+  wrote /private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/table_vintage_fet.json (circuit_type='Vintage FET')
+[Platinum Digital]
+  Threshold: 101 steps; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps; '1.0:1' .. '30.0:1'
+  Attack: 101 steps; '0.0 ms' .. '200.0 ms'
+  Release: 120 steps; '5.0 ms' .. '5000.0 ms'
+  Make Up: 111 steps; '-20.0 dB' .. '50.0 dB'
+  Knee: 11 steps; '0.0' .. '1.0'
+  Limiter Threshold: 101 steps; '-10.0 dB' .. '0.0 dB'
+  Frequency: 124 steps; '16.352 Hz' .. '19912 Hz'
+  Q: 21 steps; '0.50' .. '5.00'
+  Mix: 201 steps; '0.0 %' .. '100.0 %'
+  Input Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  Output Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  restored; mismatches: none
+  wrote /private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/table_platinum_digital.json (circuit_type='Platinum Digital')
+[Studio FET]
+  Threshold: 101 steps; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps; '1.0:1' .. '30.0:1'
+  Attack: 101 steps; '0.0 ms' .. '200.0 ms'
+  Release: 120 steps; '5.0 ms' .. '5000.0 ms'
+  Make Up: 111 steps; '-20.0 dB' .. '50.0 dB'
+  Limiter Threshold: 101 steps; '-10.0 dB' .. '0.0 dB'
+  Frequency: 124 steps; '16.352 Hz' .. '19912 Hz'
+  Q: 21 steps; '0.50' .. '5.00'
+  Mix: 201 steps; '0.0 %' .. '100.0 %'
+  Input Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  Output Gain: 121 steps; '-30.0 dB' .. '+30.0 dB'
+  restored; mismatches: none
+  wrote /private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/table_studio_fet.json (circuit_type='Studio FET')
+[Classic VCA]
+  Threshold: 101 steps; '-50.0 dB' .. '0.0 dB'
+  Ratio: 86 steps; '1.0:1' .. '30.0:1'
+  Make Up: 111 steps; '-20.0 dB' .. '50.0 dB'
+  restored; mismatches: [('Threshold', None, 61.0), ('Ratio', None, 54.0), ('Make Up', None, 40.0), ('Limiter Threshold', None, 100.0), ('Frequency', None, 105.0), ('Q', None, 6.0), ('Mix', None, 200.0), ('Input Gain', None, 60.0), ('Output Gain', None, 60.0)]
+ABORT: Limiter Threshold raw 68: element went dead
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/sweep_models.py", line 122, in <module>
+    print(f"final circuit {FINAL_MODEL}: {set_circuit(app, win, FINAL_MODEL)}", flush=True)
+                                          ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-501/-Users-geoffreykim-Desktop-conductor/78c266a4-f0f5-48bb-b655-132a7b5c1f20/scratchpad/sweep_models.py", line 46, in set_circuit
+    pop = param_rows(win)["Circuit Type"][1]
+          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+KeyError: 'Circuit Type'
