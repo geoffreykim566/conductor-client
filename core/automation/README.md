@@ -115,7 +115,9 @@ Surfaces) that leaves nothing on screen. `_run_menu` reads the item's `AXMenuIte
 through the menu bar (readable while the menu is closed) before and after; a flip is
 ledgered. Revert re-reads first and clicks again only if the mark isn't already back, so a
 toggle the user flipped themselves isn't flipped the wrong way. A plain command (New Tracks…)
-has no mark either side and gets no entry.
+has no mark either side and gets no entry. A step with `want` (on/off, from the server's toggle
+routes) skips the click when the mark already shows it: "turn on low latency" with it already on
+used to switch it off (10-20). No `want` (an older server, or "toggle") flips as before.
 
 ### Plug-ins with 0–1 Controls
 Some third-party plug-ins fill Controls view with bare 0–1 positions (Valhalla "Mix 0.5" for

@@ -98,3 +98,17 @@ def test_switch_target_is_words_not_digits():
     assert is_switch_target("on") and is_switch_target(" Off ") and is_switch_target("yes")
     assert not is_switch_target("0") and not is_switch_target("1")   # Threshold 0 dB is a knob value
     assert not is_switch_target("-3") and not is_switch_target("by:-3") and not is_switch_target(0)
+
+
+def test_toggle_menu_step_keeps_the_wanted_state():
+    steps = wire_to_steps([{"menu_path": ["Record", "Low Latency Monitoring Mode"], "want": "on"}])
+    assert steps[0]["want"] == "on"
+    assert "want" not in wire_to_steps([{"menu_path": ["Record", "Low Latency Monitoring Mode"]}])[0]
+
+
+def test_already_toggled_skips_only_a_match():
+    from core.automation.runner import already_toggled
+    assert already_toggled(True, "on") and already_toggled(False, "off")
+    assert not already_toggled(False, "on") and not already_toggled(True, "off")
+    assert not already_toggled(None, "on")      # checkmark unreadable: click as before
+    assert not already_toggled(True, None)      # no state asked: a plain flip

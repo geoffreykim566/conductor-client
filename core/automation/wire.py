@@ -71,6 +71,8 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
     for wire in wire_steps:
         if "menu_path" in wire:
             st = {"kind": "menu", "path": list(wire["menu_path"])}
+            if wire.get("want") in ("on", "off"):   # a toggle: the state the user asked for
+                st["want"] = wire["want"]
             if wire.get("expect"):   # pane-only route: the dropped row it opens onto
                 st["expect"] = list(wire["expect"])
                 st["skip_if_row"] = list(wire["expect"])

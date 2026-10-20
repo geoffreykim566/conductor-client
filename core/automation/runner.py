@@ -70,6 +70,11 @@ def _menu_checked(path: list[str]) -> bool | None:
         return None
 
 
+def already_toggled(before: bool | None, want: str | None) -> bool:
+    """A toggle item already shows the state the step wants: clicking would flip it away."""
+    return before is not None and want in ("on", "off") and before == (want == "on")
+
+
 def menu_toggle_entry(path: list[str], before: bool | None, after: bool | None) -> dict | None:
     """Ledger entry for a menu item whose checkmark the step flipped (Low
     Latency Monitoring Mode); None for a plain command or no flip."""
@@ -99,6 +104,9 @@ def _run_menu(step: dict, log, stop_event=None) -> dict | None:
             log(f"    {hit['text']!r} is showing but its window isn't in front — opening it by menu")
 
     before = _menu_checked(path)
+    if already_toggled(before, step.get("want")):
+        log(f"    {path[-1]} is already {step['want']} — nothing to change")
+        return None
     open_menubar_menu(path[0], stop_event)          # click the menu-bar title
     log(f"    open: {path[0]}")
     time.sleep(MENU_SETTLE_S)
