@@ -66,6 +66,25 @@ def run_ax_open_plugin(step: dict, log, stop_event=None) -> dict:
     return {"kind": LEDGER_KIND_PLUGIN, "label": f"remove {name}", "plugin": name, "slot": slot_label, "index": idx}
 
 
+def _set_bypass(mw, plugin: str, target, log) -> dict | None:
+    """"Bypass" on/off flips the plugin's power switch on its channel-strip slot (no window)."""
+    cb = ax.bypass_switch(ax.selected_strip(mw), plugin)
+    if cb is None:
+        raise StepAbort(f"plugin {plugin!r} is not loaded on the selected track")
+    want = str(target).strip().lower() in ax.ON
+    before = bool(ax.value(cb))
+    if before == want:
+        log(f"    {plugin}: already {'bypassed' if want else 'on'} — nothing to change")
+        return None
+    try:
+        ax.press_or_click(cb, lambda: bool(ax.value(cb)) == want)
+    except ax.AxError as exc:
+        raise StepAbort(f"couldn't {'bypass' if want else 'un-bypass'} {plugin!r}: {exc}") from exc
+    log(f"    {plugin}: {'bypassed' if want else 'switched back on'}")
+    return {"kind": LEDGER_KIND_PARAM, "label": f"{plugin} {'back on' if not before else 'bypassed again'}",
+            "plugin": plugin, "param": "Bypass", "raw_before": int(before), "bool": True, "via": "slot_bypass"}
+
+
 def _current_readout(app, win, param: str) -> str | None:
     """The parameter's value as shown: the editor's own readout when it labels the slider with a
     real unit, else the Controls-view row (flipping there and back). None if neither reads."""
@@ -86,6 +105,8 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
     app = ax.app_element()
     mw = _mw_or_abort(app)
     _select_track_if_named(mw, spec.get("track"), log)
+    if ax.norm(param) == "bypass":
+        return _set_bypass(mw, plugin, target, log)
     win = ax.plugin_window_for(app, plugin)
     opened_here = False
     if win is None:

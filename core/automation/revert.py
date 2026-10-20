@@ -23,7 +23,15 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
         try:
             if entry["kind"] in (LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN):
                 _select_entry_track(mw, entry)
-            if entry["kind"] == LEDGER_KIND_PARAM:
+            if entry["kind"] == LEDGER_KIND_PARAM and entry.get("via") == "slot_bypass":
+                cb = ax.bypass_switch(ax.selected_strip(mw), entry["plugin"])
+                if cb is None:
+                    raise ax.AxError(f"{entry['plugin']} isn't loaded on {entry.get('track') or 'the selected track'}")
+                want = bool(entry["raw_before"])
+                if bool(ax.value(cb)) != want:   # the user may have flipped it back already
+                    ax.press_or_click(cb, lambda: bool(ax.value(cb)) == want)
+                results.append((entry, True, f"{entry['plugin']} {'bypassed' if want else 'on'}"))
+            elif entry["kind"] == LEDGER_KIND_PARAM:
                 track = entry.get("track")
                 win = ax.plugin_window_for(app, entry["plugin"], track=track)
                 reopened = win is None

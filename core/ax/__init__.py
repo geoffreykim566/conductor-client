@@ -16,7 +16,7 @@ from core.ax.app import (
 )
 from core.ax.mouse import click_at, double_click_at, press_or_click
 from core.ax.menus import current_menu, dismiss_menus, drill, menu_item_checked, menubar_item, open_menu_of
-from core.ax.channel_strip import fx_slots, loaded_names, loaded_slot, selected_strip, strip
+from core.ax.channel_strip import bypass_switch, fx_slots, loaded_names, loaded_slot, selected_strip, strip
 from core.ax.plugin_windows import close_window, plugin_window_for, plugin_windows_seen, window_plugin_name
 from core.ax.plugins import open_loaded_plugin, open_plugin_by_search, remove_plugin
 from core.ax.controls_view import (
@@ -37,6 +37,7 @@ __all__ = [
     "ax_get",
     "ax_press",
     "ax_set",
+    "bypass_switch",
     "AxError",
     "CANNOT_COMPLETE",
     "center",

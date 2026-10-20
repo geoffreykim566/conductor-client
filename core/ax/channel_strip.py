@@ -42,3 +42,10 @@ def loaded_slot(strip_el, name: str, index: int | None = None):
     if index is not None and 0 <= index < len(groups) and norm(desc(groups[index])).startswith(key):
         return groups[index]
     return next((g for g in groups if norm(desc(g)).startswith(key)), None)
+
+
+def bypass_switch(strip_el, name: str):
+    """The power (bypass) checkbox on a loaded plugin's slot: value True = bypassed. It belongs
+    to the slot, not the plugin, so the plugin's own window and Controls view don't list it."""
+    g = loaded_slot(strip_el, name) if strip_el is not None else None
+    return find_child(g, AS.kAXDescriptionAttribute, "bypass", "AXCheckBox") if g is not None else None

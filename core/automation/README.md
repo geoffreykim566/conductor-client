@@ -84,6 +84,8 @@ card counted it as a change). Then it tries the editor (double-click the labelle
 disabled band is switched on first and ledgered), falls back to Controls view, and returns to
 Editor. Which path runs is per parameter: Low Cut types, High Cut never gets a text field. A write
 that lands where it started (a change clamped at the range end) also ledgers nothing.
+A `Bypass` param flips the plugin slot's power switch on the channel strip instead (no window;
+Revert flips it back unless the user already did). It isn't in the plugin's editor or Controls view.
 Dropdowns keep their own `larger` / `smaller` stepping and "already set" check in `dropdowns.py`:
 they compare option positions, knobs compare numbers.
 
