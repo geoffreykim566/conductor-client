@@ -7,7 +7,7 @@ core.events; nothing here imports core.automation. See README.md.
 """
 from core.ax.primitives import (
     CANNOT_COMPLETE, SETTLE_S, VERIFY_TIMEOUT_S, AxError, ax_get, ax_press, ax_set, center,
-    children, desc, element_at, norm, parent, role, title, value, wait_until,
+    children, desc, element_at, frame, norm, parent, role, title, value, wait_until,
 )
 from core.ax.search import find_all, find_anywhere, find_child
 from core.ax.app import (
@@ -20,7 +20,7 @@ from core.ax.channel_strip import bypass_switch, fx_slots, loaded_names, loaded_
 from core.ax.plugin_windows import close_window, plugin_window_for, plugin_windows_seen, window_plugin_name
 from core.ax.plugins import open_loaded_plugin, open_plugin_by_search, remove_plugin
 from core.ax.controls_view import (
-    OFF, ON, already_set, current_view, is_knob_travel, match_param, num, numeric_target, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
+    OFF, ON, all_unitless, already_set, current_view, is_knob_travel, is_unitless, match_param, num, numeric_target, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
     write_param_display, write_param_raw,
 )
 from core.ax.editor_view import (
@@ -29,6 +29,9 @@ from core.ax.editor_view import (
 from core.ax.tracks import select_track, track_header
 
 __all__ = [
+    "frame",
+    "all_unitless",
+    "is_unitless",
     "already_set",
     "app_element",
     "close_window",

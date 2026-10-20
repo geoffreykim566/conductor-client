@@ -1,14 +1,17 @@
 """Read every value of a plugin through its Controls view, for the server's read_plugin_values.
 
 Opens the plugin's window if it's closed, flips to Controls, reads each row's readout, then
-puts the window back as it was. Returns the request's `plugin_values` shape: {plugin, track,
-values: {label: readout}} or {error}. Never raises: a failed read is an answer Sol can give.
+puts the window back as it was. When Controls shows only 0-1 positions (some third-party
+plug-ins), the values are OCR'd off the editor instead. Returns the request's `plugin_values`
+shape: {plugin, track, values: {label: readout}} or {error}. Never raises: a failed read is an
+answer Sol can give.
 """
 from __future__ import annotations
 
 from PySide6.QtCore import QThread, Signal
 
 from core import ax
+from core.automation import editor_ocr
 from core.automation.logic_focus import activate_logic, wait_logic_on_screen
 
 MAX_ROWS = 100   # the server's cap (MAX_PLUGIN_VALUE_ROWS)
@@ -47,12 +50,22 @@ def _read(plugin: str, track: str | None, log) -> dict:
         values = {label: ax.row_readout(ctl, ro) for label, (_, ctl, ro) in list(rows.items())[:MAX_ROWS]}
         name = ax.window_plugin_name(win) or plugin
         shown_track = ax.title(win) or track
+        source = "controls"
+        if ax.all_unitless(values.values()):
+            source = "editor OCR"
+            if not ax.set_view(app, win, "Editor"):
+                return {"error": f"{plugin} shows its settings only as 0-1 positions, and its editor couldn't be opened"}
+            knobs, why = editor_ocr.ocr_knobs(win)
+            if not knobs:
+                return {"error": f"{plugin} shows its settings only as 0-1 positions, and {why}, "
+                                 f"so its exact settings can't be read"}
+            values = {k["name"]: k["value"] for k in knobs[:MAX_ROWS]}
     finally:
-        if view_before != "Controls":
-            ax.set_view(app, win, "Editor")
+        ax.set_view(app, win, "Controls" if view_before == "Controls" else "Editor")
         if opened:
             ax.close_window(win)
-    log(f"[plugin_read] {name!r} on {shown_track!r}: {len(values)} rows (opened={opened}, view was {view_before!r})")
+    log(f"[plugin_read] {name!r} on {shown_track!r}: {len(values)} rows from {source} "
+        f"(opened={opened}, view was {view_before!r})")
     if not values:
         return {"error": f"{plugin} showed no readable controls"}
     return {"plugin": name, "track": shown_track, "values": values}

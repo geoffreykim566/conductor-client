@@ -54,7 +54,8 @@ def parent(el):
     return ax_get(el, AS.kAXParentAttribute)
 
 
-def center(el):
+def frame(el):
+    """(x, y, width, height) in screen points, or None."""
     pos = ax_get(el, AS.kAXPositionAttribute)
     size = ax_get(el, AS.kAXSizeAttribute)
     if pos is None or size is None:
@@ -63,7 +64,12 @@ def center(el):
     ok2, sz = AS.AXValueGetValue(size, AS.kAXValueCGSizeType, None)
     if not (ok1 and ok2):
         return None
-    return (pt.x + sz.width / 2, pt.y + sz.height / 2)
+    return (pt.x, pt.y, sz.width, sz.height)
+
+
+def center(el):
+    f = frame(el)
+    return None if f is None else (f[0] + f[2] / 2, f[1] + f[3] / 2)
 
 
 def element_at(x, y):

@@ -28,12 +28,9 @@ def _cgimage_from_pil(img: Image.Image):
     return Quartz.CGImageSourceCreateImageAtIndex(src, 0, None)
 
 
-def ocr_words(img: Image.Image, min_conf: float = 40.0) -> list[dict]:
-    """Return [{text,left,top,width,height,conf}] in top-left pixel space."""
+def _recognize(img: Image.Image):
+    """Run Vision on `img`: (observations, width, height) in pixels."""
     cg = _cgimage_from_pil(img)
-    W = Quartz.CGImageGetWidth(cg)
-    H = Quartz.CGImageGetHeight(cg)
-
     req = Vision.VNRecognizeTextRequest.alloc().init()
     req.setRecognitionLevel_(Vision.VNRequestTextRecognitionLevelAccurate)
     req.setUsesLanguageCorrection_(False)  # plugin labels aren't prose; no autocorrect
@@ -42,9 +39,35 @@ def ocr_words(img: Image.Image, min_conf: float = 40.0) -> list[dict]:
     ok, err = handler.performRequests_error_([req], None)
     if not ok:
         raise RuntimeError(f"Vision performRequests failed: {err}")
+    return req.results() or [], Quartz.CGImageGetWidth(cg), Quartz.CGImageGetHeight(cg)
 
+
+def ocr_lines(img: Image.Image, min_conf: float = 40.0) -> list[dict]:
+    """Vision's whole lines ("Low Cut", "300.0 ms"), same shape as ocr_words. Plug-in labels
+    span several words, so matching them word by word splits them (README "Lines vs words")."""
+    obs_list, W, H = _recognize(img)
+    lines = []
+    for obs in obs_list:
+        cands = obs.topCandidates_(1)
+        if not cands or float(cands[0].confidence()) * 100.0 < min_conf:
+            continue
+        bb = obs.boundingBox()
+        lines.append({
+            "text": cands[0].string().strip(),
+            "conf": float(cands[0].confidence()) * 100.0,
+            "left": int(round(bb.origin.x * W)),
+            "top": int(round((1.0 - bb.origin.y - bb.size.height) * H)),
+            "width": int(round(bb.size.width * W)),
+            "height": int(round(bb.size.height * H)),
+        })
+    return lines
+
+
+def ocr_words(img: Image.Image, min_conf: float = 40.0) -> list[dict]:
+    """Return [{text,left,top,width,height,conf}] in top-left pixel space."""
+    obs_list, W, H = _recognize(img)
     words: list[dict] = []
-    for obs in req.results() or []:
+    for obs in obs_list:
         cands = obs.topCandidates_(1)
         if not cands:
             continue

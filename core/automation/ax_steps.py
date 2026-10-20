@@ -12,6 +12,7 @@ from __future__ import annotations
 import ApplicationServices as AS
 
 from core import ax
+from core.automation import editor_ocr
 from core.automation.errors import StepAbort
 from core.events.stop import check_stop
 
@@ -85,17 +86,42 @@ def _set_bypass(mw, plugin: str, target, log) -> dict | None:
             "plugin": plugin, "param": "Bypass", "raw_before": int(before), "bool": True, "via": "slot_bypass"}
 
 
-def _current_readout(app, win, param: str) -> str | None:
+def _current_readout(app, win, param: str) -> tuple[str | None, bool]:
     """The parameter's value as shown: the editor's own readout when it labels the slider with a
-    real unit, else the Controls-view row (flipping there and back). None if neither reads."""
+    real unit, else the Controls-view row (flipping there and back). None if neither reads.
+    Also whether Controls shows only 0-1 positions: then the value is OCR'd off the editor."""
     shown = ax.editor_readout(win, param)
     if shown is not None:
-        return shown
+        return shown, False
     if not ax.set_view(app, win, "Controls"):
-        return None
+        return None, False
     row = ax.read_param(win, param)
+    positions_only = ax.all_unitless(ax.row_readout(ctl, ro) for _, ctl, ro in ax.param_rows(win).values())
     ax.set_view(app, win, "Editor")
-    return row["readout"] if row else None
+    return (row["readout"] if row else None), positions_only
+
+
+def _set_by_ocr(app, win, plugin: str, param: str, target, opened_here: bool, log) -> dict | None:
+    """A plug-in whose Controls view shows only 0-1 positions: find the knob's value on the
+    editor's face, double-click it and type (README "Plug-ins with 0-1 Controls")."""
+    knob = editor_ocr.find_knob(win, param)
+    if knob is None:
+        raise StepAbort(f"{plugin} shows its settings only as 0-1 positions, and {param!r} "
+                        f"couldn't be found on its editor")
+    current = knob["value"]
+    try:
+        goal = ax.numeric_target(current, target)
+    except (TypeError, ValueError) as exc:
+        raise StepAbort(f"set {param!r}: {target!r} isn't a number") from exc
+    if goal is None:
+        raise StepAbort(f"couldn't read a number from {knob['name']}'s value {current!r}")
+    if ax.already_set(current, goal):
+        log(f"    {plugin} / {knob['name']}: already {current!r} — nothing to change")
+        return None
+    now = editor_ocr.type_value(app, win, knob, f"{goal:g}")
+    log(f"    {plugin} / {knob['name']}: {current!r} -> {now!r} (typed {goal:g} on the editor)")
+    return {"kind": LEDGER_KIND_PARAM, "label": f"{knob['name']} back to {current}", "plugin": plugin,
+            "param": knob["name"], "text_before": current, "via": "editor_ocr", "opened_window": opened_here}
 
 
 def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
@@ -143,7 +169,9 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
     if not (is_bool or is_raw):
         # Read once up front: a "by:" change starts from it, and a value that's already
         # there is a no-op, not a change to Revert.
-        current = _current_readout(app, win, param)
+        current, positions_only = _current_readout(app, win, param)
+        if positions_only:
+            return _set_by_ocr(app, win, plugin, param, target, opened_here, log)
         try:
             goal = ax.numeric_target(current, target)
         except (TypeError, ValueError) as exc:

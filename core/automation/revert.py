@@ -7,6 +7,7 @@ from __future__ import annotations
 import time
 
 from core import ax
+from core.automation import editor_ocr
 from core.automation.ax_steps import LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN, LEDGER_KIND_SETTING, LEDGER_KIND_TOGGLE
 from core.automation.errors import StepAbort
 from core.automation.ocr_find import find_text, is_front_window
@@ -39,7 +40,17 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
                     win = ax.open_loaded_plugin(app, mw, entry["plugin"], track=track)
                     if win is None:
                         raise ax.AxError(f"{entry['plugin']} isn't loaded on {track or 'the selected track'}")
-                if entry.get("via") == "editor_checkbox":
+                if entry.get("via") == "editor_ocr":
+                    ax.raise_window(win); ax.ensure_on_screen(win); ax.set_view(app, win, "Editor")
+                    knob = editor_ocr.find_knob(win, entry["param"])
+                    if knob is None:
+                        raise ax.AxError(f"couldn't find {entry['param']} on {entry['plugin']}'s editor")
+                    if ax.already_set(knob["value"], ax.num(entry["text_before"])):
+                        results.append((entry, True, f"{entry['param']} was already {knob['value']}"))
+                    else:
+                        now = editor_ocr.type_value(app, win, knob, f"{ax.num(entry['text_before']):g}")
+                        results.append((entry, True, f"{entry['param']} -> {now}"))
+                elif entry.get("via") == "editor_checkbox":
                     _, cb = ax.editor_checkbox(win, entry["param"])
                     ax.set_editor_checkbox(cb, bool(entry["raw_before"]))
                     results.append((entry, True, f"{entry['param']} restored"))

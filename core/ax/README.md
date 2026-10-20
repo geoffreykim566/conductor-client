@@ -47,6 +47,9 @@ every plugin tested, third-party included. Its readouts aren't writable, so a di
 reached by bisecting raw (log-scaled for frequencies): slower and a visible sweep, hence the
 editor is tried first where it labels sliders (Channel EQ does, Compressor mostly doesn't).
 Plugin windows can open with the View menu off-screen; `ensure_on_screen` first.
+A third-party plug-in's View menu names its editor after the plug-in ("Controls",
+"ValhallaSupermassive"), not "Editor", so `set_view(..., "Editor")` picks the first item that
+isn't Controls; before 10-20 every read or edit left such plug-ins in Controls view.
 
 ### Slot index is only a hint
 Search-and-Add inserts at the top of the strip, so slot indexes shift as plugins come and go.

@@ -6,7 +6,7 @@ uses it to push screenshots as per-turn context.
 
 ## Files
 - `window_capture.py` - find Logic's on-screen windows, capture one at best resolution, encode context screenshots.
-- `ocr_vision.py` - `ocr_words(img)` -> `[{text,left,top,width,height,conf}]` in top-left pixels.
+- `ocr_vision.py` - `ocr_words(img)` / `ocr_lines(img)` -> `[{text,left,top,width,height,conf}]` in top-left pixels.
 
 ## How it works
 `find_all_logic_pro_windows()` matches on window OWNER only (a browser tab titled "Logic Pro"
@@ -32,6 +32,13 @@ base64 chars as a 1568px PNG, over the server's 2M cap, so every turn 422'd whil
 (2026-09-09, v0.3.0). Vision cost depends on pixel dimensions, not bytes; quality 80 is ~340K
 chars with every label legible. Keep `SCREENSHOT_JPEG_QUALITY` >= 70. Anything still over
 `MAX_SCREENSHOT_B64_CHARS` is skipped client-side with a log line.
+
+### Lines vs words
+`ocr_words` splits each Vision line into words, which suits finding one menu title. Plug-in
+labels span several ("Low Cut", "Flutter Intensity"); matched word by word they split, and a
+unit next to a knob ("Hz") won as its name (Tape Delay ~6/14 named, 10-20). `ocr_lines` keeps
+Vision's lines. Captures are already native Retina pixels: upscaling 2-3x made OCR worse (meter
+ticks read as digits) and Vision's minimum text height changed nothing.
 
 ## Adding a capture
 Reuse `find_all_logic_pro_windows()` + `capture_one_bestres()`. Context captures must fail

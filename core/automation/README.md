@@ -17,6 +17,7 @@ a revert ledger and can undo a run. `__init__.py` re-exports the public API ui/ 
 - `logic_focus.py` - activate Logic, confirm it is frontmost and on screen; which display it is on.
 - `timing.py` - settle/verify timings. `errors.py` - `StepAbort`.
 - `plugin_read.py` - read a plugin's values through its Controls view for the server's `read_plugin_values`; `PluginReadThread`.
+- `editor_ocr.py` - read and type knob values off a plug-in editor's face by OCR, for plug-ins whose Controls view shows only 0–1.
 - `executor_thread.py` - `ExecutorThread` / `RevertThread` (QThreads the walkthrough card runs).
 - `interrupt_tap.py` - CGEventTap that stops a run on any real key/click/scroll.
 
@@ -110,6 +111,18 @@ through the menu bar (readable while the menu is closed) before and after; a fli
 ledgered. Revert re-reads first and clicks again only if the mark isn't already back, so a
 toggle the user flipped themselves isn't flipped the wrong way. A plain command (New Tracks…)
 has no mark either side and gets no entry.
+
+### Plug-ins with 0–1 Controls
+Some third-party plug-ins fill Controls view with bare 0–1 positions (Valhalla "Mix 0.5" for
+50.0 %, 10-20), so a read would hand Sol meaningless numbers and a display-value bisection
+would land a knob at an end. When every numeric Controls readout is a bare 0–1, reads and
+`set_param` use the editor's face instead (`editor_ocr.py`): each AX slider anchors a knob, its
+name is the OCR'd label above it (else left on its row) in a crop around it, its value the
+number+unit line under it. A write double-clicks that value and types only when AX reports a
+focused text box; otherwise it presses Escape and stops, since keystrokes would reach Logic as
+key commands. Revert types the old value back the same way. If OCR finds nothing, a read
+returns a plain error and a step stops with the reason. Apple plug-ins have some 0–1 rows (Q,
+Knee) but never only those, so they never take this path.
 
 ### Plug-in reads put the window back
 A read opens the plugin's window only if it was closed, flips to Controls only if it wasn't

@@ -43,7 +43,11 @@ def set_view(app, win, name: str) -> bool:
     if (title(btn) or "") == name:
         return True
     menu = open_menu_of(app, btn)
-    it = next((i for i in children(menu) if title(i) == name), None) if menu else None
+    items = children(menu) if menu else []
+    it = next((i for i in items if title(i) == name), None)
+    if it is None and name == "Editor":
+        # A third-party plug-in's menu names its editor after the plug-in ("ValhallaSupermassive").
+        it = next((i for i in items if title(i) and title(i) != "Controls"), None)
     if it is None:
         dismiss_menus(app)
         return False
@@ -142,6 +146,23 @@ def is_knob_travel(raw, lo, hi, text) -> bool:
         return abs(float(t[:-1]) - (float(raw) - float(lo)) / (float(hi) - float(lo)) * 100) <= 1
     except (TypeError, ValueError, ZeroDivisionError):
         return True
+
+
+_BARE_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
+
+
+def is_unitless(readout) -> bool:
+    """A bare number from 0 to 1: how some third-party plug-ins fill Controls view (Valhalla
+    'Mix 0.5' for 50.0 %), a position, not a setting."""
+    t = str(readout or "").strip()
+    return bool(_BARE_NUMBER.match(t)) and 0 <= float(t) <= 1
+
+
+def all_unitless(readouts) -> bool:
+    """Every numeric readout of a Controls read is a bare 0-1 number (on/off and choices aside).
+    Apple plug-ins have some 0-1 rows too (Q 0.71, Knee 0.7), never all of them."""
+    nums = [r for r in readouts if num(r) is not None]
+    return bool(nums) and all(is_unitless(r) for r in nums)
 
 
 def numeric_target(current, value) -> float | None:
