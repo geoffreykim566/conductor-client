@@ -17,10 +17,10 @@ from core.ax.app import (
 from core.ax.mouse import click_at, double_click_at, press_or_click
 from core.ax.menus import current_menu, dismiss_menus, drill, menu_item_checked, menubar_item, open_menu_of
 from core.ax.channel_strip import fx_slots, loaded_names, loaded_slot, selected_strip, strip
-from core.ax.plugin_windows import plugin_window_for, plugin_windows_seen, window_plugin_name
+from core.ax.plugin_windows import close_window, plugin_window_for, plugin_windows_seen, window_plugin_name
 from core.ax.plugins import open_loaded_plugin, open_plugin_by_search, remove_plugin
 from core.ax.controls_view import (
-    OFF, ON, match_param, num, param_rows, read_param, set_view, slider_range, write_param_bool,
+    OFF, ON, current_view, match_param, num, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
     write_param_display, write_param_raw,
 )
 from core.ax.editor_view import (
@@ -30,6 +30,8 @@ from core.ax.tracks import select_track, track_header
 
 __all__ = [
     "app_element",
+    "close_window",
+    "current_view",
     "app_windows",
     "ax_get",
     "ax_press",
@@ -74,6 +76,7 @@ __all__ = [
     "press_or_click",
     "raise_window",
     "read_param",
+    "row_readout",
     "remove_plugin",
     "role",
     "select_track",

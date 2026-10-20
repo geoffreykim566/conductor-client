@@ -99,6 +99,10 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         # (original message text, parked history). Enter/Esc route here
         # first (see eventFilter) instead of cancelling.
         self._pending_research: tuple[str, object] | None = None
+        # The same for "open <plugin> to read its values?": (text, history, plugin, track).
+        self._pending_read: tuple[str, object, str, str | None] | None = None
+        self._read_thread = None   # PluginReadThread while a read runs
+        self._read_cancelled = False
         self._session_id: str | None = None
         self._settings_popup: SettingsPanel | None = None
         self._update_popup: UpdatePopup | None = None
@@ -289,6 +293,13 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
                 return True
             if key == Qt.Key_Escape:
                 self._on_research_choice(False)
+                return True
+        if self._pending_read is not None:
+            if key in (Qt.Key_Return, Qt.Key_Enter) and not (event.modifiers() & Qt.ShiftModifier):
+                self._on_read_choice(True)
+                return True
+            if key == Qt.Key_Escape:
+                self._on_read_choice(False)
                 return True
         if key == Qt.Key_Escape and self._turn_in_flight():
             self.cancel_turn()

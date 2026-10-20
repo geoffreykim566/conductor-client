@@ -1,8 +1,13 @@
-"""Identify which open Logic window shows which plugin."""
+"""Identify which open Logic window shows which plugin; close one."""
 from __future__ import annotations
 
+import time
+
+import ApplicationServices as AS
+
 from core.ax.app import app_windows
-from core.ax.primitives import children, norm, role, title, value
+from core.ax.primitives import ax_press, children, norm, role, title, value
+from core.ax.search import find_child
 
 
 def plugin_windows_seen(app) -> set[tuple[str, str]]:
@@ -43,3 +48,12 @@ def window_plugin_name(w) -> str | None:
         return direct[-1]
     g = next((c for c in children(w) if role(c) == "AXGroup" and title(c)), None)
     return title(g) if g is not None else None
+
+
+def close_window(win) -> None:
+    """Press a plugin window's close button (the one Revert and a plugin read opened)."""
+    btn = find_child(win, AS.kAXSubroleAttribute, "AXCloseButton") or \
+        find_child(win, AS.kAXDescriptionAttribute, "close", "AXButton")
+    if btn is not None:
+        ax_press(btn)
+        time.sleep(0.3)

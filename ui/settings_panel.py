@@ -126,10 +126,18 @@ class SettingsPanel(Popup):
 
         auto_cb = QCheckBox("Run actions automatically")
         auto_cb.setToolTip("Off: each action waits for Run / ↵. On: actions run as soon as "
-                           "Conductor decides them. Deletions always ask first.")
+                           "Conductor decides them, and plug-in values are read without asking. "
+                           "Deletions always ask first.")
         auto_cb.setChecked(prefs.auto_run())
         auto_cb.toggled.connect(prefs.set_auto_run)
         layout.addWidget(auto_cb)
+
+        research_cb = QCheckBox("Research automatically")
+        research_cb.setToolTip("Off: Conductor asks before researching the web. On: research "
+                               "starts right away (it can take up to a minute).")
+        research_cb.setChecked(prefs.auto_research())
+        research_cb.toggled.connect(prefs.set_auto_research)
+        layout.addWidget(research_cb)
 
         layout.addSpacing(4)
         sep = QLabel()

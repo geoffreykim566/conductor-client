@@ -6,12 +6,12 @@ Local state. Persistent files live under `config.APP_SUPPORT_DIR`
 ## Files
 - `config_store.py` - `read_config()` / `write_config()` for the single `config.json`.
 - `identity.py` - the server-minted identity token (`conductor_token`).
-- `prefs.py` - auto-run, window size/position, onboarding and feedback flags.
+- `prefs.py` - auto-run, auto research, window size/position, onboarding and feedback flags.
 - `song_history.py` - all chat sessions in `history.json`.
 - `conversation.py` - `Conversation` / `Message`: the ordered messages of the open session.
 
 ## How it works
-`config.json` keys: `conductor_token`, `auto_run_actions`, `window_width`, `window_height`,
+`config.json` keys: `conductor_token`, `auto_run_actions`, `auto_research`, `window_width`, `window_height`,
 `window_x`, `window_y`, `setup_complete`, `questions_asked`, `feedback_never_show`,
 `feedback_last_version`. Every accessor does read-modify-write of the whole file through
 `config_store`, so modules never clobber each other's keys. A missing or corrupt file reads as `{}`.

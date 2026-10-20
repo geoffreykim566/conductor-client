@@ -1,4 +1,4 @@
-"""'Research the web?' Yes/No row under an assistant bubble (mixin for MessageWidget)."""
+"""Yes/No row under an assistant bubble: research the web, or open a plug-in to read it (mixin for MessageWidget)."""
 from typing import Callable
 
 from PySide6.QtCore import Qt
@@ -12,14 +12,15 @@ class ResearchPromptMixin:
 
     RESEARCH_PROMPT_TEXT = "Conductor wants to research the web - this can take up to a minute."
 
-    def show_research_prompt(self, on_yes: Callable[[], None], on_no: Callable[[], None]) -> None:
+    def show_research_prompt(self, on_yes: Callable[[], None], on_no: Callable[[], None],
+                             text: str | None = None) -> None:
         """Replace the bubble's status line with the research question and add
         a Yes/No row under the bubble, styled like the rating row (same
         #rateBtn pills, same height). Enter/Esc are handled by ChatWindow's
         app-level key filter and call the same callbacks as the buttons."""
         if self._role != "assistant" or getattr(self, "_research_row", None) is not None:
             return
-        self.set_status_text(self.RESEARCH_PROMPT_TEXT)
+        self.set_status_text(text or self.RESEARCH_PROMPT_TEXT)
         row = QHBoxLayout()
         row.setContentsMargins(6, 0, 0, 0)
         row.setSpacing(4)

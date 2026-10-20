@@ -12,9 +12,9 @@ the passive per-turn AX text dump sent to the server as context.
 - `mouse.py` - tagged synthetic clicks; `press_or_click` (AXPress, then a real click).
 - `menus.py` - the open AXMenu, open a popup button's menu, drill by titles, dismiss; read a menu-bar item's checkmark.
 - `channel_strip.py` - a track's strip, its FX slots, the slot holding a plugin.
-- `plugin_windows.py` - which window shows which plugin.
+- `plugin_windows.py` - which window shows which plugin; close one.
 - `plugins.py` - add a plugin by search, open a loaded one, remove one.
-- `controls_view.py` - parameters via the plugin window's Controls view (exact writes, display bisection).
+- `controls_view.py` - parameters via the plugin window's Controls view (current view, row readouts, exact writes, display bisection).
 - `editor_view.py` - parameters in the plugin's own editor (typed value, band checkboxes).
 - `tracks.py` - find/select a track header.
 - `state_capture.py` - read-only text dump of every open Logic window's AX tree.

@@ -16,6 +16,7 @@ a revert ledger and can undo a run. `__init__.py` re-exports the public API ui/ 
 - `fuzzy_match.py` - fuzzy-find a phrase in an OCR word list (pure).
 - `logic_focus.py` - activate Logic, confirm it is frontmost and on screen; which display it is on.
 - `timing.py` - settle/verify timings. `errors.py` - `StepAbort`.
+- `plugin_read.py` - read a plugin's values through its Controls view for the server's `read_plugin_values`; `PluginReadThread`.
 - `executor_thread.py` - `ExecutorThread` / `RevertThread` (QThreads the walkthrough card runs).
 - `interrupt_tap.py` - CGEventTap that stops a run on any real key/click/scroll.
 
@@ -101,6 +102,11 @@ through the menu bar (readable while the menu is closed) before and after; a fli
 ledgered. Revert re-reads first and clicks again only if the mark isn't already back, so a
 toggle the user flipped themselves isn't flipped the wrong way. A plain command (New Tracks…)
 has no mark either side and gets no entry.
+
+### Plug-in reads put the window back
+A read opens the plugin's window only if it was closed, flips to Controls only if it wasn't
+there, and undoes both afterwards, so the user's session looks as it did. It never raises: an
+`{error}` goes back to the server as the read's result, and Sol says it couldn't see the values.
 
 ## Adding a step kind
 1. Map the wire key in `wire.py` (and decide its `expect` derivation).

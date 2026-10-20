@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import time
 
-import ApplicationServices as AS
-
 from core import ax
 from core.automation.ax_steps import LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN, LEDGER_KIND_SETTING, LEDGER_KIND_TOGGLE
 from core.automation.errors import StepAbort
@@ -61,11 +59,11 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
                     if cb is not None:
                         ax.set_editor_checkbox(cb, False)
                 if reopened:
-                    _close_window(win)
+                    ax.close_window(win)
             elif entry["kind"] == LEDGER_KIND_PLUGIN:
                 win = ax.plugin_window_for(app, entry["plugin"], track=entry.get("track"))
                 if win is not None:
-                    _close_window(win)
+                    ax.close_window(win)
                 ok = ax.remove_plugin(app, mw, entry["slot"], index=entry.get("index"))
                 if not ok:
                     raise ax.AxError("slot menu removal failed")
@@ -90,13 +88,6 @@ def _select_entry_track(mw, entry: dict) -> None:
     if track and not ax.select_track(mw, track):
         raise ax.AxError(f"track {track!r} not found in the Tracks area")
 
-
-def _close_window(win) -> None:
-    btn = ax.find_child(win, AS.kAXSubroleAttribute, "AXCloseButton") or \
-        ax.find_child(win, AS.kAXDescriptionAttribute, "close", "AXButton")
-    if btn is not None:
-        ax.ax_press(btn)
-        time.sleep(0.3)
 
 
 def _revert_toggle(app, entry: dict) -> str:

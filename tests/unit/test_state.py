@@ -34,6 +34,9 @@ def test_prefs_share_the_file_with_identity(tmp_config):
     assert data["conductor_token"] == "t"
     assert data["auto_run_actions"] is True
     assert prefs.auto_run() and prefs.is_setup_complete()
+    assert not prefs.auto_research()
+    prefs.set_auto_research(True)
+    assert prefs.auto_research() and read_config()["auto_research"] is True
     assert not prefs.is_questions_asked()
 
 

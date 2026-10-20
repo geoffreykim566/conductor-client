@@ -6,14 +6,14 @@ only from tokens in `theme.py`.
 
 ## Files
 - `chat_window.py` - `ChatWindow`: layout, geometry persistence, chat/history paging, key routing.
-- `chat_turns.py` - mixin: send a message, stream the reply, research confirm, cancel, errors.
+- `chat_turns.py` - mixin: send a message, stream the reply, research / plug-in read confirm (auto-approved by Auto research / auto-run), cancel, errors.
 - `chat_sessions.py` - mixin: load/switch/new/clear sessions, persist ratings.
 - `chat_prompts.py` - mixin: feedback prompt and update-available popup.
 - `minimized_bubble.py` - the draggable circle shown while the window is minimized.
 - `chat_view.py` - `ChatView`: scrolling column of `MessageWidget`s, turn anchoring.
 - `top_fade_effect.py` - graphics effect fading the chat view's top edge to transparent.
 - `input_bar.py` - text field, send button, image attachments, and the controls row.
-- `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, reset, delete, uninstall).
+- `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, auto research, reset, delete, uninstall).
 - `popup.py` - `Popup` base (header bar + close) for casually dismissed windows.
 - `overlay_window.py` - click-through arrow overlay; only `dismiss()` is called today.
 - `style.py` - `STYLESHEET`. `theme.py` - every color/size/radius token.
@@ -24,7 +24,7 @@ only from tokens in `theme.py`.
 `InputBar.send` -> `ChatTurnsMixin._on_user_send` -> `StreamWorker` (core/net) whose signals
 stream into the current assistant bubble. On `done`, the bubble gets rating buttons and, if
 the server sent `walkthrough_steps`, a `WalkthroughCard`. Enter/Esc are routed in
-`ChatWindow.eventFilter`: research prompt first, then cancel, then the card's Run/Revert.
+`ChatWindow.eventFilter`: research or plug-in read prompt first, then cancel, then the card's Run/Revert.
 
 ## Quirks & why
 ### Translucent window

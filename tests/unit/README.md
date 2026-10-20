@@ -14,6 +14,7 @@ fine headless) but never needs Logic Pro, a QApplication, permissions, or the ne
 - `test_state_capture.py` - knob names from `AXHelp`; real readout vs knob-travel `position=`.
 - `test_state.py` - config_store, identity, prefs, song_history, Conversation.
 - `test_update_checker.py` - version parsing.
+- `test_plugin_read_stream.py` - plug-in reads on the wire: `plugin_reads` sent, `plugin_read_prompt` relayed, resume carries values.
 - `test_stream_worker.py` - `StreamWorker`: a server error event shows `ASSISTANT_UNAVAILABLE`, not raw text.
 
 ## How it works

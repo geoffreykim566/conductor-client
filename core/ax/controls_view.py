@@ -21,6 +21,21 @@ from core.ax.search import find_all
 _ROW_ROLE = "AXCell"
 
 
+def current_view(win) -> str | None:
+    """The view menu's title: "Controls", "Editor", or a zoom % (Apple plugins' editor)."""
+    btn = next((c for c in children(win) if role(c) == "AXMenuButton" and desc(c) == "view"), None)
+    return title(btn) if btn is not None else None
+
+
+def row_readout(ctl, ro) -> str:
+    """A Controls-view row's value as shown: the readout text, a popup's choice, or on/off."""
+    if ro is not None and value(ro) not in (None, ""):
+        return str(value(ro))
+    if role(ctl) == "AXCheckBox":
+        return "on" if value(ctl) else "off"
+    return str(value(ctl) if value(ctl) is not None else "")
+
+
 def set_view(app, win, name: str) -> bool:
     btn = next((c for c in children(win) if role(c) == "AXMenuButton" and desc(c) == "view"), None)
     if btn is None:
@@ -93,8 +108,7 @@ def read_param(win, label: str):
     if k is None:
         return None
     _, ctl, ro = rows[k]
-    readout = value(ro) if ro is not None else ("on" if value(ctl) else "off")
-    return {"label": k, "raw": value(ctl), "readout": readout, "kind": role(ctl)}
+    return {"label": k, "raw": value(ctl), "readout": row_readout(ctl, ro), "kind": role(ctl)}
 
 
 def write_param_raw(win, label: str, raw: float) -> dict:

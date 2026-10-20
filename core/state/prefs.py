@@ -4,17 +4,29 @@ from core.state.config_store import read_config, write_config
 
 
 AUTO_RUN_KEY = "auto_run_actions"
+AUTO_RESEARCH_KEY = "auto_research"
 
 
 def auto_run() -> bool:
     """True = execute agentic actions without the Run confirm (destructive
-    actions still confirm regardless)."""
+    actions still confirm regardless), and read a plug-in's values without asking."""
     return bool(read_config().get(AUTO_RUN_KEY, False))
 
 
 def set_auto_run(enabled: bool) -> None:
     data = read_config()
     data[AUTO_RUN_KEY] = bool(enabled)
+    write_config(data)
+
+
+def auto_research() -> bool:
+    """True = web research starts without the Yes/No prompt."""
+    return bool(read_config().get(AUTO_RESEARCH_KEY, False))
+
+
+def set_auto_research(enabled: bool) -> None:
+    data = read_config()
+    data[AUTO_RESEARCH_KEY] = bool(enabled)
     write_config(data)
 
 

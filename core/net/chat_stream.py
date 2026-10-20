@@ -85,6 +85,7 @@ def stream_chat(
     ax_state: str | None = None,
     resume: str | None = None,
     cancel: CancelToken | None = None,
+    plugin_values: dict | None = None,
 ) -> Iterator[tuple[str, object]]:
     """Relay one new user turn and yield (kind, payload) as the proxy streams.
 
@@ -108,7 +109,9 @@ def stream_chat(
     research-confirm turn: `history` is then the transcript the server's
     "research_prompt" event handed back, and `text` is ignored server-side.
     Every request declares research_confirm so the server parks a turn at
-    its first web_research call instead of running it.
+    its first web_research call instead of running it, and plugin_reads so it
+    may park at read_plugin_values: "allow_plugin_read" then carries what the
+    client read as `plugin_values` (core.automation.plugin_read).
 
     `cancel` lets the UI thread abort this call mid-stream (see CancelToken).
 
@@ -118,6 +121,8 @@ def stream_chat(
         "research_prompt" -> payload is a dict {query, history}; the stream
                              ends here, no "done" follows -- re-call with
                              resume= and that history to finish the turn
+        "plugin_read_prompt" -> payload is a dict {plugin, track, history}; the
+                             same, resumed with allow/deny_plugin_read
         "done"            -> payload is a dict {event_id, tokens_in, tokens_out, history, ...}
         "cancelled"       -> the caller cancelled; nothing else follows
         "error"           -> payload is the str to show the user (error_text)
@@ -142,7 +147,9 @@ def stream_chat(
                     "screenshots": screenshots_b64 or None,
                     "ax_state": ax_state,
                     "research_confirm": True,
+                    "plugin_reads": True,
                     "resume": resume,
+                    "plugin_values": plugin_values,
                 },
                 timeout=120,
             ) as resp:
@@ -197,8 +204,8 @@ def stream_chat(
                         yield ("done", obj)
                     elif kind == "status":
                         yield ("status", obj.get("text", ""))
-                    elif kind == "research_prompt":
-                        yield ("research_prompt", obj)
+                    elif kind in ("research_prompt", "plugin_read_prompt"):
+                        yield (kind, obj)
                         return
                     elif kind == "error":
                         # An older server sends only a raw `message`: print it, show "retry".

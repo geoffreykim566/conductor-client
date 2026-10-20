@@ -26,6 +26,8 @@ class StreamWorker(QThread):
                                                call: (query, history). No done follows;
                                                start a new worker with resume= and that
                                                history to finish the turn.
+        plugin_read_prompt(str, object, object) — the same at read_plugin_values:
+                                               (plugin, track, history).
         cancelled()                          — cancel() was called; nothing else follows
         error(str)                           — emitted with an error message on failure
         limit_reached(int)                   — message cap reached (arg is the cap, or -1 if unknown)
@@ -35,16 +37,18 @@ class StreamWorker(QThread):
     status = Signal(str)
     done = Signal(str, int, str, object, object, object, bool)
     research_prompt = Signal(str, object)
+    plugin_read_prompt = Signal(str, object, object)
     cancelled = Signal()
     error = Signal(str)
     limit_reached = Signal(int)
 
     def __init__(self, text: str, history: list[dict] | None, resume: str | None = None,
-                 parent=None) -> None:
+                 plugin_values: dict | None = None, parent=None) -> None:
         super().__init__(parent)
         self._text = text
         self._history = history
         self._resume = resume
+        self._plugin_values = plugin_values
         self._cancel = CancelToken()
 
     def cancel(self) -> None:
@@ -78,7 +82,7 @@ class StreamWorker(QThread):
         try:
             for kind, payload in stream_chat(
                 self._text, self._history, screenshots_b64, ax_state,
-                resume=self._resume, cancel=self._cancel,
+                resume=self._resume, cancel=self._cancel, plugin_values=self._plugin_values,
             ):
                 if kind == "chunk":
                     self.chunk.emit(payload)
@@ -86,6 +90,10 @@ class StreamWorker(QThread):
                     self.status.emit(payload)
                 elif kind == "research_prompt":
                     self.research_prompt.emit(payload.get("query", ""), payload.get("history"))
+                    return
+                elif kind == "plugin_read_prompt":
+                    self.plugin_read_prompt.emit(payload.get("plugin", ""), payload.get("track"),
+                                                 payload.get("history"))
                     return
                 elif kind == "cancelled":
                     self.cancelled.emit()
