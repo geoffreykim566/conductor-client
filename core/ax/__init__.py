@@ -20,15 +20,16 @@ from core.ax.channel_strip import fx_slots, loaded_names, loaded_slot, selected_
 from core.ax.plugin_windows import close_window, plugin_window_for, plugin_windows_seen, window_plugin_name
 from core.ax.plugins import open_loaded_plugin, open_plugin_by_search, remove_plugin
 from core.ax.controls_view import (
-    OFF, ON, current_view, match_param, num, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
+    OFF, ON, already_set, current_view, is_knob_travel, match_param, num, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
     write_param_display, write_param_raw,
 )
 from core.ax.editor_view import (
-    editor_checkbox, editor_labelled_slider, set_editor_checkbox, type_param_value,
+    editor_checkbox, editor_labelled_slider, editor_readout, set_editor_checkbox, type_param_value,
 )
 from core.ax.tracks import select_track, track_header
 
 __all__ = [
+    "already_set",
     "app_element",
     "close_window",
     "current_view",
@@ -48,12 +49,14 @@ __all__ = [
     "drill",
     "editor_checkbox",
     "editor_labelled_slider",
+    "editor_readout",
     "element_at",
     "ensure_on_screen",
     "find_all",
     "find_anywhere",
     "find_child",
     "focused",
+    "is_knob_travel",
     "fx_slots",
     "loaded_names",
     "loaded_slot",

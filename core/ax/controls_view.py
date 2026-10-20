@@ -132,6 +132,26 @@ def num(text) -> float | None:
     return float(m.group()) if m else None
 
 
+def is_knob_travel(raw, lo, hi, text) -> bool:
+    """A '%' readout equal to raw's place in its range is how far the knob is turned, not its
+    setting (the Compressor editor's only readouts). A '%' with no range to check counts too."""
+    t = str(text or "").strip()
+    if not t.endswith("%"):
+        return False
+    try:
+        return abs(float(t[:-1]) - (float(raw) - float(lo)) / (float(hi) - float(lo)) * 100) <= 1
+    except (TypeError, ValueError, ZeroDivisionError):
+        return True
+
+
+def already_set(current, target: float) -> bool:
+    """`current` (a readout like '-20.0 dB') already shows `target`, at the precision Logic displays."""
+    m = re.search(r"-?\d+(?:\.(\d+))?", str(current or "").replace(",", ""))
+    if m is None:
+        return False
+    return round(float(target), len(m.group(1) or "")) == float(m.group())
+
+
 def slider_range(sl) -> tuple[float | None, float | None]:
     lo = ax_get(sl, AS.kAXMinValueAttribute)
     hi = ax_get(sl, AS.kAXMaxValueAttribute)

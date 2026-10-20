@@ -13,6 +13,7 @@ import ApplicationServices as AS
 from AppKit import NSWorkspace
 
 from config import LOGIC_PRO_APP_NAMES
+from core.ax.controls_view import is_knob_travel
 
 # Bounds on the walk so a deeply nested window (or Logic itself) can't blow
 # up capture time or the text payload sent to the server.
@@ -80,14 +81,8 @@ def _slider_value(raw, lo, hi, shown) -> str | None:
     text = shown.strip() if isinstance(shown, str) else ""
     if not text:
         return None
-    if text.endswith("%"):
-        try:
-            pct = float(text[:-1])
-            travel = (float(raw) - float(lo)) / (float(hi) - float(lo)) * 100
-        except (TypeError, ValueError, ZeroDivisionError):
-            return f"position={text.replace(' ', '')}"
-        if abs(pct - travel) <= 1:
-            return f"position={pct:g}%"
+    if is_knob_travel(raw, lo, hi, text):
+        return f"position={text.replace(' ', '')}"
     return f"value={text!r}"
 
 

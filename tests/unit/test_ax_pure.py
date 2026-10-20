@@ -1,4 +1,4 @@
-from core.ax.controls_view import match_param, num
+from core.ax.controls_view import already_set, is_knob_travel, match_param, num
 from core.ax.primitives import norm
 
 
@@ -24,3 +24,18 @@ def test_match_param_exact_then_normalized_then_substring_then_fuzzy():
     assert match_param(rows, "Makeup") == "Make Up"
     assert match_param(rows, "Thresold") == "Threshold"
     assert match_param(rows, "Attack") is None
+
+
+def test_already_set_compares_at_displayed_precision():
+    assert already_set("-20.0 dB", -20)
+    assert already_set("80 Hz", 80.4)          # Logic shows whole Hz here
+    assert not already_set("-20.0 dB", -20.5)
+    assert already_set("1,040 Hz", 1040)
+    assert not already_set("Off", 0) and not already_set(None, 0)
+
+
+def test_knob_travel_is_a_percent_matching_raw_position():
+    assert is_knob_travel(40.0, 0.0, 119.0, "34 %")      # Compressor editor, live 10-19
+    assert not is_knob_travel(10.0, 0.0, 200.0, "50 %")   # a real percent
+    assert not is_knob_travel(0.0, 0.0, 1050.0, "20.0 Hz")
+    assert is_knob_travel(61.0, None, None, "61 %")       # unverifiable % counts as travel

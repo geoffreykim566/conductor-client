@@ -6,9 +6,9 @@ import time
 import ApplicationServices as AS
 
 from core.ax.app import focused
-from core.ax.controls_view import match_param
+from core.ax.controls_view import is_knob_travel, match_param
 from core.ax.mouse import double_click_at, press_or_click
-from core.ax.primitives import SETTLE_S, ax_set, center, desc, role, title, value, wait_until
+from core.ax.primitives import SETTLE_S, ax_get, ax_set, center, desc, role, title, value, wait_until
 from core.ax.search import find_all
 from core.events.keyboard import press
 
@@ -20,6 +20,20 @@ def editor_labelled_slider(win, label: str):
     names = {(desc(e) or title(e)): e for e in sliders}
     k = match_param(names, label)
     return (k, names[k]) if k else (None, None)
+
+
+def editor_readout(win, label: str) -> str | None:
+    """Editor view: a labelled slider's value as shown ('-20.0 dB'), or None when the editor
+    doesn't label it or shows only knob travel (README "Plug-in knob values in the dump")."""
+    _, el = editor_labelled_slider(win, label)
+    if el is None:
+        return None
+    text = ax_get(el, "AXValueDescription")
+    if not isinstance(text, str) or not text.strip():
+        return None
+    if is_knob_travel(value(el), ax_get(el, "AXMinValue"), ax_get(el, "AXMaxValue"), text):
+        return None
+    return text.strip()
 
 
 def type_param_value(app, win, label: str, text: str) -> dict | None:

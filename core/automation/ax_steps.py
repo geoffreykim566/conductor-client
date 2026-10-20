@@ -66,6 +66,19 @@ def run_ax_open_plugin(step: dict, log, stop_event=None) -> dict:
     return {"kind": LEDGER_KIND_PLUGIN, "label": f"remove {name}", "plugin": name, "slot": slot_label, "index": idx}
 
 
+def _current_readout(app, win, param: str) -> str | None:
+    """The parameter's value as shown: the editor's own readout when it labels the slider with a
+    real unit, else the Controls-view row (flipping there and back). None if neither reads."""
+    shown = ax.editor_readout(win, param)
+    if shown is not None:
+        return shown
+    if not ax.set_view(app, win, "Controls"):
+        return None
+    row = ax.read_param(win, param)
+    ax.set_view(app, win, "Editor")
+    return row["readout"] if row else None
+
+
 def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
     spec = step["value"]
     plugin, param, target = spec["plugin"], spec["param"], spec["value"]
@@ -106,6 +119,16 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
             return {"kind": LEDGER_KIND_PARAM, "label": f"{k} back {'on' if before else 'off'}", "plugin": plugin,
                     "param": k, "raw_before": int(before), "bool": True, "via": "editor_checkbox",
                     "opened_window": opened_here}
+    if not (is_bool or is_raw):
+        # Read once up front: a value that's already there is a no-op, not a change to Revert.
+        current = _current_readout(app, win, param)
+        try:
+            goal = float(target)
+        except (TypeError, ValueError) as exc:
+            raise StepAbort(f"set {param!r}: {target!r} isn't a number") from exc
+        if current is not None and ax.already_set(current, goal):
+            log(f"    {plugin} / {param}: already {current!r} — nothing to change")
+            return None
     typed = None
     enabled_band = None
     if not (is_bool or is_raw):
@@ -118,6 +141,9 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
                     enabled_band = k_cb
                     log(f"    enabled {k_cb!r} band first")
                 typed = ax.type_param_value(app, win, param, str(target))
+    if typed is not None and typed["raw"] == typed["raw_before"] and enabled_band is None:
+        log(f"    {plugin} / {typed['label']}: typed {target!r}, value unchanged — nothing to revert")
+        return None
     if typed is not None:
         log(f"    {plugin} / {typed['label']}: typed {target!r} (was {typed['text_before']!r}, raw {typed['raw_before']} -> {typed['raw']})")
         return {"kind": LEDGER_KIND_PARAM, "label": f"{typed['label']} back to {typed['text_before']}", "plugin": plugin,
@@ -140,6 +166,8 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
         raise StepAbort(f"set {param!r}: {exc}") from exc
     log(f"    {plugin} / {after['label']}: {before['readout']!r} -> {after['readout']!r} (raw {before['raw']} -> {after['raw']})")
     ax.set_view(app, win, "Editor")   # leave the plugin as the user expects to see it
+    if after["raw"] == before["raw"] and enabled_band is None:
+        return None   # landed where it was (a clamp at the range end): nothing to revert
     return {"kind": LEDGER_KIND_PARAM, "label": f"{after['label']} back to {before['readout']}",
             "plugin": plugin, "param": after["label"], "raw_before": before["raw"],
             "readout_before": before["readout"], "opened_window": opened_here,
