@@ -20,7 +20,7 @@ from core.ax.channel_strip import fx_slots, loaded_names, loaded_slot, selected_
 from core.ax.plugin_windows import close_window, plugin_window_for, plugin_windows_seen, window_plugin_name
 from core.ax.plugins import open_loaded_plugin, open_plugin_by_search, remove_plugin
 from core.ax.controls_view import (
-    OFF, ON, already_set, current_view, is_knob_travel, match_param, num, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
+    OFF, ON, already_set, current_view, is_knob_travel, match_param, num, numeric_target, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
     write_param_display, write_param_raw,
 )
 from core.ax.editor_view import (
@@ -67,6 +67,7 @@ __all__ = [
     "menubar_item",
     "norm",
     "num",
+    "numeric_target",
     "OFF",
     "ON",
     "open_loaded_plugin",

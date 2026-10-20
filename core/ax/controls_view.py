@@ -144,6 +144,16 @@ def is_knob_travel(raw, lo, hi, text) -> bool:
         return True
 
 
+def numeric_target(current, value) -> float | None:
+    """What a set_param value aims for: the number itself, or for "by:<delta>" the current
+    readout plus delta. None when a change has no current number to start from."""
+    s = str(value).strip()
+    if s.lower().startswith("by:"):
+        cur = num(current)
+        return None if cur is None else cur + float(s[3:])
+    return float(s)
+
+
 def already_set(current, target: float) -> bool:
     """`current` (a readout like '-20.0 dB') already shows `target`, at the precision Logic displays."""
     m = re.search(r"-?\d+(?:\.(\d+))?", str(current or "").replace(",", ""))

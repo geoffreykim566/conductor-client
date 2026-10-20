@@ -2,7 +2,7 @@
 
 Wire key -> native kind:
   {"ax_open_plugin": "<name>"}                                        -> ax_open_plugin
-  {"ax_set_param": {"plugin", "param", "value": <display number>}}    -> ax_set_param
+  {"ax_set_param": {"plugin", "param", "value": <display number> | "by:<signed change>"}} -> ax_set_param
 
 A ledger entry is {"kind", "label": <human text>, ...undo data}; revert.py
 applies them. A handler returns None when it changed nothing.
@@ -120,15 +120,21 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
                     "param": k, "raw_before": int(before), "bool": True, "via": "editor_checkbox",
                     "opened_window": opened_here}
     if not (is_bool or is_raw):
-        # Read once up front: a value that's already there is a no-op, not a change to Revert.
+        # Read once up front: a "by:" change starts from it, and a value that's already
+        # there is a no-op, not a change to Revert.
         current = _current_readout(app, win, param)
         try:
-            goal = float(target)
+            goal = ax.numeric_target(current, target)
         except (TypeError, ValueError) as exc:
             raise StepAbort(f"set {param!r}: {target!r} isn't a number") from exc
+        if goal is None:
+            raise StepAbort(f"couldn't read {param!r}'s current value to change it {target[3:]}")
         if current is not None and ax.already_set(current, goal):
             log(f"    {plugin} / {param}: already {current!r} — nothing to change")
             return None
+        if str(target).lower().startswith("by:"):
+            log(f"    {plugin} / {param}: {current!r} by {target[3:]} -> {goal:g}")
+            target = f"{goal:g}"
     typed = None
     enabled_band = None
     if not (is_bool or is_raw):

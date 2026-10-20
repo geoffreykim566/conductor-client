@@ -59,7 +59,9 @@ class WalkthroughCard(WalkthroughRunMixin, QWidget):
                         else f"{n}. Choose <b>{v}</b>")
             elif "ax_set_param" in step:
                 p = step["ax_set_param"]
-                text = f"{n}. {p.get('plugin', '')} · {p.get('param', '')} → <b>{p.get('value', '')}</b>"
+                v = str(p.get("value", ""))
+                shown = f"by {v[3:]}" if v.lower().startswith("by:") else v
+                text = f"{n}. {p.get('plugin', '')} · {p.get('param', '')} → <b>{shown}</b>"
             else:
                 continue
             lbl = QLabel(text)

@@ -77,9 +77,15 @@ silently when the server adds a step kind.
 ### Plugin and parameter steps
 `ax_open_plugin` opens the window of a plugin already on the track and adds one only when it's
 absent or `new` is set; a second copy is only ever added on request.
-`ax_set_param` tries the editor first (double-click the labelled slider, type; a disabled band
-is switched on first and ledgered), then falls back to Controls view, then returns to Editor.
-Which path runs is per parameter: Low Cut types, High Cut never gets a text field.
+`ax_set_param` reads the parameter's current value first (the editor's readout when it shows a
+real unit, else the Controls row): a `by:<change>` target is applied to it, and a target it
+already shows is skipped with nothing ledgered (10-18: "fix it" re-set an 80 Hz low cut and the
+card counted it as a change). Then it tries the editor (double-click the labelled slider, type; a
+disabled band is switched on first and ledgered), falls back to Controls view, and returns to
+Editor. Which path runs is per parameter: Low Cut types, High Cut never gets a text field. A write
+that lands where it started (a change clamped at the range end) also ledgers nothing.
+Dropdowns keep their own `larger` / `smaller` stepping and "already set" check in `dropdowns.py`:
+they compare option positions, knobs compare numbers.
 
 ### Dropdown option matching
 Exact match first, then loose: Region Smart Tempo's options prefix each other ("On" vs

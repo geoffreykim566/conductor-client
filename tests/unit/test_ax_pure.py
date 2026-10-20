@@ -1,4 +1,4 @@
-from core.ax.controls_view import already_set, is_knob_travel, match_param, num
+from core.ax.controls_view import already_set, is_knob_travel, match_param, num, numeric_target
 from core.ax.primitives import norm
 
 
@@ -39,3 +39,10 @@ def test_knob_travel_is_a_percent_matching_raw_position():
     assert not is_knob_travel(10.0, 0.0, 200.0, "50 %")   # a real percent
     assert not is_knob_travel(0.0, 0.0, 1050.0, "20.0 Hz")
     assert is_knob_travel(61.0, None, None, "61 %")       # unverifiable % counts as travel
+
+
+def test_numeric_target_applies_a_change_to_the_current_readout():
+    assert numeric_target("-20.0 dB", "by:-3") == -23.0
+    assert numeric_target("2.1:1", "by:1") == 3.1
+    assert numeric_target("-20.0 dB", "-24") == -24.0
+    assert numeric_target(None, "by:-3") is None and numeric_target("Off", "by:2") is None
