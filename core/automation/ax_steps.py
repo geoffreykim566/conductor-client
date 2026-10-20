@@ -66,6 +66,13 @@ def run_ax_open_plugin(step: dict, log, stop_event=None) -> dict:
     return {"kind": LEDGER_KIND_PLUGIN, "label": f"remove {name}", "plugin": name, "slot": slot_label, "index": idx}
 
 
+def is_switch_target(target) -> bool:
+    """An on/off word ('on', 'off', 'yes'...). Digits don't count: '0' and '1' are knob values
+    (Threshold 0 dB); a real checkbox given one still gets it via the Controls row's kind."""
+    t = str(target).strip().lower() if isinstance(target, str) else ""
+    return t in ax.ON + ax.OFF and not t.isdigit()
+
+
 def _set_bypass(mw, plugin: str, target, log) -> dict | None:
     """"Bypass" on/off flips the plugin's power switch on its channel-strip slot (no window)."""
     cb = ax.bypass_switch(ax.selected_strip(mw), plugin)
@@ -123,7 +130,7 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
             raise StepAbort(f"couldn't open the {plugin!r} window")
     ax.raise_window(win)
     ax.ensure_on_screen(win)
-    is_bool = isinstance(target, str) and target.strip().lower() in ax.ON + ax.OFF
+    is_bool = is_switch_target(target)
     is_raw = isinstance(target, str) and target.startswith("raw:")
     # Preferred: stay in the editor view.
     #  (a) on/off targets -> the editor's own checkbox (band enables etc.)
@@ -172,9 +179,11 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
         log(f"    {plugin} / {typed['label']}: typed {target!r}, value unchanged — nothing to revert")
         return None
     if typed is not None:
-        log(f"    {plugin} / {typed['label']}: typed {target!r} (was {typed['text_before']!r}, raw {typed['raw_before']} -> {typed['raw']})")
-        return {"kind": LEDGER_KIND_PARAM, "label": f"{typed['label']} back to {typed['text_before']}", "plugin": plugin,
-                "param": typed["label"], "raw_before": typed["raw_before"], "text_before": typed["text_before"],
+        # the up-front read, not the text field: the field can still show an earlier value
+        before_text = current or typed["text_before"]
+        log(f"    {plugin} / {typed['label']}: typed {target!r} (was {before_text!r}, field {typed['text_before']!r}, raw {typed['raw_before']} -> {typed['raw']})")
+        return {"kind": LEDGER_KIND_PARAM, "label": f"{typed['label']} back to {before_text}", "plugin": plugin,
+                "param": typed["label"], "raw_before": typed["raw_before"], "text_before": before_text,
                 "enabled_band": enabled_band, "via": "editor", "opened_window": opened_here}
     if not ax.set_view(app, win, "Controls"):
         raise StepAbort(f"couldn't switch {plugin!r} to Controls view")
@@ -183,7 +192,7 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
         raise StepAbort(f"parameter {param!r} not found on {plugin!r}; available: "
                         f"{list(ax.param_rows(win))[:30]}")
     try:
-        if before.get("kind") == "AXCheckBox" or (isinstance(target, str) and target.strip().lower() in ax.ON + ax.OFF):
+        if before.get("kind") == "AXCheckBox" or is_switch_target(target):
             after = ax.write_param_bool(win, before["label"], target)
         elif isinstance(target, str) and target.startswith("raw:"):
             after = ax.write_param_raw(win, before["label"], float(target[4:]))

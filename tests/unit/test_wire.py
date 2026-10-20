@@ -91,3 +91,10 @@ def test_menu_toggle_entry_only_when_checkmark_flips():
     assert menu_toggle_entry(path, True, False)["label"] == "Low Latency Monitoring Mode back on"
     assert menu_toggle_entry(path, False, False) is None   # a plain command: no checkmark either way
     assert menu_toggle_entry(path, None, True) is None     # item not found before
+
+
+def test_switch_target_is_words_not_digits():
+    from core.automation.ax_steps import is_switch_target
+    assert is_switch_target("on") and is_switch_target(" Off ") and is_switch_target("yes")
+    assert not is_switch_target("0") and not is_switch_target("1")   # Threshold 0 dB is a knob value
+    assert not is_switch_target("-3") and not is_switch_target("by:-3") and not is_switch_target(0)
