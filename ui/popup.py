@@ -1,11 +1,10 @@
 """Reusable frameless/translucent popup window.
 
-Used for Settings, its confirm dialogs (delete history / uninstall), and the
-launch-time update prompt — all centered on screen. History uses the same
-base but anchors below a button instead of centering (see anchor_below).
+Used for Settings and its confirm dialogs (delete history / uninstall), centered
+on screen.
 """
-from PySide6.QtCore import QEvent, QRect, Qt, Signal
-from PySide6.QtGui import QCursor, QGuiApplication
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from ui.theme import ICON_BTN_SIZE
@@ -54,9 +53,6 @@ class Popup(QWidget):
         self.body = QWidget()
         panel_layout.addWidget(self.body, 1)
 
-        self._dismiss_on_outside_click = False
-        self._dismiss_ignore_widget: QWidget | None = None
-
     def _on_close(self) -> None:
         self.closed.emit()
         self.close()
@@ -76,36 +72,6 @@ class Popup(QWidget):
         self.raise_()
         self.activateWindow()
 
-    def enable_click_outside_dismiss(self, ignore_widget: QWidget | None = None) -> None:
-        """Close this popup when it loses focus to a click outside it.
-
-        `ignore_widget` is the button (if any) that toggles this popup open —
-        a click there also deactivates us, but that widget's own click handler
-        already closes us, so skip our own close to avoid closing-then-
-        immediately-reopening.
-        """
-        self._dismiss_on_outside_click = True
-        self._dismiss_ignore_widget = ignore_widget
-
-    def event(self, event) -> bool:
-        if (
-            event.type() == QEvent.Type.WindowDeactivate
-            and self._dismiss_on_outside_click
-            and self.isVisible()
-            and not self._click_is_on_ignore_widget()
-        ):
-            self._on_close()
-        return super().event(event)
-
-    def _click_is_on_ignore_widget(self) -> bool:
-        if self._dismiss_ignore_widget is None:
-            return False
-        top_left = self._dismiss_ignore_widget.mapToGlobal(
-            self._dismiss_ignore_widget.rect().topLeft()
-        )
-        rect = QRect(top_left, self._dismiss_ignore_widget.size())
-        return rect.contains(QCursor.pos())
-
     def center_on_screen(self) -> None:
         self.adjustSize()
         self._sync_panel_size()
@@ -114,29 +80,3 @@ class Popup(QWidget):
             screen.center().x() - self.width() // 2,
             screen.center().y() - self.height() // 2,
         )
-
-    def anchor_above(self, widget: QWidget, gap: int = 8) -> None:
-        """Position this popup's bottom edge `gap` px above `widget`'s top edge,
-        right-aligned to `widget`'s right edge, clamped to stay on screen."""
-        self.adjustSize()
-        self._sync_panel_size()
-        top_left = widget.mapToGlobal(widget.rect().topLeft())
-        x = top_left.x() + widget.width() - self.width()
-        y = top_left.y() - self.height() - gap
-        screen = QGuiApplication.primaryScreen().availableGeometry()
-        x = max(screen.left(), min(x, screen.right() - self.width()))
-        y = max(screen.top(), y)
-        self.move(x, y)
-
-    def anchor_below(self, widget: QWidget, gap: int = 8) -> None:
-        """Position this popup's top edge `gap` px below `widget`'s bottom edge,
-        right-aligned to `widget`'s right edge, clamped to stay on screen."""
-        self.adjustSize()
-        self._sync_panel_size()
-        bottom_left = widget.mapToGlobal(widget.rect().bottomLeft())
-        x = bottom_left.x() + widget.width() - self.width()
-        y = bottom_left.y() + gap
-        screen = QGuiApplication.primaryScreen().availableGeometry()
-        x = max(screen.left(), min(x, screen.right() - self.width()))
-        y = min(y, screen.bottom() - self.height())
-        self.move(x, y)

@@ -177,11 +177,6 @@ class WalkthroughRunMixin:
             return   # the tap fired after the run had already ended
         print("[wt] run stopped by user input")
         self._collect_attempt()
-        try:
-            from ui.overlay_window import instance as _overlay
-            _overlay().dismiss()
-        except Exception:
-            pass
         self._highlight_step(-1)
         self._show_retry("Stopped.", error=False)
 
@@ -212,11 +207,6 @@ class WalkthroughRunMixin:
     def _end(self) -> None:
         """External stop (app quit, chat cleared) — tears down and hides the card."""
         self._teardown()
-        try:
-            from ui.overlay_window import instance as _overlay
-            _overlay().dismiss()
-        except Exception:
-            pass
         self.hide()
 
     def force_end(self) -> None:

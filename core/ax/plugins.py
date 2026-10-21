@@ -14,7 +14,7 @@ from core.ax.search import find_child
 from core.events.keyboard import press
 
 
-def open_plugin_by_search(app, mw, name: str, stop_check=None) -> tuple[str, object, int]:
+def open_plugin_by_search(app, mw, name: str) -> tuple[str, object, int]:
     """Search-and-Add-Plug-in on the selected strip: Ctrl+Cmd+P, set the search
     field's AXValue, Return. Returns (slot_label, plugin_window). Verifies by the
     plugin window's own name, never the truncated slot label."""

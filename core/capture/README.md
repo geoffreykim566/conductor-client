@@ -16,9 +16,6 @@ first, caps at `config.MAX_CONTEXT_WINDOWS`, downsizes to `MAX_IMAGE_LONG_EDGE` 
 base64 JPEGs; it never raises. Vision boxes come back normalized with a bottom-left origin and
 are flipped to top-left pixels; confidence is per line, applied to each word in it.
 
-`capture_all_plugin_windows`, `capture_window_bestres` and `capture_menubar_strip` have no
-callers today (leftovers from the OCR-locate era).
-
 ## Quirks & why
 ### Per-window capture
 Each window is captured on its own, never as one union-rect composite: the old composite

@@ -157,9 +157,8 @@ class ChatView(QWidget):
         if self._current_assistant is not None:
             self._current_assistant.mark_cancelled()
 
-    def set_assistant_tier(self, tier: str, sources: list) -> None:
+    def set_assistant_sources(self, sources: list) -> None:
         if self._current_assistant is not None:
-            self._current_assistant.set_source_tier(tier)
             self._current_assistant.set_sources(sources)
 
     def setup_walkthrough_card(self, steps: list, *, auto: bool = False, destructive: bool = False) -> None:

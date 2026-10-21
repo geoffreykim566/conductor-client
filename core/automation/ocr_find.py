@@ -61,9 +61,8 @@ def wait_for_text(texts: list[str], timeout: float = VERIFY_TIMEOUT_S,
 
 
 def box_center_screen(box: dict, img_size: tuple, win_info: dict) -> tuple:
-    """OCR pixel box -> global screen points (same math as the overlay's
-    _position_on_screen — pixel coords normalized by image dims, scaled into
-    the window's point bounds)."""
+    """OCR pixel box -> global screen points: pixel coords normalized by image
+    dims, scaled into the window's point bounds."""
     b = win_info["kCGWindowBounds"]
     cx = b["X"] + ((box["left"] + box["width"] / 2) / img_size[0]) * b["Width"]
     cy = b["Y"] + ((box["top"] + box["height"] / 2) / img_size[1]) * b["Height"]

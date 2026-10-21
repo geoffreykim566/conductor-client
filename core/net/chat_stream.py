@@ -241,4 +241,4 @@ def _timeout_fallback(history: list[dict] | None) -> Iterator[tuple[str, object]
         "I can't verify it — try asking again, or try rephrasing your "
         "question.",
     )
-    yield ("done", {"source_tier": "", "sources": [], "history": history})
+    yield ("done", {"sources": [], "history": history})

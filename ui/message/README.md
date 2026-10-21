@@ -7,8 +7,7 @@ chips, and the walkthrough card that runs actions in Logic.
 - `widget.py` - `MessageWidget`: the bubble, streamed text, status line; owns the card.
 - `rating.py` - `RatingMixin`: Upvote/Downvote row; clicking the active button undoes the vote.
 - `research_prompt.py` - `ResearchPromptMixin`: "research the web?" with Yes / No.
-- `sources.py` - `SourcesMixin`: source-link chips and the (disabled) confidence badge.
-- `chip.py` - `Chip`: label with its own always-on-top hover popup.
+- `sources.py` - `SourcesMixin`: source-link chips (research turns).
 - `walkthrough_card.py` - `WalkthroughCard`: step list, buttons, hint/status lines, view states.
 - `walkthrough_run.py` - `WalkthroughRunMixin`: start/stop the executor and revert threads, outcomes.
 - `styles.py` - shared label styles and `system_font()`.
@@ -42,18 +41,13 @@ live on older cards after later turns, which is the only undo path for now.
 
 ### Tooltips
 Native tooltips render behind the frameless always-on-top window on macOS: `setToolTip()`
-showed nothing (2026-09-04). `Chip` shows its own popup at the same window level; the popup
-box lives on a child widget because a translucent top-level never paints its stylesheet background.
+showed nothing (2026-09-04). The confidence badge's `Chip` (removed 2026-10-21, in git history)
+showed its own popup at the same window level instead; the popup box lived on a child widget
+because a translucent top-level never paints its stylesheet background.
 
 ### Bubble margins
 User bubbles are right-aligned, so `ChatView`'s scrollbar gutter adds to their right edge; the
 user bubble's right margin subtracts `SCROLLBAR_GUTTER` to match assistant bubbles (2026-09-04).
-
-### Confidence badges disabled
-Since 2026-09-12: the server's tier is a trace rule that fired on observational answers the
-KB had nothing to do with ("which tracks are muted" came back Moderate). The server sends ""
-now; `set_source_tier` returns early to also cover the timeout fallback and old servers.
-Styling and tooltips are kept for when the tier can tell observation from recommendation.
 
 ## Adding something under a bubble
 Write a mixin (or a widget, if it has its own state machine like the card) in its own module,

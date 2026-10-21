@@ -18,10 +18,9 @@ class StreamWorker(QThread):
     Signals:
         chunk(str)                           — emitted for each piece of text streamed in
         status(str)                          — transient research-progress notice
-        done(str, int, str, object, object, object, bool)  — (event_id, remaining,
-                                                            source_tier, sources,
-                                                            walkthrough_steps, history,
-                                                            auto_run)
+        done(str, int, object, object, object, bool)  — (event_id, remaining,
+                                                       sources, walkthrough_steps,
+                                                       history, auto_run)
         research_prompt(str, object)         — server parked the turn at a web_research
                                                call: (query, history). No done follows;
                                                start a new worker with resume= and that
@@ -35,7 +34,7 @@ class StreamWorker(QThread):
 
     chunk = Signal(str)
     status = Signal(str)
-    done = Signal(str, int, str, object, object, object, bool)
+    done = Signal(str, int, object, object, object, bool)
     research_prompt = Signal(str, object)
     plugin_read_prompt = Signal(str, object, object)
     cancelled = Signal()
@@ -60,7 +59,6 @@ class StreamWorker(QThread):
     def run(self) -> None:
         event_id = ""
         remaining = -1
-        source_tier = ""
         sources: list = []
         walkthrough_steps: list = []
         history = None
@@ -101,7 +99,6 @@ class StreamWorker(QThread):
                 elif kind == "done":
                     event_id = payload.get("event_id", "")
                     remaining = payload.get("remaining", -1)
-                    source_tier = payload.get("source_tier", "")
                     sources = payload.get("sources") or []
                     walkthrough_steps = payload.get("walkthrough_steps") or []
                     history = payload.get("history")
@@ -112,7 +109,7 @@ class StreamWorker(QThread):
                 elif kind == "error":
                     self.error.emit(payload)
                     return
-            self.done.emit(event_id, remaining, source_tier, sources,
+            self.done.emit(event_id, remaining, sources,
                            walkthrough_steps, history, auto_run)
         except FreeLimitReached as e:
             self.limit_reached.emit(e.limit if e.limit is not None else -1)

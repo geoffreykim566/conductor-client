@@ -15,7 +15,6 @@ only from tokens in `theme.py`.
 - `input_bar.py` - text field, send button, image attachments, and the controls row.
 - `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, auto research, reset, delete, uninstall).
 - `popup.py` - `Popup` base (header bar + close) for casually dismissed windows.
-- `overlay_window.py` - click-through arrow overlay; only `dismiss()` is called today.
 - `style.py` - `STYLESHEET`. `theme.py` - every color/size/radius token.
 - `message/` - chat bubbles and the walkthrough card. `onboarding/` - centered dialogs.
 
