@@ -3,6 +3,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QWidget
 
+from ui.glass import GlassBackdrop, full_rect
+from ui.motion import fade_window_in
+from ui.theme import POPUP_RADIUS
+
 
 class CenteredDialog(QWidget):
     """Frameless, translucent, centered-on-screen dialog with no header bar or
@@ -33,9 +37,14 @@ class CenteredDialog(QWidget):
         self.body = QWidget(self)
         self.body.setObjectName("setupRoot")
         self.body.setGeometry(0, 0, width, height)
+        self._glass = GlassBackdrop(self, full_rect(self, POPUP_RADIUS), roots=[self.body])
 
         screen = QGuiApplication.primaryScreen().availableGeometry()
         self.move(
             screen.center().x() - width // 2,
             screen.center().y() - height // 2,
         )
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        fade_window_in(self)

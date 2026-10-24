@@ -20,7 +20,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui.theme import BORDER, CONTROL_SIZE, ICON_BTN_SIZE, INPUT_PILL_PADDING
+from ui.symbols import set_symbol
+from ui.theme import BORDER, CONTROL_SIZE, ICON_BTN_SIZE, ICON_SIZE, INPUT_PILL_PADDING, TEXT_SECONDARY, WHITE
 
 
 class _ChatTextEdit(QTextEdit):
@@ -110,12 +111,14 @@ class InputBar(QWidget):
         new_btn.setObjectName("headerBtn")
         new_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         new_btn.clicked.connect(self.new_chat_requested)
+        set_symbol(new_btn, "square.and.pencil", ICON_SIZE, TEXT_SECONDARY)
         controls_row.addWidget(new_btn, 0, Qt.AlignVCenter)
 
         hist_btn = QPushButton("☰")
         hist_btn.setObjectName("headerBtn")
         hist_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         hist_btn.clicked.connect(self.history_requested)
+        set_symbol(hist_btn, "clock.arrow.circlepath", ICON_SIZE, TEXT_SECONDARY)
         controls_row.addWidget(hist_btn, 0, Qt.AlignVCenter)
         self.history_button = hist_btn
 
@@ -132,18 +135,22 @@ class InputBar(QWidget):
         self._min_btn.setObjectName("headerBtn")
         self._min_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         self._min_btn.clicked.connect(self.minimize_requested)
+        set_symbol(self._min_btn, "minus", ICON_SIZE, TEXT_SECONDARY)
         controls_row.addWidget(self._min_btn, 0, Qt.AlignVCenter)
 
         self._close_btn = QPushButton("✕")
         self._close_btn.setObjectName("headerBtn")
         self._close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         self._close_btn.clicked.connect(self.close_requested)
+        set_symbol(self._close_btn, "xmark", ICON_SIZE - 1, TEXT_SECONDARY)
         controls_row.addWidget(self._close_btn, 0, Qt.AlignVCenter)
 
         # Single rounded-rect bubble holding the text field and send button —
         # the only boxed element left in this panel now that the controls
         # row above has moved out onto the bubbles backdrop panel instead.
+        # ChatWindow puts a glass shape behind it (self.pill).
         bubble = QWidget()
+        self.pill = bubble
         bubble.setObjectName("inputBubble")
         bubble_row = QHBoxLayout(bubble)
         bubble_row.setContentsMargins(
@@ -177,6 +184,7 @@ class InputBar(QWidget):
         self._send_btn.setObjectName("sendBtn")
         self._send_btn.setFixedSize(CONTROL_SIZE, CONTROL_SIZE)
         self._send_btn.clicked.connect(self._on_send)
+        set_symbol(self._send_btn, "arrow.up", 15, WHITE, bold=True)
         bubble_row.addWidget(self._send_btn)
 
         panel_layout.addWidget(bubble)

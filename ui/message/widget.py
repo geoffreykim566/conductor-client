@@ -1,7 +1,7 @@
 """MessageWidget: one chat bubble (user or assistant) plus whatever attaches under it."""
 import base64
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
@@ -10,7 +10,14 @@ from ui.message.research_prompt import ResearchPromptMixin
 from ui.message.sources import SourcesMixin
 from ui.message.styles import system_font
 from ui.message.walkthrough_card import WalkthroughCard
+from ui.motion import fade_in, reduce_motion
 from ui.theme import BUTTON_RADIUS, SCROLLBAR_GUTTER, TEXT_MUTED
+
+# Streamed text is revealed a few characters per frame instead of landing all
+# at once (the server sends a reply as one chunk). Each chunk's step is sized
+# so it's all on screen after _REVEAL_TICKS frames, about half a second.
+_REVEAL_TICK_MS = 16
+_REVEAL_TICKS = 30
 
 
 class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
@@ -51,6 +58,10 @@ class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
             bubble_layout.addWidget(thumb)
 
         self._text = text
+        self._shown = len(text)      # how much of _text the label shows
+        self._reveal_step = 0
+        self._reveal_timer: QTimer | None = None
+        self._after_reveal: list = []
         self._text_label = QLabel(text)
         self._text_label.setFont(system_font(13))
         self._text_label.setWordWrap(True)
@@ -75,6 +86,7 @@ class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
 
     def set_status_text(self, text: str) -> None:
         """Show a dim italic placeholder during research. Cleared on first real chunk."""
+        self.finish_reveal()
         self._has_status = True
         self._text_label.setText(f"<i style='color:{TEXT_MUTED}'>{text}</i>")
         self._text_label.setTextFormat(Qt.RichText)
@@ -83,15 +95,51 @@ class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
         if getattr(self, "_has_status", False):
             self._has_status = False
             self._text = ""
+            self._shown = 0
             self._text_label.setTextFormat(Qt.AutoText)
         self._text += chunk
-        self._text_label.setText(self._text)
+        if reduce_motion():
+            self.finish_reveal()
+            return
+        self._reveal_step = max(3, -(-(len(self._text) - self._shown) // _REVEAL_TICKS))
+        if self._reveal_timer is None:
+            self._reveal_timer = QTimer(self)
+            self._reveal_timer.setInterval(_REVEAL_TICK_MS)
+            self._reveal_timer.timeout.connect(self._reveal_tick)
+        if not self._reveal_timer.isActive():
+            self._reveal_timer.start()
+
+    def _reveal_tick(self) -> None:
+        self._shown = min(len(self._text), self._shown + self._reveal_step)
+        self._text_label.setText(self._text[:self._shown])
+        if self._shown >= len(self._text):
+            self.finish_reveal()
+
+    def finish_reveal(self) -> None:
+        """Show all the text now and run what was waiting for it."""
+        if self._reveal_timer is not None:
+            self._reveal_timer.stop()
+        if self._shown != len(self._text):
+            self._shown = len(self._text)
+            self._text_label.setText(self._text)
+        waiting, self._after_reveal = self._after_reveal, []
+        for fn in waiting:
+            fn()
+
+    def after_reveal(self, fn) -> None:
+        """Run `fn` once the text is fully on screen, so the card, rating row
+        and sources don't appear under text that's still growing."""
+        if self._reveal_timer is not None and self._reveal_timer.isActive():
+            self._after_reveal.append(fn)
+        else:
+            fn()
 
     def mark_cancelled(self) -> None:
         """Esc mid-turn. A bubble with no real text yet just shows the
         status-style 'Cancelled'; one that already streamed part of an
         answer keeps it and gets the marker appended."""
         self.hide_research_prompt()
+        self.finish_reveal()
         if getattr(self, "_has_status", False) or not self._text:
             self.set_status_text("Cancelled")
         else:
@@ -101,6 +149,7 @@ class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
         """A failed turn. It replaces the status line; text already streamed keeps it, with the
         error under a blank line (always adding the gap left blank lines above the error)."""
         self.hide_research_prompt()
+        self.finish_reveal()
         if getattr(self, "_has_status", False) or not self._text:
             self.append_text(text)
         else:
@@ -112,6 +161,7 @@ class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
             return
         self._wt_card = WalkthroughCard(steps, auto=auto, destructive=destructive)
         self._bubble_layout.addWidget(self._wt_card)
+        fade_in(self._wt_card)
 
     def wt_enter(self) -> None:
         """Enter / the card's main button (see WalkthroughCard.enter)."""

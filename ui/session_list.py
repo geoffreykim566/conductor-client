@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui.theme import ICON_BTN_SIZE
+from ui.symbols import set_symbol
+from ui.theme import ICON_BTN_SIZE, ICON_SIZE, TEXT_SECONDARY
 
 
 def _format_date(session_id: str) -> str:
@@ -71,6 +72,7 @@ class SessionListPanel(QWidget):
         close_btn.setObjectName("headerBtn")
         close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         close_btn.clicked.connect(self.closed)
+        set_symbol(close_btn, "xmark", ICON_SIZE - 1, TEXT_SECONDARY)
         hl.addWidget(close_btn)
         layout.addWidget(header)
 

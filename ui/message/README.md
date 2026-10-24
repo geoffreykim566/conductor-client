@@ -4,7 +4,7 @@ A chat bubble and what attaches to it: rating buttons, the research Yes/No promp
 chips, and the walkthrough card that runs actions in Logic.
 
 ## Files
-- `widget.py` - `MessageWidget`: the bubble, streamed text, status line; owns the card.
+- `widget.py` - `MessageWidget`: the bubble, streamed text (revealed gradually, `after_reveal`), status line; owns the card.
 - `rating.py` - `RatingMixin`: Upvote/Downvote row; clicking the active button undoes the vote.
 - `research_prompt.py` - `ResearchPromptMixin`: "research the web?" with Yes / No.
 - `sources.py` - `SourcesMixin`: source-link chips (research turns).

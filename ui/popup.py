@@ -7,7 +7,10 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
-from ui.theme import ICON_BTN_SIZE
+from ui.glass import GlassBackdrop, full_rect
+from ui.motion import fade_window_in
+from ui.symbols import set_symbol
+from ui.theme import ICON_BTN_SIZE, ICON_SIZE, POPUP_RADIUS, TEXT_SECONDARY
 
 
 class Popup(QWidget):
@@ -47,11 +50,14 @@ class Popup(QWidget):
         close_btn.setObjectName("headerBtn")
         close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         close_btn.clicked.connect(self._on_close)
+        set_symbol(close_btn, "xmark", ICON_SIZE - 1, TEXT_SECONDARY)
         hl.addWidget(close_btn)
         panel_layout.addWidget(header)
 
         self.body = QWidget()
         panel_layout.addWidget(self.body, 1)
+
+        self._glass = GlassBackdrop(self, full_rect(self, POPUP_RADIUS), roots=[self._panel])
 
     def _on_close(self) -> None:
         self.closed.emit()
@@ -66,6 +72,7 @@ class Popup(QWidget):
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
+        fade_window_in(self)
         # Without this, a popup that isn't yet the active/key window can eat its
         # first click just activating the window (macOS), so e.g. the X button
         # doesn't register until a second click.

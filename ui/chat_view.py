@@ -1,5 +1,5 @@
 """Scrolling chat history view."""
-from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QLabel,
@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from ui.message import MessageWidget
+from ui.motion import fade_in, reduce_motion
 from ui.top_fade_effect import TopEdgeFadeEffect
 from ui.theme import SCROLLBAR_GUTTER
 
@@ -24,6 +25,7 @@ _SCROLLBAR_IDLE_MS = 600  # how long after the last scroll before the handle fad
 # growing, for the entire length of a long response. Anchoring once at turn
 # start and then holding still avoids that.
 _TURN_ANCHOR_FRACTION = 1 / 3
+_RESERVE_RELEASE_MS = 220  # the end-of-turn settle slides instead of jumping
 
 
 class ChatView(QWidget):
@@ -108,6 +110,8 @@ class ChatView(QWidget):
 
         self._current_assistant: MessageWidget | None = None
         self._active_wt_widget: MessageWidget | None = None
+        self._revealing: MessageWidget | None = None   # last reply, maybe still revealing
+        self._reserve_anim: QPropertyAnimation | None = None
         self._scroll.hide()
 
     def _insert_before_trailing_spacer(self, widget: QWidget) -> None:
@@ -115,14 +119,21 @@ class ChatView(QWidget):
 
     def add_user_message(self, text: str, images_b64: list[str]) -> None:
         self._show_messages()
+        # A reply still revealing finishes now, releasing its reserve before
+        # this turn claims a new one.
+        if self._revealing is not None:
+            self._revealing.finish_reveal()
+            self._revealing = None
         widget = MessageWidget("user", text=text, images_b64=images_b64)
         self._insert_before_trailing_spacer(widget)
+        fade_in(widget)
         self._anchor_new_turn(widget)
 
     def begin_assistant_message(self) -> None:
         self._show_messages()
         self._current_assistant = MessageWidget("assistant", text="")
         self._insert_before_trailing_spacer(self._current_assistant)
+        fade_in(self._current_assistant)
         # No scroll here — the turn's anchor (see _apply_turn_anchor) already
         # reserved enough room below the user message for the response to
         # render into; the empty bubble just grows into it as chunks arrive.
@@ -157,14 +168,18 @@ class ChatView(QWidget):
         if self._current_assistant is not None:
             self._current_assistant.mark_cancelled()
 
+    # Sources, the card and rating wait for the reply's reveal to finish
+    # (MessageWidget.after_reveal), so they don't sit under growing text.
     def set_assistant_sources(self, sources: list) -> None:
         if self._current_assistant is not None:
-            self._current_assistant.set_sources(sources)
+            w = self._current_assistant
+            w.after_reveal(lambda: w.set_sources(sources))
 
     def setup_walkthrough_card(self, steps: list, *, auto: bool = False, destructive: bool = False) -> None:
         if self._current_assistant is not None:
-            self._current_assistant.setup_walkthrough(steps, auto=auto, destructive=destructive)
-            self._active_wt_widget = self._current_assistant
+            w = self._current_assistant
+            w.after_reveal(lambda: w.setup_walkthrough(steps, auto=auto, destructive=destructive))
+            self._active_wt_widget = w
 
     def wt_enter(self) -> None:
         if self._active_wt_widget is not None:
@@ -181,10 +196,11 @@ class ChatView(QWidget):
 
     def show_rating(self, on_rate, initial: int = 0) -> None:
         if self._current_assistant is not None:
-            self._current_assistant.enable_rating(on_rate, initial=initial)
+            w = self._current_assistant
+            w.after_reveal(lambda: w.enable_rating(on_rate, initial=initial))
 
     def end_assistant_message(self) -> None:
-        self._current_assistant = None
+        reply, self._current_assistant = self._current_assistant, None
         # The leading spacer frozen by this turn's _apply_turn_anchor is
         # deliberately left frozen here rather than unfrozen back to
         # flexible: unfreezing right when a short response finishes would
@@ -200,7 +216,38 @@ class ChatView(QWidget):
         # something that needs to survive after the turn is done; left
         # un-reset it becomes permanent scrollable blank space below the
         # last message.
-        self._trailing_spacer.setMinimumHeight(0)
+        #
+        # Not until the reply has finished revealing (MessageWidget.after_reveal):
+        # released while the text was still short, the view clamped down and
+        # the reply grew out of sight below.
+        if reply is not None:
+            self._revealing = reply
+            reply.after_reveal(self._release_reserve)
+        else:
+            self._release_reserve()
+
+    def _release_reserve(self) -> None:
+        """Shrink the trailing reserve to 0. Animated, so a short reply's
+        settle toward the bottom (the scrollbar clamping as room goes) slides."""
+        start = self._trailing_spacer.minimumHeight()
+        if reduce_motion() or start == 0:
+            self._trailing_spacer.setMinimumHeight(0)
+            return
+        anim = QPropertyAnimation(self._trailing_spacer, b"minimumHeight", self)
+        anim.setDuration(_RESERVE_RELEASE_MS)
+        anim.setStartValue(start)
+        anim.setEndValue(0)
+        anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._reserve_anim = anim
+        anim.start(QPropertyAnimation.DeleteWhenStopped)
+        anim.destroyed.connect(self._on_reserve_anim_gone)
+
+    def _on_reserve_anim_gone(self) -> None:
+        self._reserve_anim = None
+
+    def _stop_reserve_release(self) -> None:
+        if self._reserve_anim is not None:
+            self._reserve_anim.stop()   # DeleteWhenStopped: deleted, then cleared above
 
     def clear(self) -> None:
         # Stop any running walkthrough thread before its owning widget gets
@@ -218,8 +265,10 @@ class ChatView(QWidget):
             if w:
                 w.deleteLater()
         self._unfreeze_spacer()
+        self._stop_reserve_release()
         self._trailing_spacer.setMinimumHeight(0)
         self._current_assistant = None
+        self._revealing = None
         self._active_wt_widget = None
         self._scroll.verticalScrollBar().setValue(0)
         self._scroll.hide()
@@ -304,6 +353,7 @@ class ChatView(QWidget):
         QApplication.processEvents()
         viewport_h = self._scroll.viewport().height()
         target_position = int(viewport_h * _TURN_ANCHOR_FRACTION)
+        self._stop_reserve_release()
         self._trailing_spacer.setMinimumHeight(max(0, viewport_h - target_position))
         QApplication.processEvents()  # let the reserve's resize land before measuring
 
@@ -314,12 +364,14 @@ class ChatView(QWidget):
 
         target_spacer_h = max(0, target_position - content_above)
         self._flex_spacer.setFixedHeight(target_spacer_h)
-        new_widget_top = target_spacer_h + content_above
-        target_scroll = new_widget_top - target_position
 
         QApplication.processEvents()  # let the setFixedHeight() resize above land
+        # Re-measured rather than derived from widget_top: rows above can
+        # still settle during these processEvents() calls, which left the
+        # message low or off screen (README "Turn anchoring").
+        new_widget_top = user_widget.mapTo(self._container, QPoint(0, 0)).y()
         bar = self._scroll.verticalScrollBar()
-        bar.setValue(max(0, min(target_scroll, bar.maximum())))
+        bar.setValue(max(0, min(new_widget_top - target_position, bar.maximum())))
 
     def _unfreeze_spacer(self) -> None:
         self._flex_spacer.setMinimumHeight(0)

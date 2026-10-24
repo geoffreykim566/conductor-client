@@ -1,10 +1,10 @@
 """Main floating chat window. Frameless, always-on-top, minimizes to a small bubble.
 
-A permanent, slightly-transparent rounded panel (see paintEvent) sits behind
-the message bubbles -- Logic Pro showing through blank space behind the
-bubbles read as chaotic given that space was never clickable anyway. Stops
-above the input bar, which already draws its own backing panel (#inputPanel,
-ui/style.py). History is a page in the same QStackedWidget as the chat view,
+A permanent rounded panel sits behind the message bubbles -- Logic Pro
+showing through blank space behind the bubbles read as chaotic given that
+space was never clickable anyway. It's native glass (ui/glass.py), or painted
+in paintEvent when there's none. Stops above the input bar, whose pill gets
+its own glass shape. History is a page in the same QStackedWidget as the chat view,
 swapped in over the bubbles panel (see _show_history/_show_chat) rather than
 a separate popup window -- Settings and its confirm dialogs still use
 ui/popup.py's Popup for that.
@@ -29,6 +29,8 @@ from ui.chat_prompts import ChatPromptsMixin
 from ui.chat_sessions import ChatSessionsMixin
 from ui.chat_turns import ChatTurnsMixin
 from ui.chat_view import ChatView
+from ui.glass import GlassBackdrop
+from ui.motion import fade_window_in, hide_faded
 from ui.input_bar import InputBar
 from ui.minimized_bubble import MinimizedBubble
 from ui.onboarding.feedback_dialog import FeedbackDialog
@@ -40,6 +42,9 @@ from ui.theme import (
     MAX_WINDOW_WIDTH,
     MIN_WINDOW_HEIGHT,
     MIN_WINDOW_WIDTH,
+    GLASS_WASH,
+    GLASS_WASH_ALPHA,
+    INPUT_PILL_RADIUS,
     MINIMIZED_SIZE,
     PANEL,
     PANEL_ALPHA,
@@ -137,6 +142,9 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         layout.addSpacing(8)
         layout.addWidget(self._input_bar)
 
+        self._glass = GlassBackdrop(self, self._glass_shapes, roots=[self._input_bar.pill])
+        self._glass.watch(self._input_bar, self._input_bar.pill)
+
         self._geometry_save_timer = QTimer(self)
         self._geometry_save_timer.setSingleShot(True)
         self._geometry_save_timer.timeout.connect(self.persist_geometry)
@@ -189,22 +197,36 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         clear_window_pos()
         self._anchor_to_bottom_right()
 
-    # --- painting ---
-    def paintEvent(self, event) -> None:
-        # Same look as #inputPanel (ui/style.py), drawn directly rather than
-        # via a stylesheet rule (see the WA_StyledBackground comment in __init__).
-
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(qcolor(PANEL_BORDER, PANEL_BORDER_ALPHA))
-        painter.setBrush(qcolor(PANEL, PANEL_ALPHA))
+    # --- backdrop ---
+    def _panel_rect(self) -> QRect:
         # Spans the full window width -- the window IS the panel, nothing is
         # laid out past its edges. Stops a few px above the input bar, which
-        # draws its own pill, so the two rounded shapes read as separate.
-        panel_rect = QRect(0, 0, self.width(), self._input_bar.y() - 4)
+        # has its own pill, so the two rounded shapes read as separate.
+        return QRect(0, 0, self.width(), self._input_bar.y() - 4)
+
+    def _glass_shapes(self) -> list:
+        pill = self._input_bar.pill
+        return [
+            (self._panel_rect(), PANEL_RADIUS),
+            (QRect(pill.mapTo(self, QPoint(0, 0)), pill.size()), INPUT_PILL_RADIUS),
+        ]
+
+    def paintEvent(self, event) -> None:
+        # Same look as #inputBubble (ui/style.py): the dark wash over the glass,
+        # or the painted panel when there's none. Drawn directly rather than
+        # via a stylesheet rule (see the WA_StyledBackground comment in __init__).
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        if self._glass.active:
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(qcolor(GLASS_WASH, GLASS_WASH_ALPHA))
+        else:
+            painter.setPen(qcolor(PANEL_BORDER, PANEL_BORDER_ALPHA))
+            painter.setBrush(qcolor(PANEL, PANEL_ALPHA))
         painter.drawRoundedRect(
-            panel_rect.adjusted(0, 0, -1, -1), PANEL_RADIUS, PANEL_RADIUS
+            self._panel_rect().adjusted(0, 0, -1, -1), PANEL_RADIUS, PANEL_RADIUS
         )
+        painter.end()
         super().paintEvent(event)
 
     # --- positioning ---
@@ -216,6 +238,12 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         )
 
     # --- minimize / restore / dock ---
+    # Every window fades in from its showEvent (ui/motion.py); hiding this
+    # one fades it out first.
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        fade_window_in(self)
+
     def minimize_to_bubble(self) -> None:
         if self._bubble is None:
             self._bubble = MinimizedBubble(self)
@@ -224,12 +252,12 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
             screen.right() - MINIMIZED_SIZE - WINDOW_MARGIN,
             screen.bottom() - MINIMIZED_SIZE - WINDOW_MARGIN,
         )
-        self._bubble.show()
-        self.hide()
+        hide_faded(self, then=self._bubble.show)
 
     def restore_from_bubble(self) -> None:
         if self._bubble is not None:
             self._bubble.hide()
+        fade_window_in(self)   # also cancels a fade-out still hiding this window
         self.show()
         self.raise_()
         self.activateWindow()
@@ -237,6 +265,7 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
     def open_from_dock(self) -> None:
         if self._bubble is not None:
             self._bubble.hide()
+        fade_window_in(self)   # also cancels a fade-out still hiding this window
         self.show()
         self.raise_()
         self.activateWindow()
@@ -244,7 +273,7 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
     def hide_to_dock(self) -> None:
         if self._bubble is not None:
             self._bubble.hide()
-        self.hide()
+        hide_faded(self)
 
     # --- history page ---
     def _show_chat(self) -> None:

@@ -4,7 +4,10 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QEvent, QPoint, Qt
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
-from ui.theme import MINIMIZED_SIZE
+from ui.glass import GlassBackdrop, full_rect
+from ui.motion import fade_window_in
+from ui.symbols import set_symbol
+from ui.theme import MINIMIZED_RADIUS, MINIMIZED_SIZE, WHITE
 
 if TYPE_CHECKING:
     from ui.chat_window import ChatWindow
@@ -34,7 +37,13 @@ class MinimizedBubble(QWidget):
         self._btn.setFixedSize(MINIMIZED_SIZE, MINIMIZED_SIZE)
         self._btn.clicked.connect(parent_window.restore_from_bubble)
         self._btn.installEventFilter(self)
+        set_symbol(self._btn, "pianokeys", 22, WHITE)
         layout.addWidget(self._btn)
+        self._glass = GlassBackdrop(self, full_rect(self, MINIMIZED_RADIUS), roots=[self._btn])
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        fade_window_in(self)
 
     def eventFilter(self, obj: object, event: QEvent) -> bool:
         if obj is self._btn:

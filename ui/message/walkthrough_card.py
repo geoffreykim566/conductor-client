@@ -14,7 +14,7 @@ from ui.message.styles import (
     system_font,
 )
 from ui.message.walkthrough_run import WalkthroughRunMixin
-from ui.theme import MONO, TEXT_DIM
+from ui.theme import TEXT_DIM
 
 
 class WalkthroughCard(WalkthroughRunMixin, QWidget):
@@ -102,7 +102,7 @@ class WalkthroughCard(WalkthroughRunMixin, QWidget):
 
         hint = QLabel("Press ↵ to run")
         hint.setFont(system_font(10))
-        hint.setStyleSheet(f"QLabel {{ font-family: {MONO}; color: {TEXT_DIM}; padding-left: 2px; margin-top: 4px; }}")
+        hint.setStyleSheet(f"QLabel {{ color: {TEXT_DIM}; padding-left: 2px; margin-top: 4px; }}")
         cl.addWidget(hint)
         self._hint = hint
 
