@@ -71,8 +71,8 @@ message finishes a reveal still running.
 
 ### Fonts
 UI text is the app font (SF Pro, the system font; QSS rules leave `font-family` out). It can't
-be bundled and doesn't need to be. Menlo (`MONO`) is kept for technical text: the card's step
-lines and the messages-left counter (user call 2026-10-23).
+be bundled and doesn't need to be. Menlo (`MONO`) is kept only for the card's step lines (user
+call 2026-10-23; the counter moved to SF the same day).
 
 ### Controls row placement
 New-chat/history/minimize/close sit above the bubbles on the backdrop panel (moved there from

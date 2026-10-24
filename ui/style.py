@@ -2,9 +2,10 @@
 top-level window (main chat window, popups, minimized bubble, onboarding
 dialogs) shares the same look without each needing its own setStyleSheet call.
 
-Text uses the app font (SF Pro) unless a rule names MONO. A root widget with
-glass="true" (set by ui/glass.py while a native backdrop is attached) swaps
-its painted panel for a thin dark wash, so the glass behind it shows.
+Text uses the app font (SF Pro); only the card step lines (ui/message/styles.py)
+use MONO. A root widget with glass="true" (set by ui/glass.py while a native
+backdrop is attached) swaps its painted panel for a thin dark wash, so the
+glass behind it shows.
 
 Every value here is a ui/theme.py token -- add new tokens there rather than
 new literals here."""
@@ -33,7 +34,6 @@ from ui.theme import (
     GLASS_WASH_ALPHA,
     INPUT_PILL_RADIUS,
     MINIMIZED_RADIUS,
-    MONO,
     PANEL,
     PANEL_ALPHA,
     PANEL_BORDER,
@@ -199,8 +199,7 @@ QPushButton#sendBtn:disabled {{
 QLabel#remainingLabel {{
     background: transparent;
     color: {TEXT_MUTED};
-    font-family: {MONO};
-    font-size: {FONT_XS - 1}px;
+    font-size: {FONT_XS}px;
 }}
 QPushButton#rateBtn {{
     background: transparent;
