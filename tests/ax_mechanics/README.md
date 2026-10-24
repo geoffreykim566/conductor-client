@@ -17,6 +17,7 @@ prove (or disprove) a mechanism before core/ax relies on it. Results and numbers
 - `t10_shortcuts.py` - shortcut sweep via `core.events.keyboard.press` with the frontmost gate.
 - `t11_transport.py` - read-only: transport, tempo, meters.
 - `t12_reversibility.py` - which actions Logic's own Undo reverts (imports from t6 and t7).
+- `t13_stem_splitter.py` - the `context_menu` + `checks` steps on Stem Splitter through the real handlers; presses Cancel, never Apply.
 
 ## How it works
 Open a scratch project (Audio 1, Audio 2, one software-instrument track), grant Accessibility,

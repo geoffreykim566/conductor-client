@@ -16,6 +16,8 @@ a revert ledger and can undo a run. `__init__.py` re-exports the public API ui/ 
 - `fuzzy_match.py` - fuzzy-find a phrase in an OCR word list (pure).
 - `logic_focus.py` - activate Logic, confirm it is frontmost and on screen; which display it is on.
 - `timing.py` - settle/verify timings. `errors.py` - `StepAbort`.
+- `context_menus.py` - the `context_menu` step: open a target's Control-click menu through AX (`AXShowMenu`), find it by its window, drill it.
+- `sheet_checks.py` - the `checks` step: tick and untick named checkboxes on the sheet the previous step opened; never presses Apply.
 - `plugin_read.py` - read a plugin's values through its Controls view for the server's `read_plugin_values`; `PluginReadThread`.
 - `editor_ocr.py` - read and type knob values off a plug-in editor's face by OCR, for plug-ins whose Controls view shows only 0–1.
 - `executor_thread.py` - `ExecutorThread` / `RevertThread` (QThreads the walkthrough card runs).
@@ -42,6 +44,10 @@ package, and only `runner.py` wires the AX step handlers.
 - `click_value_of` - find a settings-row label, click the value blob to its right.
 - `choose` - pick `value` (or "larger"/"smaller") in the dropdown the previous step opened.
 - `ax_open_plugin`, `ax_set_param` - pure AX, see `ax_steps.py`.
+- `context_menu` - open the Control-click menu of `on` (only "region" so far; `target` names
+  one, else the selected one, else the only one), press `path` by title (or `alt`), verify the
+  sheet named `opens` appeared. Stem Splitter.
+- `checks` - set the sheet's named checkboxes to `value` ({name: bool}); nothing is ledgered.
 Any step may carry `expect` (text that must appear after acting) and `final`.
 
 ## Quirks & why
@@ -96,6 +102,23 @@ Mastering Assistant goes through the same handlers: open inserts it on Stereo Ou
 and its ledger entries carry no track (core/ax README).
 Dropdowns keep their own `larger` / `smaller` stepping and "already set" check in `dropdowns.py`:
 they compare option positions, knobs compare numbers.
+
+### Context menus go through AX, not a click
+A region is an AX element with `AXShowMenu`, which opens its Control-click menu and selects it,
+so a named region needn't be selected first and the window size, scroll or desktop don't matter
+(live 10-23: a region scrolled fully out of view worked). The call blocks while the menu is open
+and returns -25204 when AX gives up (~1.5 s), so its messaging timeout is 0.3 s; the menu is then
+found through Logic's popup-menu window bounds, not the region's position. A Control-click on the
+region's visible part is only the fallback when no menu window appears.
+The region menu's top block reorders (Stem Splitter… was first in one session, second in
+another), so the first hop must match exactly, else `alt` (Processing > Stem Splitter…) is used.
+
+### Stem Splitter sheet
+A sheet on the main window headed "Stem Splitter", six labelled checkboxes, Cancel / Apply.
+Escape doesn't close it; Cancel does. It keeps its ticks across opens, even after Cancel, so a
+card without stems opens it as last used. The card never presses Apply (user call 10-23): until
+then nothing in the project changed, so there's nothing to revert. Apply makes a folder track
+"<region> (Stems)" with one track per stem and mutes the source region.
 
 ### Dropdown option matching
 Exact match first, then loose: Region Smart Tempo's options prefix each other ("On" vs

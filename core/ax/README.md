@@ -9,7 +9,7 @@ the passive per-turn AX text dump sent to the server as context.
 - `primitives.py` - attribute get/set, press, role/title/desc/value, center, `wait_until`, `norm`, `AxError`.
 - `search.py` - `find_child`, `find_anywhere`, `find_all`.
 - `app.py` - Logic's pid / app element / windows / main window; raise and keep windows on screen.
-- `mouse.py` - tagged synthetic clicks; `press_or_click` (AXPress, then a real click).
+- `mouse.py` - tagged synthetic clicks (and Control-click); `press_or_click` (AXPress, then a real click).
 - `menus.py` - the open AXMenu, open a popup button's menu, drill by titles, dismiss; read a menu-bar item's checkmark.
 - `channel_strip.py` - a track's strip, its FX slots, the slot holding a plugin; Stereo Out's Mastering slot.
 - `plugin_windows.py` - which window shows which plugin; close one.
@@ -17,6 +17,8 @@ the passive per-turn AX text dump sent to the server as context.
 - `controls_view.py` - parameters via the plugin window's Controls view (current view, row readouts, exact writes, display bisection).
 - `editor_view.py` - parameters in the plugin's own editor (typed value, band checkboxes).
 - `tracks.py` - find/select a track header.
+- `regions.py` - the regions in the Tracks area; pick one by name, else the selected one, else the only one of a kind; its visible point.
+- `sheets.py` - a sheet on the main window by heading; read and set its named checkboxes.
 - `state_capture.py` - read-only text dump of every open Logic window's AX tree.
 
 ## How it works
@@ -64,6 +66,14 @@ Controls-view reads and writes, and "No Plug-in" removal all reuse the plug-in c
 `plugin_slot` (live 10-22). Its window is titled "Stereo Out" whichever track is selected, so
 callers drop `track` for it. In an empty project its window opens with an intro sheet (OK);
 that's left for the user, and the window counts as open.
+
+### Regions
+A region is an `AXLayoutItem` (role description "Region") in its track's row under "Tracks
+contents"; its help says "Audio region" or "Folder region" etc., its description is the name,
+with " (Audio)" and ", muted" added by Logic. `AXSelected` reads and is settable. Its frame runs
+past the view when it's long or scrolled, so a click point is clipped to the Tracks scroll area.
+A name match ignores those suffixes and punctuation; an exact name wins over regions whose name
+contains it (a split's "Life Is Good (Vocals)" vs the source "Life Is Good").
 
 ### Plugin load mismatch
 If a search loads something whose window doesn't come up as the requested plugin, report it and

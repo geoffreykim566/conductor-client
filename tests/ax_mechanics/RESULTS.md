@@ -85,6 +85,14 @@ settings (buffer size etc.) were not tested here; per the July notes they are ou
 Caveat: the Edit menu's "Undo …" item title lagged behind the real stack (showed a stale title
 after mute), so it is not a reliable pre-check of what Cmd+Z will do.
 
+## T13 — Stem Splitter through the region's context menu (2026-10-23, `t13_stem_splitter.py`)
+`AXShowMenu` on the region opens its menu and selects the region; menu up in 0.30 s with the
+messaging timeout at 0.3 s (1.55 s at the default). Found via the menu window's bounds, it worked
+with the region fully scrolled out of view. Open only, Vocals + Drums, the Processing fallback and
+all six (pressed 4 boxes, read back): 4/4 PASS, 1.5–2.9 s each. Two audio regions and none
+selected: refused "select the audio region first" before any menu opened. A folder region:
+refused as not audio.
+
 ## Cross-cutting findings
 
 - **`AXPress` is unreliable in both directions**: false success (track Mute/Solo, T6b slot

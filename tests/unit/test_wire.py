@@ -112,3 +112,27 @@ def test_already_toggled_skips_only_a_match():
     assert not already_toggled(False, "on") and not already_toggled(True, "off")
     assert not already_toggled(None, "on")      # checkmark unreadable: click as before
     assert not already_toggled(True, None)      # no state asked: a plain flip
+
+
+def test_context_menu_and_checks_map():
+    steps = wire_to_steps([
+        {"context_menu": ["Stem Splitter…"], "on": "region", "or": ["Processing", "Stem Splitter…"],
+         "opens": "Stem Splitter"},
+        {"checks": {"Vocals": True, "Drums": True, "Bass": False}, "sheet": "Stem Splitter"},
+    ])
+    menu, checks = steps
+    assert menu == {"kind": "context_menu", "path": ["Stem Splitter…"], "on": "region", "target": None,
+                    "alt": ["Processing", "Stem Splitter…"], "opens": "Stem Splitter"}
+    assert checks == {"kind": "checks", "value": {"Vocals": True, "Drums": True, "Bass": False},
+                      "sheet": "Stem Splitter", "final": True}
+    assert "expect" not in menu   # verified through AX (`opens`), not OCR
+
+
+def test_context_menu_alone_is_final():
+    steps = wire_to_steps([{"context_menu": ["Stem Splitter…"], "opens": "Stem Splitter"}])
+    assert steps[0]["on"] == "region" and steps[0]["alt"] == [] and steps[0]["final"] is True
+
+
+def test_context_menu_carries_its_target():
+    steps = wire_to_steps([{"context_menu": ["Stem Splitter…"], "target": "SICKO MODE", "opens": "Stem Splitter"}])
+    assert steps[0]["target"] == "SICKO MODE"

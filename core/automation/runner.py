@@ -1,7 +1,8 @@
 """Run a translated step list, one act->verify contract per step.
 
 Step kinds: key, menu, click_text, click_value_of, choose (see README
-"Step kinds") plus ax_open_plugin / ax_set_param (ax_steps.py). Any step may
+"Step kinds") plus ax_open_plugin / ax_set_param (ax_steps.py), context_menu
+(context_menus.py) and checks (sheet_checks.py). Any step may
 carry `expect` (text that must appear after acting, else abort) and `final`
 (the state-changing step). Every event batch is preceded by a frontmost
 check, so a path aborts rather than typing into another app.
@@ -10,11 +11,13 @@ import time
 
 from core import ax
 from core.automation.ax_steps import LEDGER_KIND_TOGGLE, run_ax_open_plugin, run_ax_set_param, with_track
+from core.automation.context_menus import run_context_menu
 from core.automation.dropdowns import last_click, run_choose
 from core.automation.errors import StepAbort
 from core.automation.logic_focus import require_logic_frontmost
 from core.automation.menus import menu_window_count, open_menubar_menu, wait_menu_count, wait_menus_gone
 from core.automation.ocr_find import box_center_screen, find_text, is_front_window, value_blob_right_of, wait_for_text
+from core.automation.sheet_checks import run_checks
 from core.automation.timing import ACTION_SETTLE_S, MENU_SETTLE_S
 from core.events.keyboard import NAMED_KEYS, post_key, press, type_select
 from core.events.mouse import click_at
@@ -186,6 +189,8 @@ _HANDLERS = {
     "choose": lambda step, opts, log, stop_event: run_choose(step, opts.get("choose"), log, stop_event),
     "ax_open_plugin": lambda step, opts, log, stop_event: with_track(run_ax_open_plugin(step, log, stop_event)),
     "ax_set_param": lambda step, opts, log, stop_event: with_track(run_ax_set_param(step, log, stop_event)),
+    "context_menu": lambda step, opts, log, stop_event: run_context_menu(step, log, stop_event),
+    "checks": lambda step, opts, log, stop_event: run_checks(step, log, stop_event),
 }
 
 

@@ -44,7 +44,9 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
     Wire keys map straight to `kind`: menu_path->menu, shortcut->key,
     click_text->click_text, click_value_of->click_value_of, choose->choose
     (a dropdown route's value; carries the route as `reopen` for revert),
-    ax_open_plugin, ax_set_param. Unrecognized keys are dropped rather than
+    ax_open_plugin, ax_set_param, context_menu (a target's Control-click menu;
+    verified through AX by `opens`, the sheet it brings up), checks (boxes on that
+    sheet). Unrecognized keys are dropped rather than
     guessed at (mirrors the server's own stance on legacy path steps).
 
 
@@ -93,6 +95,12 @@ def wire_to_steps(wire_steps: list[dict]) -> list[dict]:
             if wire.get("track"):
                 st["track"] = wire["track"]
             steps.append(st)
+        elif "context_menu" in wire:
+            steps.append({"kind": "context_menu", "path": list(wire["context_menu"]), "on": wire.get("on") or "region",
+                          "target": wire.get("target"), "alt": list(wire.get("or") or []), "opens": wire.get("opens")})
+        elif "checks" in wire:
+            steps.append({"kind": "checks", "value": {str(k): bool(v) for k, v in dict(wire["checks"]).items()},
+                          "sheet": wire.get("sheet")})
         elif "ax_set_param" in wire:
             steps.append({"kind": "ax_set_param", "value": dict(wire["ax_set_param"])})
         elif "choose" in wire:

@@ -57,6 +57,12 @@ class WalkthroughCard(WalkthroughRunMixin, QWidget):
                 v = step["choose"]
                 text = (f"{n}. One step <b>{v}</b>" if v in ("larger", "smaller")
                         else f"{n}. Choose <b>{v}</b>")
+            elif "context_menu" in step:
+                what = f"“{step['target']}”" if step.get("target") else f"the {step.get('on') or 'region'}"
+                text = f"{n}. Control-click {what} → " + " → ".join(step["context_menu"])
+            elif "checks" in step:
+                on = [k for k, v in step["checks"].items() if v]
+                text = f"{n}. Tick <b>{', '.join(on)}</b>" + (" only" if len(on) < len(step["checks"]) else "")
             elif "ax_set_param" in step:
                 p = step["ax_set_param"]
                 v = str(p.get("value", ""))

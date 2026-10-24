@@ -9,10 +9,12 @@ from core.ax.primitives import AxError, ax_press, center, wait_until
 from core.events.tag import tag_synthetic
 
 
-def _post_mouse(kind, point, click_state=None):
+def _post_mouse(kind, point, click_state=None, flags=None):
     ev = Quartz.CGEventCreateMouseEvent(None, kind, point, Quartz.kCGMouseButtonLeft)
     if click_state is not None:
         Quartz.CGEventSetIntegerValueField(ev, Quartz.kCGMouseEventClickState, click_state)
+    if flags is not None:
+        Quartz.CGEventSetFlags(ev, flags)
     tag_synthetic(ev)
     Quartz.CGEventPost(Quartz.kCGHIDEventTap, ev)
 
@@ -23,6 +25,15 @@ def click_at(x, y):
     time.sleep(0.03)
     _post_mouse(Quartz.kCGEventLeftMouseDown, p, 1)
     _post_mouse(Quartz.kCGEventLeftMouseUp, p, 1)
+
+
+def ctrl_click_at(x, y):
+    """Control-click: opens the element's shortcut menu, like a right-click."""
+    p = (x, y)
+    _post_mouse(Quartz.kCGEventMouseMoved, p)
+    time.sleep(0.03)
+    _post_mouse(Quartz.kCGEventLeftMouseDown, p, 1, Quartz.kCGEventFlagMaskControl)
+    _post_mouse(Quartz.kCGEventLeftMouseUp, p, 1, Quartz.kCGEventFlagMaskControl)
 
 
 def double_click_at(x, y):
