@@ -165,7 +165,7 @@ class WalkthroughRunMixin:
             self._mark_step_failed(idx)
             note = f"Couldn't finish step {idx + 1}."
         else:
-            note = f"Couldn't start — {msg}."   # activation: the reason is the user's fix
+            note = f"{msg[:1].upper()}{msg[1:]}."   # activation: the reason alone is the user's fix
         if self._ledger:
             note += " Earlier steps can be reverted."
         # Card stays visible so the step list remains as a manual guide.
