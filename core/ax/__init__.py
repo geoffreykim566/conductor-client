@@ -16,9 +16,11 @@ from core.ax.app import (
 )
 from core.ax.mouse import click_at, double_click_at, press_or_click
 from core.ax.menus import current_menu, dismiss_menus, drill, menu_item_checked, menubar_item, open_menu_of
-from core.ax.channel_strip import bypass_switch, fx_slots, loaded_names, loaded_slot, selected_strip, strip
+from core.ax.channel_strip import (
+    bypass_switch, fx_slots, is_mastering, loaded_names, loaded_slot, mastering_slot, plugin_slot, selected_strip, strip,
+)
 from core.ax.plugin_windows import close_window, plugin_window_for, plugin_windows_seen, window_plugin_name
-from core.ax.plugins import open_loaded_plugin, open_plugin_by_search, remove_plugin
+from core.ax.plugins import insert_mastering, open_loaded_plugin, open_plugin_by_search, remove_plugin
 from core.ax.controls_view import (
     OFF, ON, all_unitless, already_set, current_view, is_knob_travel, is_unitless, match_param, num, numeric_target, param_rows, read_param, row_readout, set_view, slider_range, write_param_bool,
     write_param_display, write_param_raw,
@@ -62,6 +64,10 @@ __all__ = [
     "focused",
     "is_knob_travel",
     "fx_slots",
+    "insert_mastering",
+    "is_mastering",
+    "mastering_slot",
+    "plugin_slot",
     "loaded_names",
     "loaded_slot",
     "logic_pid",

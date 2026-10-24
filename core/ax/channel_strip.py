@@ -44,8 +44,34 @@ def loaded_slot(strip_el, name: str, index: int | None = None):
     return next((g for g in groups if norm(desc(g)).startswith(key)), None)
 
 
-def bypass_switch(strip_el, name: str):
+def is_mastering(name: str) -> bool:
+    """Mastering Assistant lives in its own slot on Stereo Out, not the selected track's Audio FX."""
+    return norm(name) in ("masteringassistant", "mastering")
+
+
+def mastering_slot(mw) -> tuple[str | None, object]:
+    """Stereo Out's Mastering slot: ("off", the insert button) or ("on", the loaded slot group,
+    shaped like any plugin slot), else (None, None). Matched loosely: Logic renames AX
+    descriptions after a tree rebuild (README "AX renames")."""
+    s = strip(mw, "Stereo Out")
+    for c in (children(s) if s is not None else []):
+        d = norm(desc(c))
+        if "mastering" in d and not d.startswith("library"):
+            return ("on" if _is_slot_group(c) else "off"), c
+    return None, None
+
+
+def plugin_slot(mw, name: str, index: int | None = None):
+    """The loaded slot for `name`: Stereo Out's Mastering slot for Mastering Assistant, else
+    the selected strip's Audio FX slot."""
+    if is_mastering(name):
+        state, el = mastering_slot(mw)
+        return el if state == "on" else None
+    return loaded_slot(selected_strip(mw), name, index)
+
+
+def bypass_switch(mw, name: str):
     """The power (bypass) checkbox on a loaded plugin's slot: value True = bypassed. It belongs
     to the slot, not the plugin, so the plugin's own window and Controls view don't list it."""
-    g = loaded_slot(strip_el, name) if strip_el is not None else None
+    g = plugin_slot(mw, name)
     return find_child(g, AS.kAXDescriptionAttribute, "bypass", "AXCheckBox") if g is not None else None

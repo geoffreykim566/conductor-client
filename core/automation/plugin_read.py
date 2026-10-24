@@ -33,6 +33,8 @@ def _read(plugin: str, track: str | None, log) -> dict:
     mw = ax.main_window(app)
     if mw is None:
         return {"error": "Logic's project window isn't on this desktop"}
+    if ax.is_mastering(plugin):
+        track = None   # on Stereo Out, whichever track is selected
     if track and not ax.select_track(mw, track):
         return {"error": f"track {track!r} not found"}
     win = ax.plugin_window_for(app, plugin, track=track) if track else ax.plugin_window_for(app, plugin)

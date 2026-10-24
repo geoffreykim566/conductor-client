@@ -25,7 +25,7 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
             if entry["kind"] in (LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN):
                 _select_entry_track(mw, entry)
             if entry["kind"] == LEDGER_KIND_PARAM and entry.get("via") == "slot_bypass":
-                cb = ax.bypass_switch(ax.selected_strip(mw), entry["plugin"])
+                cb = ax.bypass_switch(mw, entry["plugin"])
                 if cb is None:
                     raise ax.AxError(f"{entry['plugin']} isn't loaded on {entry.get('track') or 'the selected track'}")
                 want = bool(entry["raw_before"])

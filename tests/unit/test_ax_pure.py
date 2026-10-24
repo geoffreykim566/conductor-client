@@ -1,3 +1,4 @@
+from core.ax.channel_strip import is_mastering
 from core.ax.controls_view import already_set, is_knob_travel, match_param, num, numeric_target
 from core.ax.primitives import norm
 
@@ -46,3 +47,9 @@ def test_numeric_target_applies_a_change_to_the_current_readout():
     assert numeric_target("2.1:1", "by:1") == 3.1
     assert numeric_target("-20.0 dB", "-24") == -24.0
     assert numeric_target(None, "by:-3") is None and numeric_target("Off", "by:2") is None
+
+
+def test_is_mastering_names_only_logics_mastering_assistant():
+    assert is_mastering("Mastering Assistant") and is_mastering("mastering assistant")
+    assert is_mastering("Mastering")   # the slot's own label, as Revert's ledger stores it
+    assert not is_mastering("Ozone 11 Mastering") and not is_mastering("Channel EQ")

@@ -1,13 +1,14 @@
-"""Add, open and remove plugins on the selected channel strip."""
+"""Add, open and remove plugins on the selected channel strip (Mastering Assistant: on Stereo Out)."""
 from __future__ import annotations
 
 import time
 
 import ApplicationServices as AS
 
-from core.ax.app import ensure_on_screen, focused
-from core.ax.channel_strip import fx_slots, loaded_names, loaded_slot, selected_strip
+from core.ax.app import ensure_on_screen, focused, main_window
+from core.ax.channel_strip import fx_slots, is_mastering, loaded_names, loaded_slot, mastering_slot, plugin_slot, selected_strip
 from core.ax.menus import dismiss_menus, open_menu_of
+from core.ax.mouse import press_or_click
 from core.ax.plugin_windows import plugin_window_for, plugin_windows_seen
 from core.ax.primitives import AxError, ax_press, ax_set, children, role, title, wait_until
 from core.ax.search import find_child
@@ -48,7 +49,9 @@ def open_loaded_plugin(app, mw, name: str, index: int | None = None, track: str 
     """Open the window of an already-loaded plugin via its slot's 'open' button.
     `track`: the selected strip's track, so another track's open window of the
     same plugin isn't taken for this one."""
-    g = loaded_slot(selected_strip(mw), name, index)
+    g = plugin_slot(mw, name, index)
+    if is_mastering(name):
+        track = None   # its window is titled "Stereo Out", whichever track is selected
     if g is None:
         return None
     before_w = plugin_windows_seen(app)
@@ -61,13 +64,37 @@ def open_loaded_plugin(app, mw, name: str, index: int | None = None, track: str 
     return win
 
 
+def insert_mastering(app, mw):
+    """Press Stereo Out's empty Mastering slot ("Click to insert Mastering Assistant"): Logic
+    loads it and opens its window. The same as Mix > Mastering Assistant, without the menu.
+    Returns the window; it may carry Logic's intro sheet in an empty project (left for the user)."""
+    state, btn = mastering_slot(mw)
+    if state is None:
+        raise AxError("Stereo Out's Mastering slot isn't showing (is the Inspector open?)")
+    if state == "off":
+        press_or_click(btn, lambda: mastering_slot(main_window(app))[0] == "on")
+        on, _ = wait_until(lambda: mastering_slot(main_window(app))[0] == "on" or None, timeout=3.0)
+        if not on:
+            raise AxError("Mastering Assistant didn't load")
+    win, _ = wait_until(lambda: plugin_window_for(app, "Mastering Assistant"), timeout=4.0)
+    if win is None:
+        raise AxError("Mastering Assistant loaded but its window didn't open")
+    ensure_on_screen(win)
+    return win
+
+
 def remove_plugin(app, mw, slot_label: str, index: int | None = None) -> bool:
     """Open the loaded slot's 'list' menu and choose 'No Plug-in'."""
-    s = selected_strip(mw)
-    g = loaded_slot(s, slot_label, index)
+    if is_mastering(slot_label):
+        g = plugin_slot(mw, slot_label)
+        removed = lambda: mastering_slot(main_window(app))[0] == "off" or None  # noqa: E731
+    else:
+        s = selected_strip(mw)
+        g = loaded_slot(s, slot_label, index)
+        n_before = len(fx_slots(s)[1]) if g is not None else 0
+        removed = lambda: (len(fx_slots(selected_strip(mw))[1]) < n_before) or None  # noqa: E731
     if g is None:
         return False
-    n_before = len(fx_slots(s)[1])
     lst = find_child(g, AS.kAXDescriptionAttribute, "list", "AXButton")
     menu = open_menu_of(app, lst)
     item = next((i for i in children(menu) if (title(i) or "").startswith("No Plug-in")), None) if menu else None
@@ -75,5 +102,5 @@ def remove_plugin(app, mw, slot_label: str, index: int | None = None) -> bool:
         dismiss_menus(app)
         return False
     ax_press(item)
-    gone, _ = wait_until(lambda: (len(fx_slots(selected_strip(mw))[1]) < n_before) or None, timeout=3.0)
+    gone, _ = wait_until(removed, timeout=3.0)
     return bool(gone)

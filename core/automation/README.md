@@ -92,6 +92,8 @@ Only on/off words make a target a switch, not "0"/"1": the server sends switches
 and "set the threshold to 0" was taken as "off" and failed on the knob (10-20).
 A `Bypass` param flips the plugin slot's power switch on the channel strip instead (no window;
 Revert flips it back unless the user already did). It isn't in the plugin's editor or Controls view.
+Mastering Assistant goes through the same handlers: open inserts it on Stereo Out (or opens it),
+and its ledger entries carry no track (core/ax README).
 Dropdowns keep their own `larger` / `smaller` stepping and "already set" check in `dropdowns.py`:
 they compare option positions, knobs compare numbers.
 

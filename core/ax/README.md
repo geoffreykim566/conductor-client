@@ -11,9 +11,9 @@ the passive per-turn AX text dump sent to the server as context.
 - `app.py` - Logic's pid / app element / windows / main window; raise and keep windows on screen.
 - `mouse.py` - tagged synthetic clicks; `press_or_click` (AXPress, then a real click).
 - `menus.py` - the open AXMenu, open a popup button's menu, drill by titles, dismiss; read a menu-bar item's checkmark.
-- `channel_strip.py` - a track's strip, its FX slots, the slot holding a plugin.
+- `channel_strip.py` - a track's strip, its FX slots, the slot holding a plugin; Stereo Out's Mastering slot.
 - `plugin_windows.py` - which window shows which plugin; close one.
-- `plugins.py` - add a plugin by search, open a loaded one, remove one.
+- `plugins.py` - add a plugin by search (Mastering Assistant: press its slot), open a loaded one, remove one.
 - `controls_view.py` - parameters via the plugin window's Controls view (current view, row readouts, exact writes, display bisection).
 - `editor_view.py` - parameters in the plugin's own editor (typed value, band checkboxes).
 - `tracks.py` - find/select a track header.
@@ -54,6 +54,16 @@ isn't Controls; before 10-20 every read or edit left such plug-ins in Controls v
 ### Slot index is only a hint
 Search-and-Add inserts at the top of the strip, so slot indexes shift as plugins come and go.
 `loaded_slot` uses the add-time index only if that slot still holds the named plugin.
+
+### Mastering Assistant is a plug-in in its own slot
+It sits in a dedicated slot on the Stereo Out strip, not in a track's Audio FX slots (v043).
+Empty, the slot is an `AXButton` whose help says "Click to insert Mastering Assistant"; pressing
+it loads the plug-in and opens its window, the same as Mix > Mastering Assistant without the
+menu. Loaded, it's a slot group (`bypass`/`open`/`list`) like any plug-in's, so open, bypass,
+Controls-view reads and writes, and "No Plug-in" removal all reuse the plug-in code through
+`plugin_slot` (live 10-22). Its window is titled "Stereo Out" whichever track is selected, so
+callers drop `track` for it. In an empty project its window opens with an intro sheet (OK);
+that's left for the user, and the window counts as open.
 
 ### Plugin load mismatch
 If a search loads something whose window doesn't come up as the requested plugin, report it and

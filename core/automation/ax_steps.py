@@ -34,8 +34,8 @@ def _mw_or_abort(app):
     return mw
 
 
-def _select_track_if_named(mw, track: str | None, log) -> None:
-    if not track:
+def _select_track_if_named(mw, track: str | None, log, plugin: str = "") -> None:
+    if not track or ax.is_mastering(plugin):   # it's on Stereo Out, which has no track header
         return
     if not ax.select_track(mw, track):
         raise StepAbort(f"track {track!r} not found in the Tracks area")
@@ -47,7 +47,9 @@ def run_ax_open_plugin(step: dict, log, stop_event=None) -> dict:
     check_stop(stop_event)
     app = ax.app_element()
     mw = _mw_or_abort(app)
-    _select_track_if_named(mw, step.get("track"), log)
+    _select_track_if_named(mw, step.get("track"), log, name)
+    if ax.is_mastering(name):
+        return _open_mastering(app, mw, log)
     want_new = bool(step.get("new"))
     # Default: if the plugin is already on the selected track, open its window
     # rather than adding a second instance; add only when absent or explicitly asked.
@@ -67,6 +69,26 @@ def run_ax_open_plugin(step: dict, log, stop_event=None) -> dict:
     return {"kind": LEDGER_KIND_PLUGIN, "label": f"remove {name}", "plugin": name, "slot": slot_label, "index": idx}
 
 
+def _open_mastering(app, mw, log) -> dict | None:
+    """Stereo Out's Mastering slot: insert it when empty (ledgered), open its window when loaded."""
+    state, _ = ax.mastering_slot(mw)
+    try:
+        if state == "on":
+            win = ax.open_loaded_plugin(app, mw, "Mastering Assistant")
+            if win is None:
+                raise StepAbort("Mastering Assistant is on but its window couldn't be opened")
+            ax.raise_window(win)
+            log("    Mastering Assistant already on — opened its window")
+            return None
+        win = ax.insert_mastering(app, mw)
+    except ax.AxError as exc:
+        raise StepAbort(f"Mastering Assistant: {exc}") from exc
+    ax.raise_window(win)
+    log("    inserted Mastering Assistant on Stereo Out")
+    return {"kind": LEDGER_KIND_PLUGIN, "label": "remove Mastering Assistant", "plugin": "Mastering Assistant",
+            "slot": "Mastering", "index": None, "track": None}
+
+
 def is_switch_target(target) -> bool:
     """An on/off word ('on', 'off', 'yes'...). Digits don't count: '0' and '1' are knob values
     (Threshold 0 dB); a real checkbox given one still gets it via the Controls row's kind."""
@@ -76,7 +98,7 @@ def is_switch_target(target) -> bool:
 
 def _set_bypass(mw, plugin: str, target, log) -> dict | None:
     """"Bypass" on/off flips the plugin's power switch on its channel-strip slot (no window)."""
-    cb = ax.bypass_switch(ax.selected_strip(mw), plugin)
+    cb = ax.bypass_switch(mw, plugin)
     if cb is None:
         raise StepAbort(f"plugin {plugin!r} is not loaded on the selected track")
     want = str(target).strip().lower() in ax.ON
@@ -137,7 +159,7 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
     check_stop(stop_event)
     app = ax.app_element()
     mw = _mw_or_abort(app)
-    _select_track_if_named(mw, spec.get("track"), log)
+    _select_track_if_named(mw, spec.get("track"), log, plugin)
     if ax.norm(param) == "bypass":
         return _set_bypass(mw, plugin, target, log)
     win = ax.plugin_window_for(app, plugin)
@@ -145,8 +167,8 @@ def run_ax_set_param(step: dict, log, stop_event=None) -> dict:
     if win is None:
         # the plugin is (presumably) loaded but its window is closed -- open it
         # via the slot's 'open' button; if it isn't loaded, that's a real miss
-        s = ax.selected_strip(mw)
-        g = next((g for g in ax.fx_slots(s)[1] if ax.norm(plugin)[:6] in ax.norm(ax.desc(g))), None)
+        g = ax.plugin_slot(mw, plugin) if ax.is_mastering(plugin) else next(
+            (g for g in ax.fx_slots(ax.selected_strip(mw))[1] if ax.norm(plugin)[:6] in ax.norm(ax.desc(g))), None)
         if g is None:
             raise StepAbort(f"plugin {plugin!r} is not loaded on the selected track")
         ax.ax_press(ax.find_child(g, AS.kAXDescriptionAttribute, "open", "AXButton"))
@@ -243,7 +265,9 @@ def with_track(entry: dict | None) -> dict | None:
     """Stamp a plugin/param ledger entry with the track it was made on (the
     selected strip after the step), so Revert can select it again -- the user
     may have selected another track since."""
-    if isinstance(entry, dict) and "track" not in entry:
+    if isinstance(entry, dict) and ax.is_mastering(entry.get("plugin", "")):
+        entry["track"] = None   # on Stereo Out: Revert finds it there, whatever track is selected
+    elif isinstance(entry, dict) and "track" not in entry:
         mw = ax.main_window(ax.app_element())
         strip = ax.selected_strip(mw) if mw is not None else None
         entry["track"] = ax.desc(strip) if strip is not None else None
