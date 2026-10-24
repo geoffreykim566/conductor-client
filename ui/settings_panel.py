@@ -159,25 +159,29 @@ class SettingsPanel(Popup):
         uninstall_btn.clicked.connect(self._ask_uninstall)
         layout.addWidget(uninstall_btn)
 
-    def _ask_delete_history(self) -> None:
-        self._confirm_popup = _ConfirmPopup(
-            "Delete all chat history. This cannot be undone.",
-            self._confirm_delete_history,
-        )
+    def _ask(self, warning: str, on_confirm) -> None:
+        """Swap Settings for a confirm popup; Settings comes back when it closes
+        (Cancel, X or a confirmed delete). Stacked, the two looked sloppy."""
+        self._confirm_popup = _ConfirmPopup(warning, on_confirm)
+        self._confirm_popup.closed.connect(self._on_confirm_closed)
         self._confirm_popup.center_on_screen()
+        self.hide()
         self._confirm_popup.show()
+
+    def _on_confirm_closed(self) -> None:
+        self._confirm_popup = None
+        self.show()
+
+    def _ask_delete_history(self) -> None:
+        self._ask("Delete all chat history. This cannot be undone.", self._confirm_delete_history)
 
     def _confirm_delete_history(self) -> None:
         song_history.clear_all()
         self.history_cleared.emit()
 
     def _ask_uninstall(self) -> None:
-        self._confirm_popup = _ConfirmPopup(
-            "Deletes all data, resets permissions and quits. Drag Conductor.app to Trash to finish.",
-            self._confirm_uninstall,
-        )
-        self._confirm_popup.center_on_screen()
-        self._confirm_popup.show()
+        self._ask("Deletes all data, resets permissions and quits. Drag Conductor.app to Trash to finish.",
+                  self._confirm_uninstall)
 
     def _confirm_uninstall(self) -> None:
         delete_me()

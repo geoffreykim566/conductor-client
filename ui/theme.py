@@ -84,7 +84,7 @@ FONT_TITLE = 15
 # --- Window -----------------------------------------------------------------
 WINDOW_WIDTH = 350
 WINDOW_HEIGHT = 500
-MIN_WINDOW_WIDTH = 230
+MIN_WINDOW_WIDTH = 270       # narrowest with no bubble cut off (assistant text's 220 min + padding)
 MIN_WINDOW_HEIGHT = 380
 MAX_WINDOW_WIDTH = 630
 MAX_WINDOW_HEIGHT = 1000

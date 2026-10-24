@@ -19,7 +19,7 @@ class Popup(QWidget):
     Subclasses (or callers) add their own content to `self.body`.
     """
 
-    closed = Signal()
+    closed = Signal()   # however it closes: the X, a Cancel button, close()
 
     def __init__(self, title: str, width: int) -> None:
         super().__init__()
@@ -60,8 +60,11 @@ class Popup(QWidget):
         self._glass = GlassBackdrop(self, full_rect(self, POPUP_RADIUS), roots=[self._panel])
 
     def _on_close(self) -> None:
-        self.closed.emit()
         self.close()
+
+    def closeEvent(self, event) -> None:
+        super().closeEvent(event)
+        self.closed.emit()
 
     def _sync_panel_size(self) -> None:
         self._panel.setFixedSize(self.size())
@@ -81,6 +84,11 @@ class Popup(QWidget):
 
     def center_on_screen(self) -> None:
         self.adjustSize()
+        # adjustSize() sizes wrapped labels for one line, which clipped a
+        # wrapped warning; the layout's height-for-width is the real height.
+        layout = self.layout()
+        if layout.hasHeightForWidth():
+            self.resize(self.width(), max(self.height(), layout.totalHeightForWidth(self.width())))
         self._sync_panel_size()
         screen = QGuiApplication.primaryScreen().availableGeometry()
         self.move(

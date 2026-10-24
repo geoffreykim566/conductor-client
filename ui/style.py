@@ -262,8 +262,10 @@ QPushButton#danger {{
     color: {DANGER};
     border: 1px solid {DANGER_BORDER};
     border-radius: {CAPSULE_RADIUS}px;
-    font-size: {FONT_SM}px;
-    padding: 7px;
+    /* Same padding and size as #secondary: a Reset button arms into this
+    style, and the Danger Zone buttons sit under the Reset ones. */
+    font-size: {FONT_MD}px;
+    padding: 9px;
 }}
 QPushButton#danger:hover {{
     background-color: {DANGER};
