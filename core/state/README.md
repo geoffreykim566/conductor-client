@@ -9,6 +9,8 @@ Local state. Persistent files live under `config.APP_SUPPORT_DIR`
 - `prefs.py` - auto-run, auto research, window size/position, onboarding and feedback flags.
 - `song_history.py` - all chat sessions in `history.json`.
 - `conversation.py` - `Conversation` / `Message`: the ordered messages of the open session.
+- `run_log.py` - tees stdout/stderr into a 2000-line in-memory buffer for bug reports.
+- `recent_context.py` - the last 3 turns' AX dumps and the last card's steps, in memory, for bug reports.
 
 ## How it works
 `config.json` keys: `conductor_token`, `auto_run_actions`, `auto_research`, `window_width`, `window_height`,
@@ -26,6 +28,11 @@ text plus that blob.
 `identity.py` and the old `setup_screen.py` each had their own copy of the config.json reader;
 both now go through `config_store`. Legacy `device_id` entries from pre-token builds are
 ignored: unsigned, so the server would reject them anyway.
+
+### Bug-report context lives in memory only
+AX dumps aren't in `history.json`, so `recent_context` keeps the last few for a report, plus a
+fresh capture at send time. `run_log` exists because the packaged app has no console
+(`sys.stdout` is None), so the buffer is its only log; `main.py` installs it before the first print.
 
 ### Feedback opt-out resets per version
 `reset_feedback_for_new_version()` clears "Don't ask again" whenever `config.VERSION` changes.

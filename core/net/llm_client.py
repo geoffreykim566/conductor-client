@@ -10,6 +10,7 @@ from core.capture import window_capture
 from core.net.account import get_me
 from core.net.auth import RegistrationThrottled
 from core.net.chat_stream import CancelToken, FreeLimitReached, error_text, stream_chat
+from core.state import recent_context
 
 
 class StreamWorker(QThread):
@@ -74,6 +75,7 @@ class StreamWorker(QThread):
             ax_state = state_capture.capture_ax_state()
         except Exception:
             ax_state = None
+        recent_context.note_ax_state(ax_state, self._text)
         if self._cancel.is_cancelled():  # Esc during the captures above
             self.cancelled.emit()
             return

@@ -95,6 +95,7 @@ MINIMIZED_SIZE = 60          # collapsed bubble, px square
 PANEL_RADIUS = 22
 BUBBLE_RADIUS = 14           # <= half a one-line bubble's height, or Qt squares it
 POPUP_RADIUS = 18
+MENU_RADIUS = 12             # the ☰ dropdown
 ROW_RADIUS = 10
 FIELD_RADIUS = 10
 BUTTON_RADIUS = 8

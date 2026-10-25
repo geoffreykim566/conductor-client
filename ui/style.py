@@ -18,6 +18,7 @@ from ui.theme import (
     BORDER,
     BORDER_FOCUS,
     BUBBLE_RADIUS,
+    BUTTON_RADIUS,
     CAPSULE_RADIUS,
     CHIP_RADIUS,
     DANGER,
@@ -33,6 +34,7 @@ from ui.theme import (
     GLASS_WASH,
     GLASS_WASH_ALPHA,
     INPUT_PILL_RADIUS,
+    MENU_RADIUS,
     MINIMIZED_RADIUS,
     PANEL,
     PANEL_ALPHA,
@@ -68,6 +70,11 @@ QWidget#setupRoot, QWidget#guideRoot, QWidget#popupRoot {{
     border: {_PANEL_BORDER};
     border-radius: {POPUP_RADIUS}px;
 }}
+QWidget#menuRoot {{
+    background-color: {rgba(PANEL, POPUP_ALPHA)};
+    border: {_PANEL_BORDER};
+    border-radius: {MENU_RADIUS}px;
+}}
 QWidget#minimizedRoot {{
     background-color: {_PANEL_BG};
     border: {_PANEL_BORDER};
@@ -75,6 +82,7 @@ QWidget#minimizedRoot {{
 }}
 QWidget#setupRoot[glass="true"], QWidget#guideRoot[glass="true"],
 QWidget#popupRoot[glass="true"], QWidget#minimizedRoot[glass="true"],
+QWidget#menuRoot[glass="true"],
 QWidget#inputBubble[glass="true"] {{
     background-color: {_GLASS_WASH};
     border: none;
@@ -201,6 +209,16 @@ QLabel#remainingLabel {{
     color: {TEXT_MUTED};
     font-size: {FONT_XS}px;
 }}
+QPushButton#menuItem {{
+    background: transparent;
+    border: none;
+    border-radius: {BUTTON_RADIUS}px;
+    color: {TEXT};
+    font-size: {FONT_MD}px;
+    padding: 6px 10px;
+    text-align: left;
+}}
+QPushButton#menuItem:hover {{ background: {SURFACE_HOVER}; }}
 QPushButton#rateBtn {{
     background: transparent;
     border: 1px solid transparent;

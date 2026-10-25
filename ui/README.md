@@ -8,7 +8,9 @@ only from tokens in `theme.py`.
 - `chat_window.py` - `ChatWindow`: layout, geometry persistence, chat/history paging, key routing.
 - `chat_turns.py` - mixin: send a message, stream the reply, research / plug-in read confirm (auto-approved by Auto research / auto-run), cancel, errors.
 - `chat_sessions.py` - mixin: load/switch/new/clear sessions, persist ratings.
-- `chat_prompts.py` - mixin: feedback prompt and update-available popup.
+- `chat_prompts.py` - mixin: feedback prompt (opens the Report Bug form on Feedback) and update-available popup.
+- `main_menu.py` - `MainMenu`: the ☰ glass dropdown (New Chat, History, Settings, Report Bug).
+- `feedback_form.py` - `FeedbackForm`: the Report Bug popup (Bug or Feedback, title, optional message).
 - `minimized_bubble.py` - the draggable circle shown while the window is minimized.
 - `chat_view.py` - `ChatView`: scrolling column of `MessageWidget`s, turn anchoring.
 - `top_fade_effect.py` - graphics effect fading the chat view's top edge to transparent.
@@ -75,9 +77,21 @@ be bundled and doesn't need to be. Menlo (`MONO`) is kept only for the card's st
 call 2026-10-23; the counter moved to SF the same day).
 
 ### Controls row placement
-New-chat/history/minimize/close sit above the bubbles on the backdrop panel (moved there from
+The ☰ menu, counter and minimize/close sit above the bubbles on the backdrop panel (moved there from
 the input bar 2026-09-04, user preference). The main layout has zero spacing: the gap is the
 controls row's own bottom margin, one lever instead of margin+spacing stacking unevenly.
+New chat and history moved into the ☰ menu with Report Bug and Settings (user call 10-24);
+Settings is also still in the macOS menu bar. The menu is our own glass dropdown, not a
+`QMenu`: a native menu follows the system appearance and goes light in light mode.
+
+### Report Bug form
+The user picks Bug or Feedback (neither preselected); the note naming what's attached only
+appears then, and switches with the pick. A bug always attaches the chat log, run log, Logic's
+window state and versions; feedback sends only title and message unless "Include the chat and
+logs" is ticked. Never a screenshot (user call 10-24). The form re-measures its height when the
+note appears (`_fit_height`): the panel is pinned to its old size and hid the growth.
+The app-wide key filter ignores keys while another of our windows is active, or Enter in the
+form's title would press a waiting card's Run.
 
 ### Window drag handle
 The controls row is the window's drag handle. Until 6b28d41 (2026-09-12) a margin outside

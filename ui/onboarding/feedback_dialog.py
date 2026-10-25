@@ -1,9 +1,7 @@
-"""Feedback-form prompt shown when remaining free messages cross a threshold."""
-from PySide6.QtCore import Qt, QUrl, Signal
-from PySide6.QtGui import QDesktopServices
+"""Feedback prompt shown when remaining free messages cross a threshold; opens the in-app form."""
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
-from config import FEEDBACK_FORM_URL
 from core.state.prefs import mark_feedback_never_show
 from ui.onboarding.centered_dialog import CenteredDialog
 
@@ -12,6 +10,7 @@ class FeedbackDialog(CenteredDialog):
     """Periodic feedback prompt shown after the user crosses a usage threshold."""
 
     closed = Signal()
+    feedback_requested = Signal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(360, 240, parent)
@@ -27,7 +26,7 @@ class FeedbackDialog(CenteredDialog):
 
         body = QLabel(
             "We'd love to hear your thoughts!\n"
-            "The form takes less than a minute."
+            "It only takes a title."
         )
         body.setObjectName("subtitle")
         body.setWordWrap(True)
@@ -54,8 +53,8 @@ class FeedbackDialog(CenteredDialog):
         layout.addLayout(bottom_row)
 
     def _on_feedback(self) -> None:
-        QDesktopServices.openUrl(QUrl(FEEDBACK_FORM_URL))
         self._finish()
+        self.feedback_requested.emit()
 
     def _on_never(self) -> None:
         mark_feedback_never_show()

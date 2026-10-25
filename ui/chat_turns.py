@@ -1,7 +1,7 @@
 """One chat turn on ChatWindow: send, stream, research / plug-in read confirm, cancel, finish (mixin)."""
 from core.automation.plugin_read import PluginReadThread
 from core.net.llm_client import StreamWorker
-from core.state import prefs, song_history
+from core.state import prefs, recent_context, song_history
 
 
 class ChatTurnsMixin:
@@ -150,6 +150,7 @@ class ChatTurnsMixin:
             )
         if walkthrough_steps:
             steps = list(walkthrough_steps)
+            recent_context.note_card(steps)
             destructive = any(isinstance(st, dict) and st.get("destructive") for st in steps)
             # Both must agree: the user's auto-run setting (a master switch)
             # and the server's per-turn call for this card (auto_run).

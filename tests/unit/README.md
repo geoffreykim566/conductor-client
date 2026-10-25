@@ -16,6 +16,7 @@ fine headless) but never needs Logic Pro, a QApplication, permissions, or the ne
 - `test_state.py` - config_store, identity, prefs, song_history, Conversation.
 - `test_update_checker.py` - version parsing.
 - `test_plugin_read_stream.py` - plug-in reads on the wire: `plugin_reads` sent, `plugin_read_prompt` relayed, resume carries values.
+- `test_feedback.py` - log tee, recent AX ring, the bug-report context, the POST body and 401 retry.
 - `test_stream_worker.py` - `StreamWorker`: a server error event shows `ASSISTANT_UNAVAILABLE`, not raw text.
 
 ## How it works

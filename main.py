@@ -5,6 +5,7 @@ from PySide6.QtCore import QEvent
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QMenuBar
 
+from core.state import run_log
 from core.state.prefs import is_questions_asked, is_setup_complete, mark_setup_complete
 from ui.chat_window import ChatWindow
 from ui.onboarding.accessibility_screen import AccessibilityScreen
@@ -56,6 +57,7 @@ def _check_server(url: str) -> None:
 
 
 def main() -> None:
+    run_log.install()   # before the first print, so a bug report carries the whole run
     from config import SERVER_BASE_URL
     print(f"[conductor] server → {SERVER_BASE_URL}")
     _check_server(SERVER_BASE_URL)

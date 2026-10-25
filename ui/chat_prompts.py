@@ -19,6 +19,7 @@ class ChatPromptsMixin:
         if remaining in FEEDBACK_PROMPT_REMAINING_THRESHOLDS:
             self._feedback_dialog = FeedbackDialog()
             self._feedback_dialog.closed.connect(self._on_feedback_dialog_closed)
+            self._feedback_dialog.feedback_requested.connect(lambda: self.open_feedback_form("feedback"))
             self._feedback_dialog.show()
 
     def _on_feedback_dialog_closed(self) -> None:

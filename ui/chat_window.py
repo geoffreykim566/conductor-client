@@ -36,6 +36,8 @@ from ui.minimized_bubble import MinimizedBubble
 from ui.onboarding.feedback_dialog import FeedbackDialog
 from ui.onboarding.update_popup import UpdatePopup
 from ui.session_list import SessionListPanel
+from ui.feedback_form import FeedbackForm
+from ui.main_menu import MainMenu
 from ui.settings_panel import SettingsPanel
 from ui.theme import (
     MAX_WINDOW_HEIGHT,
@@ -119,13 +121,12 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         # stacking. chat_view-to-input_bar keeps its own explicit gap below.
         layout.setSpacing(0)
 
-        # Built before being placed so its .controls widget (new-chat/history/
-        # minimize/close) exists to add above the bubbles, on the backdrop panel.
+        # Built before being placed so its .controls widget (menu/minimize/close)
+        # exists to add above the bubbles, on the backdrop panel.
         self._input_bar = InputBar()
         self._input_bar.send.connect(self._on_user_send)
         self._input_bar.enter_empty.connect(self._on_enter_empty)
-        self._input_bar.new_chat_requested.connect(self._on_new_chat)
-        self._input_bar.history_requested.connect(self._on_toggle_history)
+        self._input_bar.menu_requested.connect(self._open_main_menu)
         self._input_bar.minimize_requested.connect(self.minimize_to_bubble)
         self._input_bar.close_requested.connect(self.hide_to_dock)
         layout.addWidget(self._input_bar.controls)
@@ -152,6 +153,8 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         QApplication.instance().installEventFilter(self)
 
         self._feedback_dialog: FeedbackDialog | None = None
+        self._feedback_form: FeedbackForm | None = None
+        self._main_menu: MainMenu | None = None
         self._bubble: MinimizedBubble | None = None
         saved_pos = get_saved_window_pos()
         if saved_pos and QGuiApplication.screenAt(QPoint(saved_pos[0], saved_pos[1])):
@@ -289,7 +292,29 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         else:
             self._show_history()
 
-    # --- settings popup (opened from the macOS menu bar) ---
+    # --- ☰ menu ---
+    def _open_main_menu(self) -> None:
+        self._main_menu = MainMenu()
+        self._main_menu.picked.connect(self._on_menu_pick)
+        self._main_menu.show_below(self._input_bar.menu_button)
+
+    def _on_menu_pick(self, key: str) -> None:
+        {"new_chat": self._on_new_chat, "history": self._on_toggle_history,
+         "report_bug": self.open_feedback_form, "settings": self.open_settings}[key]()
+
+    # --- Report Bug form ---
+    def open_feedback_form(self, kind: str | None = None) -> None:
+        if self._feedback_form is not None and self._feedback_form.isVisible():
+            self._feedback_form.raise_()
+            self._feedback_form.activateWindow()
+            return
+        chat = [{"role": m.role, "text": m.text, "event_id": m.event_id, "rating": m.rating,
+                 "images": len(m.images_b64)} for m in self._conversation.messages()]
+        self._feedback_form = FeedbackForm(chat, self._server_history, kind)
+        self._feedback_form.center_on_screen()
+        self._feedback_form.show()
+
+    # --- settings popup (☰ menu and the macOS menu bar) ---
     def open_settings(self) -> None:
         if self._settings_popup is not None and self._settings_popup.isVisible():
             self._settings_popup.raise_()
@@ -311,6 +336,10 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
 
     def eventFilter(self, obj, event) -> bool:
         if event.type() != QEvent.Type.KeyPress:
+            return False
+        # Keys typed in another of our windows (Report Bug, Settings) are theirs, not Run/cancel.
+        active = QApplication.activeWindow()
+        if active is not None and active is not self:
             return False
         key = event.key()
         # Research prompt showing: Enter = Yes, Esc = No. Checked before the

@@ -23,7 +23,6 @@ GITHUB_REPO = "geoffreykim566/conductor-website"
 WEBSITE_URL = "https://askconductor.ai"
 
 # --- Feedback ---
-FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdFXMtLksRH-BfQ92vm6nQJKtupz2Nm8LZgBczXiOhZwMCt9A/viewform?usp=dialog"
 FEEDBACK_PROMPT_REMAINING_THRESHOLDS = (35, 20, 0)
 
 # Window geometry and all other UI tokens live in ui/theme.py.

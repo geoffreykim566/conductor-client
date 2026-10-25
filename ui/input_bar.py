@@ -40,19 +40,18 @@ class _ChatTextEdit(QTextEdit):
 
 
 class InputBar(QWidget):
-    """Pending-attachment row + new-chat/history icons + text + send button.
+    """Pending-attachment row + the ☰ menu icon + text + send button.
 
     Emits send(text, list_of_b64_images) when the user submits.
     Emits enter_empty when Enter is pressed with no text (walkthrough advance).
-    Emits new_chat_requested / history_requested from their respective icons.
+    Emits menu_requested from the ☰ icon (ChatWindow opens MainMenu under menu_button).
     """
 
     _DEFAULT_PLACEHOLDER = "Ask anything about Logic Pro…"
 
     send = Signal(str, list)
     enter_empty = Signal()
-    new_chat_requested = Signal()
-    history_requested = Signal()
+    menu_requested = Signal()
     minimize_requested = Signal()
     close_requested = Signal()
 
@@ -84,7 +83,7 @@ class InputBar(QWidget):
         self._attachments_row.hide()
         panel_layout.addWidget(self._attachments_row)
 
-        # Controls row (new-chat/history/remaining-count/minimize/close) --
+        # Controls row (menu/remaining-count/minimize/close) --
         # NOT part of this panel. Sits on the bubbles backdrop panel instead
         # (ChatWindow adds self.controls above the chat view, see
         # ChatWindow.__init__), a standalone widget so it can be placed there
@@ -107,20 +106,13 @@ class InputBar(QWidget):
         controls_row.setContentsMargins(10, 10, 12, 7)
         controls_row.setSpacing(6)
 
-        new_btn = QPushButton("✦")
-        new_btn.setObjectName("headerBtn")
-        new_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
-        new_btn.clicked.connect(self.new_chat_requested)
-        set_symbol(new_btn, "square.and.pencil", ICON_SIZE, TEXT_SECONDARY)
-        controls_row.addWidget(new_btn, 0, Qt.AlignVCenter)
-
-        hist_btn = QPushButton("☰")
-        hist_btn.setObjectName("headerBtn")
-        hist_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
-        hist_btn.clicked.connect(self.history_requested)
-        set_symbol(hist_btn, "clock.arrow.circlepath", ICON_SIZE, TEXT_SECONDARY)
-        controls_row.addWidget(hist_btn, 0, Qt.AlignVCenter)
-        self.history_button = hist_btn
+        menu_btn = QPushButton("☰")
+        menu_btn.setObjectName("headerBtn")
+        menu_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
+        menu_btn.clicked.connect(self.menu_requested)
+        set_symbol(menu_btn, "line.3.horizontal", ICON_SIZE, TEXT_SECONDARY)
+        controls_row.addWidget(menu_btn, 0, Qt.AlignVCenter)
+        self.menu_button = menu_btn
 
         controls_row.addStretch()
 

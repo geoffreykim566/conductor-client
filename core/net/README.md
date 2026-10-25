@@ -10,6 +10,7 @@ those calls off the UI thread.
 - `account.py` - ratings, `get_me` (usage), `put_me` (onboarding answers), `delete_me`; async variants.
 - `llm_client.py` - `StreamWorker` (one chat turn with screenshots + AX context) and `MeWorker`.
 - `update_checker.py` - `UpdateChecker` QThread comparing the latest GitHub release to `config.VERSION`.
+- `feedback.py` - `POST /v3/feedback`, the bug-report context dump (`build_context`, `versions`) and `FeedbackWorker`.
 
 ## How it works
 Every request carries the token as `X-Conductor-Id`. User-facing calls (chat, `get_me`)
