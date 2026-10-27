@@ -45,7 +45,7 @@ point is `main.py`, and both `build.sh` and `conductor.spec` `import config` top
 are listed in the spec's `hiddenimports`.
 
 ## Runtime data
-`~/Library/Application Support/Conductor-v3/`:
+`~/Library/Application Support/Conductor/` (see `core/state` README for the move from `Conductor-v3`):
 - `config.json` - identity token, preferences, window geometry, onboarding/feedback flags.
 - `history.json` - all chat sessions.
 Settings -> Uninstall notifies the server, deletes this folder and resets the app's three macOS

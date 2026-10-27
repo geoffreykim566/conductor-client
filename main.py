@@ -6,6 +6,7 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QMenuBar
 
 from core.state import run_log
+from core.state.data_dir import prepare_data_dir
 from core.state.prefs import is_disclaimer_current, is_questions_asked, is_setup_complete, mark_disclaimer_accepted
 from ui.chat_window import ChatWindow
 from ui.onboarding.accessibility_screen import AccessibilityScreen
@@ -58,6 +59,7 @@ def _check_server(url: str) -> None:
 
 
 def main() -> None:
+    prepare_data_dir()  # first: everything below may read config.json
     run_log.install()   # before the first print, so a bug report carries the whole run
     from config import SERVER_BASE_URL
     print(f"[conductor] server → {SERVER_BASE_URL}")

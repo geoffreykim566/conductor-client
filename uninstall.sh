@@ -1,7 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_SUPPORT="$HOME/Library/Application Support/Conductor-v3"
+AS="$HOME/Library/Application Support"
+# Our data dir is "Conductor" when it carries our marker, else the bundle-id fallback.
+if [ -f "$AS/Conductor/.conductor-logicpro" ]; then
+  APP_SUPPORT="$AS/Conductor"
+else
+  APP_SUPPORT="$AS/com.conductor.logicpro"
+fi
+LEGACY_APP_SUPPORT="$AS/Conductor-v3"   # before v0.4.3; moved into APP_SUPPORT at launch
 CONFIG_FILE="$APP_SUPPORT/config.json"
 SERVER="https://api.askconductor.ai"
 
@@ -21,6 +28,7 @@ fi
 # Notify the server before wiping local files so the identity token is still readable.
 # IP-based rate limits are intentionally left intact — they live in a separate
 # table keyed by IP, not the install's identity, so reinstalling doesn't reset the cap.
+[ -f "$CONFIG_FILE" ] || CONFIG_FILE="$LEGACY_APP_SUPPORT/config.json"
 if [ -f "$CONFIG_FILE" ] && command -v python3 &>/dev/null; then
   TOKEN=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('conductor_token',''))" "$CONFIG_FILE" 2>/dev/null || true)
   if [ -n "$TOKEN" ]; then
@@ -39,12 +47,12 @@ else
   echo "  Skipped: /Applications/Conductor.app not found"
 fi
 
-if [ -d "$APP_SUPPORT" ]; then
-  rm -rf "$APP_SUPPORT"
-  echo "✓ Removed $APP_SUPPORT"
-else
-  echo "  Skipped: $APP_SUPPORT not found"
-fi
+for dir in "$APP_SUPPORT" "$LEGACY_APP_SUPPORT"; do
+  if [ -d "$dir" ]; then
+    rm -rf "$dir"
+    echo "✓ Removed $dir"
+  fi
+done
 
 echo ""
 echo "Conductor has been uninstalled."

@@ -4,7 +4,7 @@ import shutil
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
-from config import APP_SUPPORT_DIR, PRIVACY_URL
+from config import APP_SUPPORT_DIR, LEGACY_APP_SUPPORT_DIR, PRIVACY_URL
 from core.net.account import delete_me
 from core.state import prefs, song_history
 from ui.onboarding.permissions import reset_permissions
@@ -193,5 +193,6 @@ class SettingsPanel(Popup):
     def _confirm_uninstall(self) -> None:
         delete_me()
         shutil.rmtree(_APP_DATA, ignore_errors=True)
+        shutil.rmtree(LEGACY_APP_SUPPORT_DIR, ignore_errors=True)
         reset_permissions()
         QApplication.quit()
