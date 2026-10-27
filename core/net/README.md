@@ -13,7 +13,7 @@ those calls off the UI thread.
 - `feedback.py` - `POST /v3/feedback`, the bug-report context dump (`build_context`, `versions`) and `FeedbackWorker`.
 
 ## How it works
-Every request carries the token as `X-Conductor-Id`. User-facing calls (chat, `get_me`)
+Every request carries the token as `X-Conductor-Id`, plus the device hash as `X-Conductor-Device` (also on register). User-facing calls (chat, `get_me`)
 register lazily on first use; fire-and-forget calls (ratings, `put_me`, `delete_me`) skip when
 no token exists rather than burn a registration. A 401 clears the token and retries once (a
 loop, not recursion, so a broken server can't cause a register storm). The chat `history` is

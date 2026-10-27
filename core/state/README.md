@@ -5,7 +5,7 @@ Local state. Persistent files live under `config.APP_SUPPORT_DIR`
 
 ## Files
 - `config_store.py` - `read_config()` / `write_config()` for the single `config.json`.
-- `identity.py` - the server-minted identity token (`conductor_token`).
+- `identity.py` - the server-minted identity token (`conductor_token`) and `device_hash()`, a SHA-256 of the Mac's hardware UUID.
 - `prefs.py` - auto-run, auto research, window size/position, onboarding and feedback flags.
 - `song_history.py` - all chat sessions in `history.json`.
 - `conversation.py` - `Conversation` / `Message`: the ordered messages of the open session.
@@ -28,6 +28,13 @@ text plus that blob.
 `identity.py` and the old `setup_screen.py` each had their own copy of the config.json reader;
 both now go through `config_store`. Legacy `device_id` entries from pre-token builds are
 ignored: unsigned, so the server would reject them anyway.
+
+### Device hash: one user per Mac
+`device_hash()` reads `IOPlatformUUID` with `ioreg` and sends only its SHA-256 (with a fixed
+`conductor-device:` prefix). Settings -> Uninstall deletes the token, so without it every
+reinstall was a new server user with fresh free messages; the server now returns the same user for
+the same Mac (server `app/api/README.md`). The UUID changes only when the Mac is erased and set
+up as new. None if `ioreg` fails: the server then treats the install as new, as before.
 
 ### Bug-report context lives in memory only
 AX dumps aren't in `history.json`, so `recent_context` keeps the last few for a report, plus a

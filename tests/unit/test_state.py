@@ -1,4 +1,6 @@
+import hashlib
 import json
+from types import SimpleNamespace
 
 from config import VERSION
 from core.state import identity, prefs, song_history
@@ -84,3 +86,23 @@ def test_conversation_reload_keeps_ratings():
     assert conv.last_user().text == "q"
     assert conv.last_assistant().rating == -1
     assert conv.last_assistant().event_id == "e1"
+
+
+def test_device_hash_is_a_stable_sha256_never_the_raw_uuid(monkeypatch):
+    raw = "12345678-ABCD-4EF0-9123-456789ABCDEF"
+    out = f'  "IOPlatformSerialNumber" = "X"\n  "IOPlatformUUID" = "{raw}"\n'
+    monkeypatch.setattr(identity.subprocess, "run", lambda *a, **k: SimpleNamespace(stdout=out))
+    identity.device_hash.cache_clear()
+    h = identity.device_hash()
+    identity.device_hash.cache_clear()
+    assert h == hashlib.sha256(f"conductor-device:{raw}".encode()).hexdigest(), h
+    assert raw not in h
+
+
+def test_device_hash_is_none_when_ioreg_fails(monkeypatch):
+    def boom(*a, **k):
+        raise OSError("no ioreg")
+    monkeypatch.setattr(identity.subprocess, "run", boom)
+    identity.device_hash.cache_clear()
+    assert identity.device_hash() is None
+    identity.device_hash.cache_clear()

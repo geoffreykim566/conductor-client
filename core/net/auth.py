@@ -22,7 +22,7 @@ def register() -> str:
 
     Raises RegistrationThrottled on 429 (per-IP registration cap).
     """
-    r = httpx.post(f"{SERVER_BASE_URL}/v3/register", timeout=30)
+    r = httpx.post(f"{SERVER_BASE_URL}/v3/register", headers=_device_header(), timeout=30)
     if r.status_code == 429:
         raise RegistrationThrottled()
     r.raise_for_status()
@@ -36,5 +36,11 @@ def ensure_token() -> str:
     return identity.get_token() or register()
 
 
+def _device_header() -> dict:
+    h = identity.device_hash()
+    return {"X-Conductor-Device": h} if h else {}
+
+
 def headers(token: str) -> dict:
-    return {"X-Conductor-Id": token, "Content-Type": "application/json"}
+    """Auth headers; the device hash rides along so /v3/me can link a pre-hash user to this Mac."""
+    return {"X-Conductor-Id": token, "Content-Type": "application/json", **_device_header()}
