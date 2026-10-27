@@ -1,10 +1,11 @@
 """Settings popup — Danger Zone + window controls. Opened from the macOS menu bar."""
 import shutil
 
-from PySide6.QtCore import QTimer, Signal
+from PySide6.QtCore import QTimer, QUrl, Signal
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
-from config import APP_SUPPORT_DIR
+from config import APP_SUPPORT_DIR, PRIVACY_URL
 from core.net.account import delete_me
 from core.state import prefs, song_history
 from ui.onboarding.permissions import reset_permissions
@@ -140,6 +141,21 @@ class SettingsPanel(Popup):
         layout.addWidget(research_cb)
 
         layout.addSpacing(4)
+        sep1 = QLabel()
+        sep1.setFixedHeight(1)
+        sep1.setStyleSheet(f"background: {DIVIDER};")
+        layout.addWidget(sep1)
+
+        privacy_label = QLabel("PRIVACY")
+        privacy_label.setObjectName("sessionTitle")
+        layout.addWidget(privacy_label)
+
+        privacy_btn = QPushButton("Privacy Policy")
+        privacy_btn.setObjectName("secondary")
+        privacy_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(PRIVACY_URL)))
+        layout.addWidget(privacy_btn)
+
+        layout.addSpacing(4)
         sep = QLabel()
         sep.setFixedHeight(1)
         sep.setStyleSheet(f"background: {DIVIDER};")
@@ -180,7 +196,7 @@ class SettingsPanel(Popup):
         self.history_cleared.emit()
 
     def _ask_uninstall(self) -> None:
-        self._ask("Deletes all data, resets permissions and quits. Drag Conductor.app to Trash to finish.",
+        self._ask("Deletes all data on this Mac, resets permissions and quits. Drag Conductor.app to Trash to finish.",
                   self._confirm_uninstall)
 
     def _confirm_uninstall(self) -> None:

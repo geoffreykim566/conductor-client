@@ -21,6 +21,8 @@ SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "https://api.askconduct
 # DMG releases (GitHub Releases) and the marketing page live in conductor-website.
 GITHUB_REPO = "geoffreykim566/conductor-website"
 WEBSITE_URL = "https://askconductor.ai"
+PRIVACY_URL = f"{WEBSITE_URL}/privacy"
+CONTACT_EMAIL = "hello@askconductor.ai"
 
 # --- Feedback ---
 FEEDBACK_PROMPT_REMAINING_THRESHOLDS = (35, 20, 0)
