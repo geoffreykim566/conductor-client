@@ -1,8 +1,7 @@
 """Settings popup — Danger Zone + window controls. Opened from the macOS menu bar."""
 import shutil
 
-from PySide6.QtCore import QTimer, QUrl, Signal
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from config import APP_SUPPORT_DIR, PRIVACY_URL
@@ -10,7 +9,7 @@ from core.net.account import delete_me
 from core.state import prefs, song_history
 from ui.onboarding.permissions import reset_permissions
 from ui.popup import Popup
-from ui.theme import DIVIDER
+from ui.theme import ACCENT, DIVIDER
 
 _APP_DATA = APP_SUPPORT_DIR
 
@@ -141,21 +140,6 @@ class SettingsPanel(Popup):
         layout.addWidget(research_cb)
 
         layout.addSpacing(4)
-        sep1 = QLabel()
-        sep1.setFixedHeight(1)
-        sep1.setStyleSheet(f"background: {DIVIDER};")
-        layout.addWidget(sep1)
-
-        privacy_label = QLabel("PRIVACY")
-        privacy_label.setObjectName("sessionTitle")
-        layout.addWidget(privacy_label)
-
-        privacy_btn = QPushButton("Privacy Policy")
-        privacy_btn.setObjectName("secondary")
-        privacy_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(PRIVACY_URL)))
-        layout.addWidget(privacy_btn)
-
-        layout.addSpacing(4)
         sep = QLabel()
         sep.setFixedHeight(1)
         sep.setStyleSheet(f"background: {DIVIDER};")
@@ -174,6 +158,13 @@ class SettingsPanel(Popup):
         uninstall_btn.setObjectName("danger")
         uninstall_btn.clicked.connect(self._ask_uninstall)
         layout.addWidget(uninstall_btn)
+
+        privacy = QLabel(f"<a href='{PRIVACY_URL}' style='color: {ACCENT}; text-decoration: none;'>Privacy policy</a>")
+        privacy.setObjectName("subtitle")
+        privacy.setAlignment(Qt.AlignCenter)
+        privacy.setOpenExternalLinks(True)
+        layout.addSpacing(4)
+        layout.addWidget(privacy)
 
     def _ask(self, warning: str, on_confirm) -> None:
         """Swap Settings for a confirm popup; Settings comes back when it closes
