@@ -34,7 +34,7 @@ It lists what goes to the server and links the website's `privacy.html` (`config
 keep the two in step. When the wording changes what a user agrees to, bump
 `prefs.DISCLAIMER_VERSION`: returning users see it once more before chat. The v1 text (no
 version recorded) didn't mention screenshots, so v2 is shown to everyone (2026-10-27).
-OpenAI isn't named here (user call): the privacy page names it, with its 30-day retention.
+OpenAI and the contact email aren't here (user call): the privacy page has both.
 
 ### Update popup has no permanent opt-out
 Staying on an old version isn't a preference worth remembering; Skip only dismisses it for
