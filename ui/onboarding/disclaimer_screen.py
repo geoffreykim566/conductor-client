@@ -2,7 +2,7 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout
 
-from config import CONTACT_EMAIL, PRIVACY_URL
+from config import PRIVACY_URL
 from ui.onboarding.centered_dialog import CenteredDialog
 from ui.theme import ACCENT
 
@@ -36,11 +36,12 @@ class DisclaimerScreen(CenteredDialog):
         items = "".join(f"<li>{s}</li>" for s in _SENT)
         sent = QLabel(
             "Conductor sends the following to our server:"
-            f"<ul style='margin: 4px 0 0 -24px;'>{items}</ul>"
+            f"<ul style='margin: 12px 0 0 -24px;'>{items}</ul>"
         )
         sent.setObjectName("subtitle")
         sent.setWordWrap(True)
         layout.addWidget(sent)
+        layout.addSpacing(8)
 
         terms = QLabel(_TERMS)
         terms.setObjectName("subtitle")
@@ -49,8 +50,6 @@ class DisclaimerScreen(CenteredDialog):
 
         links = QLabel(
             f"<a href='{PRIVACY_URL}' style='color: {ACCENT}; text-decoration: none;'>Privacy policy</a>"
-            f" &nbsp;·&nbsp; <a href='mailto:{CONTACT_EMAIL}' style='color: {ACCENT}; "
-            f"text-decoration: none;'>{CONTACT_EMAIL}</a>"
         )
         links.setObjectName("subtitle")
         links.setAlignment(Qt.AlignCenter)
