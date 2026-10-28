@@ -31,7 +31,7 @@ def test_identity_token_lifecycle(tmp_config):
 def test_prefs_share_the_file_with_identity(tmp_config):
     identity.save_token("t")
     prefs.set_auto_run(True)
-    prefs.mark_setup_complete()
+    prefs.mark_disclaimer_accepted()
     data = read_config()
     assert data["conductor_token"] == "t"
     assert data["auto_run_actions"] is True
@@ -40,6 +40,14 @@ def test_prefs_share_the_file_with_identity(tmp_config):
     prefs.set_auto_research(True)
     assert prefs.auto_research() and read_config()["auto_research"] is True
     assert not prefs.is_questions_asked()
+
+
+def test_older_disclaimer_is_shown_again(tmp_config):
+    write_config({"setup_complete": True})   # accepted the v1 text, which had no version
+    assert prefs.is_setup_complete() and not prefs.is_disclaimer_current()
+    prefs.mark_disclaimer_accepted()
+    assert prefs.is_disclaimer_current()
+    assert read_config()["disclaimer_version"] == prefs.DISCLAIMER_VERSION
 
 
 def test_window_geometry(tmp_config):

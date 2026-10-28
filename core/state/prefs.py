@@ -79,9 +79,19 @@ def is_setup_complete() -> bool:
     return bool(read_config().get("setup_complete"))
 
 
-def mark_setup_complete() -> None:
+# Bump when the disclaimer's wording changes what users agree to: everyone sees it once more.
+DISCLAIMER_VERSION = 2
+
+
+def is_disclaimer_current() -> bool:
+    """True once the user has accepted the current disclaimer (v1 users had no version)."""
+    return read_config().get("disclaimer_version") == DISCLAIMER_VERSION
+
+
+def mark_disclaimer_accepted() -> None:
     data = read_config()
     data["setup_complete"] = True
+    data["disclaimer_version"] = DISCLAIMER_VERSION
     write_config(data)
 
 

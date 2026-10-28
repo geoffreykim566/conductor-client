@@ -1,9 +1,10 @@
 # core/state
 
 Local state. Persistent files live under `config.APP_SUPPORT_DIR`
-(`~/Library/Application Support/Conductor-v3`); the in-memory conversation drives the chat UI.
+(`~/Library/Application Support/Conductor`); the in-memory conversation drives the chat UI.
 
 ## Files
+- `data_dir.py` - `prepare_data_dir()`: first thing in `main()`, moves `Conductor-v3` in and clears pre-v3 leftovers.
 - `config_store.py` - `read_config()` / `write_config()` for the single `config.json`.
 - `identity.py` - the server-minted identity token (`conductor_token`) and `device_hash()`, a SHA-256 of the Mac's hardware UUID.
 - `prefs.py` - auto-run, auto research, window size/position, onboarding and feedback flags.
@@ -24,6 +25,18 @@ overwrites it with None). `Conversation` is display-only; what is sent each turn
 text plus that blob.
 
 ## Quirks & why
+### The data dir is "Conductor", moved in from "Conductor-v3"
+Until v0.4.3 the data lived in `Conductor-v3`, because pre-v3 builds (up to v0.2.6) used
+`Conductor` and the two mustn't share a token or history. v0.4.3 drops the version from the name
+(no names carry a version, user call 2026-10-27): at launch, `prepare_data_dir()` moves
+`Conductor-v3` into `Conductor`, replacing any pre-v3 data there; with no `Conductor-v3`, pre-v3
+data alone is cleared, since its token and history don't carry over. A marker file
+(`config.DATA_DIR_MARKER`) records that the dir is current. "Conductor" is a common app name,
+so `config` only uses it when it's empty or ours (our marker, or a `config.json` with
+`conductor_token`); another app's data there is never touched, and we use
+`com.conductor.logicpro` instead. Uninstall (Settings and `uninstall.sh`) removes any leftover
+`Conductor-v3` too.
+
 ### One file for token and prefs
 `identity.py` and the old `setup_screen.py` each had their own copy of the config.json reader;
 both now go through `config_store`. Legacy `device_id` entries from pre-token builds are

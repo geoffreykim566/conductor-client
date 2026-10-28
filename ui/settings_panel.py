@@ -1,15 +1,15 @@
 """Settings popup — Danger Zone + window controls. Opened from the macOS menu bar."""
 import shutil
 
-from PySide6.QtCore import QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
-from config import APP_SUPPORT_DIR
+from config import APP_SUPPORT_DIR, LEGACY_APP_SUPPORT_DIR, PRIVACY_URL
 from core.net.account import delete_me
 from core.state import prefs, song_history
 from ui.onboarding.permissions import reset_permissions
 from ui.popup import Popup
-from ui.theme import DIVIDER
+from ui.theme import ACCENT, DIVIDER
 
 _APP_DATA = APP_SUPPORT_DIR
 
@@ -159,6 +159,13 @@ class SettingsPanel(Popup):
         uninstall_btn.clicked.connect(self._ask_uninstall)
         layout.addWidget(uninstall_btn)
 
+        privacy = QLabel(f"<a href='{PRIVACY_URL}' style='color: {ACCENT}; text-decoration: none;'>Privacy policy</a>")
+        privacy.setObjectName("subtitle")
+        privacy.setAlignment(Qt.AlignCenter)
+        privacy.setOpenExternalLinks(True)
+        layout.addSpacing(4)
+        layout.addWidget(privacy)
+
     def _ask(self, warning: str, on_confirm) -> None:
         """Swap Settings for a confirm popup; Settings comes back when it closes
         (Cancel, X or a confirmed delete). Stacked, the two looked sloppy."""
@@ -180,11 +187,12 @@ class SettingsPanel(Popup):
         self.history_cleared.emit()
 
     def _ask_uninstall(self) -> None:
-        self._ask("Deletes all data, resets permissions and quits. Drag Conductor.app to Trash to finish.",
+        self._ask("Deletes all data on this Mac, resets permissions and quits. Drag Conductor.app to Trash to finish.",
                   self._confirm_uninstall)
 
     def _confirm_uninstall(self) -> None:
         delete_me()
         shutil.rmtree(_APP_DATA, ignore_errors=True)
+        shutil.rmtree(LEGACY_APP_SUPPORT_DIR, ignore_errors=True)
         reset_permissions()
         QApplication.quit()

@@ -31,7 +31,7 @@ logic most likely to regress, so tests import them by name. Rename them and the 
 
 ### Never write to the real app-support dir
 Anything that touches `config.json` or `history.json` must use the fixtures; without them a
-test would edit your real `~/Library/Application Support/Conductor-v3`.
+test would edit your real `~/Library/Application Support/Conductor`.
 
 ## Adding a test
 Prefer extracting a pure function over mocking AppKit/AX. One file per module area; plain
