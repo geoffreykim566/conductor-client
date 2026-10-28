@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 
-VERSION = "0.4.2"
+VERSION = "0.4.3"
 
 # --- App data ---
 # "Conductor", unless another app's data is already there (see core/state/data_dir.py,
