@@ -73,8 +73,17 @@ message finishes a reveal still running.
 
 ### Fonts
 UI text is the app font (SF Pro, the system font; QSS rules leave `font-family` out). It can't
-be bundled and doesn't need to be. Menlo (`MONO`) is kept only for the card's step lines (user
-call 2026-10-23; the counter moved to SF the same day).
+be bundled and doesn't need to be. The card's step lines were Menlo until 2026-10-30 and are SF
+now too (user call), so there's no mono font left in the app.
+
+### Input field height
+The text field grows with its wrapped text, up to 6 lines, then scrolls (`InputBar._fit_height`).
+It used to be fixed at one line (`CONTROL_SIZE`) with viewport margins centring that line, so a
+second line scrolled the first out and showed half-cut lines. One line is still `CONTROL_SIZE`
+tall; each further line adds a line height and keeps the one-line top/bottom padding. It re-fits
+on the document's size change (typing and width reflow) and on polish/style/font change, since
+the stylesheet's font size and border-less frame only apply at polish. The send button is
+bottom-aligned so it stays by the last line.
 
 ### Controls row placement
 The ☰ menu, counter and minimize/close sit above the bubbles on the backdrop panel (moved there from
