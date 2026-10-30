@@ -10,7 +10,7 @@ practice -- see the comment where it's built, below.
 import base64
 
 from PySide6.QtCore import QEvent, QPoint, Qt, Signal
-from PySide6.QtGui import QFontMetrics, QKeyEvent, QMouseEvent, QPixmap, QTextOption
+from PySide6.QtGui import QKeyEvent, QMouseEvent, QPixmap, QTextOption
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -48,6 +48,7 @@ class InputBar(QWidget):
     """
 
     _DEFAULT_PLACEHOLDER = "Ask anything about Logic Pro…"
+    _MAX_LINES = 6   # the field grows to this many lines, then scrolls
 
     send = Signal(str, list)
     enter_empty = Signal()
@@ -157,18 +158,21 @@ class InputBar(QWidget):
         # option, not the cursor-based setAlignment(). Left-aligned so both
         # the placeholder and the cursor start at the field's left edge
         # rather than the middle. Vertical centering (QTextDocument has no
-        # concept of it) is handled manually via viewport margins below.
-        self._text.document().setDefaultTextOption(QTextOption(Qt.AlignLeft))
+        # concept of it) is handled by the viewport margins in _fit_height.
+        # Wraps inside a word too, so a long unbroken string (a URL, a path)
+        # grows the field instead of scrolling it sideways.
+        option = QTextOption(Qt.AlignLeft)
+        option.setWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
+        self._text.document().setDefaultTextOption(option)
         self._text.document().setDocumentMargin(0)
-        self._text.setFixedHeight(CONTROL_SIZE)
-        line_height = QFontMetrics(self._text.font()).height()
-        # Bottom explicitly computed as the remainder rather than hardcoded 0:
-        # a 0 bottom left the leftover as blank room that read bigger than the top.
-
-        extra = max(0, CONTROL_SIZE - line_height)
-        top_margin = extra // 2
-        bottom_margin = extra - top_margin
-        self._text.setViewportMargins(12, top_margin, 4, bottom_margin)
+        self._text.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # The field grows with its text (_fit_height, README "Input field
+        # height"). Re-fit when the document's size changes (typing, reflow
+        # after a width change) and on polish/style/font change (eventFilter):
+        # the stylesheet's font size and border-less frame only apply then.
+        self._text.document().documentLayout().documentSizeChanged.connect(self._fit_height)
+        self._text.installEventFilter(self)
+        self._fit_height()
         self._text.submit.connect(self._on_send)
         bubble_row.addWidget(self._text, 1)
 
@@ -177,9 +181,27 @@ class InputBar(QWidget):
         self._send_btn.setFixedSize(CONTROL_SIZE, CONTROL_SIZE)
         self._send_btn.clicked.connect(self._on_send)
         set_symbol(self._send_btn, "arrow.up", 15, WHITE, bold=True)
-        bubble_row.addWidget(self._send_btn)
+        # Bottom-aligned: as the field grows the button stays by the last line.
+        bubble_row.addWidget(self._send_btn, 0, Qt.AlignBottom)
 
         panel_layout.addWidget(bubble)
+
+    def _fit_height(self, *_args) -> None:
+        """Size the field to its wrapped text, up to _MAX_LINES (then it scrolls).
+        One line is CONTROL_SIZE tall; each further line adds a line height,
+        and the top/bottom padding stays the one-line field's (the line
+        centred in CONTROL_SIZE). Measured from the font in effect now, not
+        at construction, which is before the stylesheet sets the font size."""
+        line_height = self._text.fontMetrics().height()
+        extra = max(0, CONTROL_SIZE - line_height)
+        top_margin = extra // 2
+        # Bottom computed as the remainder rather than hardcoded 0: a 0 bottom
+        # left the leftover as blank room that read bigger than the top.
+        bottom_margin = extra - top_margin
+        self._text.setViewportMargins(12, top_margin, 4, bottom_margin)
+        doc_height = self._text.document().documentLayout().documentSize().height()
+        text_height = min(max(round(doc_height), line_height), line_height * self._MAX_LINES)
+        self._text.setFixedHeight(text_height + extra + 2 * self._text.frameWidth())
 
     def add_pending_image(self, b64: str) -> None:
         """Add an image to the pending attachments preview."""
@@ -286,6 +308,10 @@ class InputBar(QWidget):
                 self._drag_move(event)
             elif t == QEvent.Type.MouseButtonRelease:
                 self._drag_release()
+        elif obj is self._text and event.type() in (
+            QEvent.Type.Polish, QEvent.Type.StyleChange, QEvent.Type.FontChange
+        ):
+            self._fit_height()
         return super().eventFilter(obj, event)
 
     def _drag_press(self, event: QMouseEvent) -> None:

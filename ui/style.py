@@ -2,10 +2,9 @@
 top-level window (main chat window, popups, minimized bubble, onboarding
 dialogs) shares the same look without each needing its own setStyleSheet call.
 
-Text uses the app font (SF Pro); only the card step lines (ui/message/styles.py)
-use MONO. A root widget with glass="true" (set by ui/glass.py while a native
-backdrop is attached) swaps its painted panel for a thin dark wash, so the
-glass behind it shows.
+Text uses the app font (SF Pro) everywhere. A root widget with glass="true"
+(set by ui/glass.py while a native backdrop is attached) swaps its painted
+panel for a thin dark wash, so the glass behind it shows.
 
 Every value here is a ui/theme.py token -- add new tokens there rather than
 new literals here."""

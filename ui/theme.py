@@ -73,8 +73,7 @@ DANGER_BORDER = rgba(DANGER, 0.30)
 # --- Typography -------------------------------------------------------------
 # UI text is the app font: SF Pro, the macOS system font, which Qt uses by
 # default (rules leave font-family out). It can't be bundled and doesn't need
-# to be. Menlo stays for technical text: the card's step lines.
-MONO = '"Menlo", monospace'
+# to be. Used everywhere, the card's step lines included.
 FONT_XS = 11
 FONT_SM = 12
 FONT_MD = 13
