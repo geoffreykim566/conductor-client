@@ -159,7 +159,11 @@ class InputBar(QWidget):
         # the placeholder and the cursor start at the field's left edge
         # rather than the middle. Vertical centering (QTextDocument has no
         # concept of it) is handled by the viewport margins in _fit_height.
-        self._text.document().setDefaultTextOption(QTextOption(Qt.AlignLeft))
+        # Wraps inside a word too, so a long unbroken string (a URL, a path)
+        # grows the field instead of scrolling it sideways.
+        option = QTextOption(Qt.AlignLeft)
+        option.setWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
+        self._text.document().setDefaultTextOption(option)
         self._text.document().setDocumentMargin(0)
         self._text.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         # The field grows with its text (_fit_height, README "Input field
