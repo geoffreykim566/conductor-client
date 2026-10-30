@@ -9,6 +9,9 @@ from core.automation.errors import StepAbort
 from core.automation.fuzzy_match import fuzzy_match_menu_item
 from core.automation.logic_focus import logic_display
 from core.automation.timing import VERIFY_INTERVAL_S, VERIFY_TIMEOUT_S
+from core.ax.app import app_element
+from core.ax.menus import menubar_item
+from core.ax.primitives import AxError, center
 from core.capture.ocr_vision import ocr_words
 from core.events.mouse import click_at
 from core.events.stop import check_stop
@@ -34,13 +37,33 @@ def open_menubar_menu(title: str, stop_event=None) -> None:
 
     Chosen over Ctrl+F2 keyboard focus: proven not to fire on at least one
     test machine (system shortcut disabled/intercepted), while the menu bar
-    is always clickable. Menu-bar text renders on a translucent strip, so
-    OCR runs at min_conf=20.
+    is always clickable. The title is found through AX, with OCR of the
+    menu bar as the fallback (README "Menu bar is clicked, not focused").
 
     """
     check_stop(stop_event)
+    x, y = title_point_ax(title) or title_point_ocr(title)
+    count = menu_window_count()
+    click_at(x, y, stop_event)
+    if not wait_menu_count(count + 1):
+        raise StepAbort(f"menu {title!r} did not open after clicking its title")
+
+
+def title_point_ax(title: str) -> tuple[float, float] | None:
+    """Screen point of the menu-bar title from Logic's AXMenuBar, or None."""
+    try:
+        item = menubar_item(app_element(), [title])
+    except AxError:
+        return None
+    return None if item is None else center(item)
+
+
+def title_point_ocr(title: str) -> tuple[float, float]:
+    """Screen point of the menu-bar title by OCR of the bar's left half, where
+    app menus sit. Menu-bar text renders on a translucent strip, so OCR runs
+    at min_conf=20."""
     display_id, bounds = logic_display()
-    rect = Quartz.CGRectMake(0, 0, bounds.size.width, 40)
+    rect = Quartz.CGRectMake(0, 0, bounds.size.width / 2, 40)
     cg = Quartz.CGDisplayCreateImageForRect(display_id, rect)
     if cg is None:
         raise StepAbort("could not capture the menu bar strip")
@@ -55,13 +78,10 @@ def open_menubar_menu(title: str, stop_event=None) -> None:
         raise StepAbort(
             f"menu-bar title {title!r} not found "
             f"(ocr_saw={[w['text'] for w in words]})")
-    scale = pw / bounds.size.width
+    scale = pw / (bounds.size.width / 2)
     x = bounds.origin.x + (box["left"] + box["width"] / 2) / scale
     y = bounds.origin.y + (box["top"] + box["height"] / 2) / scale
-    count = menu_window_count()
-    click_at(x, y, stop_event)
-    if not wait_menu_count(count + 1):
-        raise StepAbort(f"menu {title!r} did not open after clicking its title")
+    return x, y
 
 
 def menu_window_count() -> int:

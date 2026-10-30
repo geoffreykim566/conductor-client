@@ -11,7 +11,7 @@ a revert ledger and can undo a run. `__init__.py` re-exports the public API ui/ 
 - `dropdowns.py` - the `choose` step: read the open dropdown via AX, pick, read back; option matching.
 - `ax_steps.py` - `ax_open_plugin` / `ax_set_param` handlers; each returns a ledger entry.
 - `revert.py` - undo a ledger, newest entry first (replays a dropdown route when needed).
-- `menus.py` - open a menu-bar menu by OCR'ing its title; count/await Logic's popup-menu windows.
+- `menus.py` - open a menu-bar menu by clicking its title (found via AX, OCR fallback); count/await Logic's popup-menu windows.
 - `ocr_find.py` - capture Logic's windows, OCR them, find text; OCR box -> screen point helpers.
 - `fuzzy_match.py` - fuzzy-find a phrase in an OCR word list (pure).
 - `logic_focus.py` - activate Logic, confirm it is frontmost and on screen; which display it is on.
@@ -53,7 +53,11 @@ Any step may carry `expect` (text that must appear after acting) and `final`.
 ## Quirks & why
 ### Menu bar is clicked, not focused
 Ctrl+F2 menu-bar focus did nothing on at least one machine; the menu-bar title is always
-clickable. Menu-bar text sits on a translucent strip, so its OCR runs at `min_conf=20`.
+clickable. The title's position comes from Logic's `AXMenuBar` first. OCR of the bar is only the
+fallback: the bar is translucent, and over a busy wallpaper Vision missed every app-menu title on
+the full-width strip while reading the clock and status items (2026-10-30, "Logic Pro" not found,
+intermittently, depending on what was under the bar). The same image read fine cropped to the
+left, so the fallback OCRs only the bar's left half, at `min_conf=20`.
 
 ### Logic on another desktop
 `activate_logic()` returns as soon as Logic is frontmost, but from another Space its windows
