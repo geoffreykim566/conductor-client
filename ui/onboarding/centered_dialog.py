@@ -12,8 +12,8 @@ class CenteredDialog(QWidget):
     """Frameless, translucent, centered-on-screen dialog with no header bar or
     close button -- the setup-screen aesthetic (bold centered title, plain
     subtitle, full-width primary button, ghost secondary buttons) shared by
-    every screen in ui/onboarding: onboarding (PermissionScreen,
-    InputMonitoringScreen, DisclaimerScreen, QuestionsDialog) and periodic
+    every screen in ui/onboarding: onboarding (PermissionsScreen,
+    DisclaimerScreen, QuestionsDialog) and periodic
     prompts (FeedbackDialog, UpdatePopup). Styling comes from the app-wide
     stylesheet (ui/style.py). Distinct from ui/popup.py's Popup,
     which has a header bar + close button for things dismissed casually

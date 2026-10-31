@@ -14,6 +14,7 @@ from ui.message.styles import (
     system_font,
 )
 from ui.message.walkthrough_run import WalkthroughRunMixin
+from ui.onboarding.permissions import accessibility_name
 from ui.theme import TEXT_DIM
 
 
@@ -169,10 +170,10 @@ class WalkthroughCard(WalkthroughRunMixin, QWidget):
         for i, lbl in enumerate(self._step_labels):
             lbl.setStyleSheet(STEP_FAILED_STYLE if i == idx else STEP_STYLE)
 
-    def _show_permission_needed(self, msg: str | None = None) -> None:
+    def _show_permission_needed(self) -> None:
         self._status.setText(
-            msg or "Needs Accessibility permission — System Settings → Privacy & "
-            "Security → Accessibility, then try again."
+            f"Needs {accessibility_name()} permission — System Settings → "
+            f"Privacy & Security → {accessibility_name()}, then try again."
         )
         self._status.setStyleSheet(STATUS_ERROR_STYLE)
         self._status.show()

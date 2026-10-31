@@ -26,8 +26,9 @@ python3 -m venv .venv && .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python main.py                                          # against https://api.askconductor.ai
 CONDUCTOR_SERVER_URL=http://127.0.0.1:8000 .venv/bin/python main.py   # against a local server
 ```
-For a local server run `docker compose up -d --build` inside `server/`. On first launch macOS
-asks for Screen Recording, Input Monitoring and Accessibility (the last is needed to run actions).
+For a local server run `docker compose up -d --build` inside `server/`. On first launch setup
+asks for Accessibility (called Device Control and Data Access from macOS 27; needed to run actions)
+and Screen Recording.
 In dev these are granted to the terminal / Python binary, not to Conductor.app.
 
 ## Tests
