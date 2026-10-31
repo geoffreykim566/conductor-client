@@ -94,11 +94,8 @@ class WalkthroughRunMixin:
             return False
 
         interrupt_tap = WalkthroughInterruptTap(parent=self)
-        if not interrupt_tap.arm():
-            self._show_permission_needed(
-                "Needs Input Monitoring permission — System Settings → Privacy & "
-                "Security → Input Monitoring, then try again."
-            )
+        if not interrupt_tap.arm():   # the tap needs Accessibility too (core/automation README)
+            self._show_permission_needed()
             self._active = False
             return False
 

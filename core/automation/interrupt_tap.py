@@ -6,7 +6,8 @@ untouched; anything untagged is real user input, so it's swallowed (never
 reaches Logic Pro) and `triggered` fires. Mouse-moved is not watched (desk
 bumps shouldn't abort a run).
 
-Requires Input Monitoring, a mandatory onboarding gate. If CGEventTapCreate
+Requires Accessibility (an active tap; Input Monitoring alone isn't enough),
+the same onboarding gate that lets a card click and type. If CGEventTapCreate
 still fails (permission revoked later), arm() returns False and the caller
 refuses to start the walkthrough -- no degraded fallback mode.
 """

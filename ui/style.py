@@ -102,6 +102,11 @@ QLabel#subtitle {{
     color: {TEXT_SECONDARY};
     font-size: {FONT_SM}px;
 }}
+QLabel#rowTitle {{
+    color: {TEXT_BRIGHT};
+    font-size: {FONT_MD}px;
+    font-weight: 600;
+}}
 QLabel#stepLabel {{
     color: {TEXT};
     font-size: {FONT_LG}px;

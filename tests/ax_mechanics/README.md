@@ -20,8 +20,8 @@ prove (or disprove) a mechanism before core/ax relies on it. Results and numbers
 - `t13_stem_splitter.py` - the `context_menu` + `checks` steps on Stem Splitter through the real handlers; presses Cancel, never Apply.
 
 ## How it works
-Open a scratch project (Audio 1, Audio 2, one software-instrument track), grant Accessibility,
-Input Monitoring and Screen Recording to `.venv/bin/python`, then from the repo root:
+Open a scratch project (Audio 1, Audio 2, one software-instrument track), grant Accessibility
+and Screen Recording to `.venv/bin/python`, then from the repo root:
 `PYTHONUNBUFFERED=1 .venv/bin/python -m tests.ax_mechanics.t6_open_plugin`. Every script
 activates Logic, HARD-GATES on `frontmost_owner()`, captures a baseline, re-checks frontmost
 after every action, and verifies by re-reading AX state after a settle loop.

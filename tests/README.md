@@ -13,8 +13,8 @@ one at a time: `PYTHONUNBUFFERED=1 .venv/bin/python -m tests.ax_mechanics.<test>
 
 ## Quirks & why
 ### Live scripts are not pytest tests
-They click and type into whatever Logic project is open, change it, and need Accessibility,
-Input Monitoring and Screen Recording granted to the Python that runs them. Their files are
+They click and type into whatever Logic project is open, change it, and need Accessibility
+and Screen Recording granted to the Python that runs them. Their files are
 named `t<N>_*.py`, not `test_*.py`, so pytest never collects them.
 
 ## Adding tests

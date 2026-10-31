@@ -11,6 +11,7 @@ fine headless) but never needs Logic Pro, a QApplication, permissions, or the ne
 - `test_dropdowns.py` - dropdown option matching (`_same_option`, `_exact_option`, `_option_index`, `_title_for`).
 - `test_ocr_geometry.py` - OCR box -> screen point, value blob right of a label.
 - `test_menus.py` - menu-bar title clicked at its AX point, OCR only when AX has none.
+- `test_permissions.py` - setup asks Accessibility then Screen Recording, one live row at a time; the macOS 27 Accessibility name.
 - `test_ax_pure.py` - `norm`, readout `num`, parameter-name `match_param`.
 - `test_editor_ocr.py` - OCR label/value picking around a knob; Controls readouts that are only 0–1 positions.
 - `test_state_capture.py` - knob names from `AXHelp`; real readout vs knob-travel `position=`.
