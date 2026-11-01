@@ -10,6 +10,7 @@ from core.state.data_dir import prepare_data_dir
 from core.state.prefs import is_disclaimer_current, is_questions_asked, is_setup_complete, mark_disclaimer_accepted
 from ui.chat_window import ChatWindow
 from ui.onboarding.disclaimer_screen import DisclaimerScreen
+from ui.onboarding.email_screen import EmailScreen
 from ui.onboarding.permissions import all_granted
 from ui.onboarding.permissions_screen import PermissionsScreen
 from ui.onboarding.questions_dialog import QuestionsDialog
@@ -63,12 +64,41 @@ def main() -> None:
     app.setQuitOnLastWindowClosed(False)
     app.aboutToQuit.connect(lambda: app._chat_window and app._chat_window.prepare_for_quit())
 
+    if _needs_email():
+        _show_email(app)
+    else:
+        _after_email(app)
+
+    sys.exit(app.exec())
+
+
+def _needs_email() -> bool:
+    """No token yet: a Mac the server knows (a reinstall) registers without an email;
+    any other answer (a refusal, no network) shows the email screen."""
+    from core.net.auth import register
+    from core.state import identity
+    if identity.get_token():
+        return False
+    try:
+        register(timeout=5)
+        return False
+    except Exception as e:
+        print(f"[conductor] register without email: {type(e).__name__} {e}")
+        return True
+
+
+def _show_email(app: ConductorApp) -> None:
+    screen = EmailScreen()
+    app._screen = screen
+    screen.finished.connect(lambda: (screen.close(), _after_email(app)))
+    screen.show()
+
+
+def _after_email(app: ConductorApp) -> None:
     if not all_granted():
         _show_permissions(app)
     else:
         _onboarded(app)
-
-    sys.exit(app.exec())
 
 
 def _show_permissions(app: ConductorApp) -> None:

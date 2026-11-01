@@ -17,14 +17,31 @@ class RegistrationThrottled(Exception):
     """
 
 
-def register() -> str:
+class RegistrationRefused(Exception):
+    """The waitlist gate refused this Mac (HTTP 403). `reason` is the server's code:
+    email_required, not_on_waitlist, not_approved or install_limit."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+def register(email: str | None = None, timeout: float = 30) -> str:
     """Mint a fresh identity from the server and persist its token.
 
-    Raises RegistrationThrottled on 429 (per-IP registration cap).
+    A Mac the server already knows needs no email; a new one needs an approved
+    waitlist email. Raises RegistrationThrottled on 429, RegistrationRefused on 403.
     """
-    r = httpx.post(f"{SERVER_BASE_URL}/v3/register", headers=_device_header(), timeout=30)
+    r = httpx.post(f"{SERVER_BASE_URL}/v3/register", headers=_device_header(),
+                   json={"email": email} if email else None, timeout=timeout)
     if r.status_code == 429:
         raise RegistrationThrottled()
+    if r.status_code == 403:
+        try:
+            reason = r.json().get("detail") or "email_required"
+        except ValueError:
+            reason = "email_required"
+        raise RegistrationRefused(reason)
     r.raise_for_status()
     token = r.json()["conductor_id"]
     identity.save_token(token)
