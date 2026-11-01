@@ -5,7 +5,7 @@ ratings, profile) and GitHub Releases for update checks, plus the QThread worker
 those calls off the UI thread.
 
 ## Files
-- `auth.py` - register for a server-minted token, `ensure_token()`, `headers()`; `RegistrationThrottled`.
+- `auth.py` - register for a server-minted token (with the waitlist email on a new Mac), `ensure_token()`, `headers()`; `RegistrationThrottled`, `RegistrationRefused` (403, `.reason`).
 - `chat_stream.py` - `stream_chat()` over SSE from `POST /v3/chat`; `CancelToken`; `FreeLimitReached`.
 - `account.py` - ratings, `get_me` (usage), `put_me` (onboarding answers), `delete_me`; async variants.
 - `llm_client.py` - `StreamWorker` (one chat turn with screenshots + AX context) and `MeWorker`.
