@@ -9,7 +9,7 @@ from core.net.account import delete_me
 from core.state import prefs, song_history
 from ui.onboarding.permissions import reset_permissions
 from ui.popup import Popup
-from ui.theme import ACCENT, DIVIDER
+from ui.theme import DIVIDER, LINK
 
 _APP_DATA = APP_SUPPORT_DIR
 
@@ -159,7 +159,7 @@ class SettingsPanel(Popup):
         uninstall_btn.clicked.connect(self._ask_uninstall)
         layout.addWidget(uninstall_btn)
 
-        privacy = QLabel(f"<a href='{PRIVACY_URL}' style='color: {ACCENT}; text-decoration: none;'>Privacy policy</a>")
+        privacy = QLabel(f"<a href='{PRIVACY_URL}' style='color: {LINK}; text-decoration: none;'>Privacy policy</a>")
         privacy.setObjectName("subtitle")
         privacy.setAlignment(Qt.AlignCenter)
         privacy.setOpenExternalLinks(True)

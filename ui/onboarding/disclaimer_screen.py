@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout
 
 from config import PRIVACY_URL
 from ui.onboarding.centered_dialog import CenteredDialog
-from ui.theme import ACCENT
+from ui.theme import LINK
 
 # Keep in step with the website's privacy.html. A change to what users agree to
 # bumps prefs.DISCLAIMER_VERSION so everyone sees it again.
@@ -49,7 +49,7 @@ class DisclaimerScreen(CenteredDialog):
         layout.addWidget(terms)
 
         links = QLabel(
-            f"<a href='{PRIVACY_URL}' style='color: {ACCENT}; text-decoration: none;'>Privacy policy</a>"
+            f"<a href='{PRIVACY_URL}' style='color: {LINK}; text-decoration: none;'>Privacy policy</a>"
         )
         links.setObjectName("subtitle")
         links.setAlignment(Qt.AlignCenter)

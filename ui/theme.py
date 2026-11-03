@@ -61,11 +61,12 @@ TEXT_DIM = "#727278"
 TEXT_FAINT = "#56565b"
 
 # --- Colors: accent / status ------------------------------------------------
-ACCENT = "#0a84ff"
-ACCENT_HOVER = "#409cff"
-ACCENT_FILL = "#086ed4"      # translucent blue fills (user bubble, primary, send)
+ACCENT = "#7B2CBF"
+ACCENT_HOVER = "#9D4EDD"
+ACCENT_FILL = "#7B2CBF"      # translucent purple fills (user bubble, primary, send)
 ACCENT_FILL_ALPHA = 0.78
-ACCENT_TINT = rgba(ACCENT, 0.18)   # blue wash behind accent text / active rows
+ACCENT_TINT = rgba(ACCENT, 0.18)   # purple wash behind accent text / active rows
+LINK = "#0a84ff"             # links stay blue (user call)
 DANGER = "#ff453a"
 DANGER_BG = rgba(DANGER, 0.14)
 DANGER_BORDER = rgba(DANGER, 0.30)
