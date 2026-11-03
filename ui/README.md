@@ -21,6 +21,7 @@ only from tokens in `theme.py`.
 - `symbols.py` - SF Symbols rendered to Qt icons (header, send, bubble).
 - `motion.py` - fade-ins for widgets and windows, fade-out on hide; off under Reduce motion.
 - `style.py` - `STYLESHEET`. `theme.py` - every color/size/radius token.
+- `checkbox_style.py` - `CheckboxStyle`: draws checkbox squares in `theme.CHECKBOX`.
 - `message/` - chat bubbles and the walkthrough card. `onboarding/` - centered dialogs.
 
 ## How it works
@@ -92,6 +93,12 @@ controls row's own bottom margin, one lever instead of margin+spacing stacking u
 New chat and history moved into the ☰ menu with Report Bug and Settings (user call 10-24);
 Settings is also still in the macOS menu bar. The menu is our own glass dropdown, not a
 `QMenu`: a native menu follows the system appearance and goes light in light mode.
+
+### Checkbox color
+The native macOS style paints checkboxes in the Mac's system accent color and ignores Qt's palette
+(tested 2026-11-03), so they'd change color from Mac to Mac. `CheckboxStyle`, a proxy under the
+stylesheet, draws only the square in `theme.CHECKBOX` (the purple accent; user call). It's code,
+not a QSS `::indicator` rule, because a QSS checkmark needs a bundled image and the build ships none.
 
 ### Report Bug form
 The user picks Bug or Feedback (neither preselected); the note naming what's attached only

@@ -13,6 +13,7 @@ from ui.onboarding.disclaimer_screen import DisclaimerScreen
 from ui.onboarding.permissions import all_granted
 from ui.onboarding.permissions_screen import PermissionsScreen
 from ui.onboarding.questions_dialog import QuestionsDialog
+from ui.checkbox_style import CheckboxStyle
 from ui.style import STYLESHEET
 
 
@@ -59,6 +60,7 @@ def main() -> None:
     print(f"[conductor] server → {SERVER_BASE_URL}")
     _check_server(SERVER_BASE_URL)
     app = ConductorApp(sys.argv)
+    app.setStyle(CheckboxStyle())  # before the stylesheet, which wraps it
     app.setStyleSheet(STYLESHEET)
     app.setQuitOnLastWindowClosed(False)
     app.aboutToQuit.connect(lambda: app._chat_window and app._chat_window.prepare_for_quit())
