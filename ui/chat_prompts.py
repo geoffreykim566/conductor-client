@@ -2,7 +2,7 @@
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 
-from config import FEEDBACK_PROMPT_REMAINING_THRESHOLDS, WEBSITE_URL
+from config import DOWNLOAD_URL, FEEDBACK_PROMPT_REMAINING_THRESHOLDS
 from core.net.update_checker import UpdateChecker
 from core.state.prefs import is_feedback_never_show
 from ui.onboarding.feedback_dialog import FeedbackDialog
@@ -39,6 +39,6 @@ class ChatPromptsMixin:
         self._update_popup.show()
 
     def _on_update_get(self) -> None:
-        QDesktopServices.openUrl(QUrl(WEBSITE_URL))
+        QDesktopServices.openUrl(QUrl(DOWNLOAD_URL))
         if self._update_popup is not None:
             self._update_popup.close()

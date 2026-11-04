@@ -47,6 +47,8 @@ SERVER_BASE_URL = os.environ.get("CONDUCTOR_SERVER_URL", "https://api.askconduct
 GITHUB_REPO = "geoffreykim566/conductor-website"
 WEBSITE_URL = "https://askconductor.ai"
 PRIVACY_URL = f"{WEBSITE_URL}/privacy"
+# The update popup opens this: once the waitlist ships, the home page has no download link.
+DOWNLOAD_URL = f"{WEBSITE_URL}/download"
 
 # --- Feedback ---
 FEEDBACK_PROMPT_REMAINING_THRESHOLDS = (35, 20, 0)
