@@ -6,6 +6,7 @@ request, update available).
 
 ## Files
 - `centered_dialog.py` - `CenteredDialog` base: window flags, translucency, fixed size, `body`, centering.
+- `email_screen.py` - `EmailScreen`: the waitlist email, first in setup; registers this Mac with it and words each refusal (`refusal_text`).
 - `permissions.py` - the two permissions setup asks for (`setup_permissions()`: check, request, pane, macOS's name for each), `all_granted()`, `active_index()`, `accessibility_name()`, plus `reset_permissions()` (called by Settings -> Uninstall).
 - `permissions_screen.py` - `PermissionsScreen`: a row per permission, asked one at a time.
 - `disclaimer_screen.py` - beta data-collection disclaimer with the privacy policy link; accepting it marks setup complete and records `DISCLAIMER_VERSION`.
@@ -14,7 +15,7 @@ request, update available).
 - `update_popup.py` - "Update available" with Download; reappears every launch.
 
 ## How it works
-`main.py`: either permission missing -> `PermissionsScreen`; then if setup isn't complete or the disclaimer accepted is older than `prefs.DISCLAIMER_VERSION` -> `DisclaimerScreen` -> `QuestionsDialog`
+`main.py`: no token -> one silent register without an email (5 s); refused or unreachable -> `EmailScreen`. Then either permission missing -> `PermissionsScreen`; then if setup isn't complete or the disclaimer accepted is older than `prefs.DISCLAIMER_VERSION` -> `DisclaimerScreen` -> `QuestionsDialog`
 (once) -> chat. The permission screen:
 - Only the first missing row has a live Grant Access. It calls that permission's request, which
   shows macOS's popup; the popup's own button opens System Settings. The screen never opens
@@ -72,6 +73,14 @@ It was once asked only when a card's Run was first clicked (`check_event_permiss
 new user hit a system dialog mid-card (seen live, 2026-10-04). Setup now asks up front, using
 the same live check (`core.events.tag.check_event_permission`, see core/events README). The
 Run-time check stays for users who skip.
+
+### The email screen is the waitlist gate (2026-10-31)
+A new Mac registers only with an approved waitlist email, at most 2 Macs each (server
+`app/api/README.md`, Waitlist). Launch first tries register with no email, so a Mac the server
+already knows (a reinstall: Uninstall wipes the token) skips the screen and never uses a slot.
+Every Mac registered before v0.4.4 has a token, so it never sees the screen. The email isn't
+stored here or tied to the user on the server. Quit is on the screen because the dialog is
+frameless with no close button.
 
 ## Adding a screen
 Subclass `CenteredDialog(width, height)`, build `QVBoxLayout(self.body)`, use object names

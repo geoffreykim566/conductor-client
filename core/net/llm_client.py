@@ -8,7 +8,7 @@ from PySide6.QtCore import QThread, Signal
 from core.ax import state_capture
 from core.capture import window_capture
 from core.net.account import get_me
-from core.net.auth import RegistrationThrottled
+from core.net.auth import RegistrationRefused, RegistrationThrottled
 from core.net.chat_stream import CancelToken, FreeLimitReached, error_text, stream_chat
 from core.state import recent_context
 
@@ -118,6 +118,9 @@ class StreamWorker(QThread):
         except RegistrationThrottled:
             # First launch from a busy shared IP — transient, not the user's fault.
             self.error.emit("[Error] Couldn't set up your free account right now. Please try again later.")
+        except RegistrationRefused:
+            # Token lost on a Mac the server doesn't know: only setup's email screen can fix it.
+            self.error.emit("[Error] Conductor needs your waitlist email. Quit and reopen Conductor to enter it.")
         except Exception as e:
             if self._cancel.is_cancelled():
                 self.cancelled.emit()
