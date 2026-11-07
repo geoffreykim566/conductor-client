@@ -22,6 +22,8 @@ from ui.theme import (
     DANGER,
     DANGER_BG,
     DANGER_BORDER,
+    DANGER_BORDER_HOVER,
+    DANGER_BG_HOVER,
     DIVIDER,
     FIELD_RADIUS,
     FONT_LG,
@@ -307,9 +309,10 @@ QPushButton#danger {{
     padding: 9px;
 }}
 QPushButton#danger:hover {{
-    background-color: {DANGER};
-    color: {WHITE};
-    border-color: {DANGER};
+    /* A stronger tint, not solid red: the glass still shows through, like the
+    un-hovered button. An armed Reset is always hovered (the click just landed). */
+    background-color: {DANGER_BG_HOVER};
+    border-color: {DANGER_BORDER_HOVER};
 }}
 QFrame#sessionRow {{
     background: transparent;

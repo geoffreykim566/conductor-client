@@ -72,6 +72,8 @@ CHECKBOX = ACCENT            # checkbox squares (ui/checkbox_style.py)
 DANGER = "#ff453a"
 DANGER_BG = rgba(DANGER, 0.14)
 DANGER_BORDER = rgba(DANGER, 0.30)
+DANGER_BG_HOVER = rgba(DANGER, 0.26)
+DANGER_BORDER_HOVER = rgba(DANGER, 0.50)
 
 # --- Typography -------------------------------------------------------------
 # UI text is the app font: SF Pro, the macOS system font, which Qt uses by
