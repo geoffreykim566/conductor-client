@@ -4,10 +4,10 @@ from PySide6.QtCore import Signal
 from ui.glass_menu import GlassMenu
 
 _ITEMS = (
-    ("new_chat", "New Chat"),
-    ("history", "History"),
-    ("settings", "Settings"),
-    ("report_bug", "Report Bug"),
+    ("new_chat", "New Chat", "square.and.pencil"),
+    ("history", "History", "clock.arrow.circlepath"),
+    ("settings", "Settings", "gearshape"),
+    ("report_bug", "Report Bug", "exclamationmark.triangle"),
 )
 
 
@@ -17,4 +17,5 @@ class MainMenu(GlassMenu):
     picked = Signal(str)
 
     def __init__(self) -> None:
-        super().__init__([(label, lambda k=key: self.picked.emit(k), True) for key, label in _ITEMS])
+        super().__init__([(label, lambda k=key: self.picked.emit(k), True, symbol)
+                          for key, label, symbol in _ITEMS])

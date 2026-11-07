@@ -236,7 +236,7 @@ QPushButton#menuItem {{
     border-radius: 5px;
     color: {TEXT};
     font-size: {FONT_MD}px;
-    padding: 3px 10px;
+    padding: 5px 10px;
     text-align: left;
 }}
 QPushButton#menuItem:hover {{ background: {_ACCENT_BG}; color: {WHITE}; }}

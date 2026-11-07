@@ -114,5 +114,6 @@ ICON_BTN_SIZE = 22
 ICON_SIZE = 14               # SF Symbol glyphs in the header buttons
 WINDOW_ICON_SIZE = 12        # the chat header's minimize and close glyphs
 MENU_ICON_WIDTH = 12         # the chat header's ☰ lines
+MENU_ICON_SIZE = 11          # SF Symbols on the ☰ menu's rows
 SCROLLBAR_WIDTH = 4
 SCROLLBAR_GUTTER = 6         # keeps the track inboard of the panel's rounded edge

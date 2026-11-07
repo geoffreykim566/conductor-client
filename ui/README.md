@@ -104,8 +104,10 @@ Settings is also still in the macOS menu bar. The menu is our own glass dropdown
 The ☰ menu and the right-click menu are one design, `GlassMenu` (`glass_menu.py`), so they
 can't drift apart. It's ours, not Qt's `QMenu`: a native menu follows the system appearance
 and goes light in light mode, and Qt's right-click menu kept Qt's own old look (user report
-2026-11-06). Styled after macOS's text menus (user call 11-06, Notes as the reference): thin
-rows, no icons or dividers, the hovered row filled with the accent purple. The panel is the
+2026-11-06). Styled after macOS's menus (user calls 11-06/07, Notes as the reference): no
+dividers, the hovered row filled with the accent purple. A row can carry a small SF Symbol
+(`MENU_ICON_SIZE`, one fixed slot so labels line up); the ☰ menu's rows have one, the
+right-click menu's don't. The panel is the
 same glass as every other popup (the normal wash, no border; user call 11-07, matching the
 definition popup). A darker wash read as a flat box, and a light rim as a hard edge.
 Right-click: one app-wide event filter (`install_context_menus` in `main.py`) catches the

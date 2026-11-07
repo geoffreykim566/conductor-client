@@ -6,7 +6,7 @@ context-menu event for selectable labels (chat bubbles), text edits (the input
 field) and line edits, and shows a `GlassMenu` with the same basic items Qt's
 menu had.
 """
-from PySide6.QtCore import QEvent, QObject, QPoint, Qt
+from PySide6.QtCore import QEvent, QObject, QPoint, QSize, Qt
 from PySide6.QtGui import QGuiApplication, QTextDocument
 from PySide6.QtWidgets import (
     QLabel,
@@ -19,17 +19,20 @@ from PySide6.QtWidgets import (
 )
 
 from ui.glass import GlassBackdrop, full_rect
-from ui.theme import MENU_RADIUS
+from ui.symbols import set_symbol
+from ui.theme import MENU_ICON_SIZE, MENU_RADIUS, TEXT_DIM, TEXT_SECONDARY
 
-_MIN_WIDTH = 140
+_MIN_WIDTH = 170
 _SCREEN_MARGIN = 6
 _PAD = 4
+_ICON_SLOT = MENU_ICON_SIZE + 5   # one slot for every glyph (they differ in width), so labels line up
 
 
 class GlassMenu(QWidget):
-    """A compact glass menu in the style of macOS text menus: plain rows, no icons or
-    dividers, the hovered row filled purple. `items` holds (label, action, enabled)
-    tuples. A click outside closes it (Qt.Popup)."""
+    """A compact glass menu in the style of macOS menus: no dividers, the hovered row
+    filled purple. `items` holds (label, action, enabled) or (label, action, enabled,
+    symbol) tuples; a symbol puts a small SF Symbol before the label. A click outside
+    closes it (Qt.Popup)."""
 
     def __init__(self, items) -> None:
         super().__init__(None, Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
@@ -45,10 +48,14 @@ class GlassMenu(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(_PAD, _PAD, _PAD, _PAD)
         layout.setSpacing(0)
-        for label, action, enabled in items:
+        for label, action, enabled, *symbol in items:
             btn = QPushButton(label)
             btn.setObjectName("menuItem")
             btn.setEnabled(enabled)
+            if symbol:
+                set_symbol(btn, symbol[0], MENU_ICON_SIZE, TEXT_SECONDARY if enabled else TEXT_DIM)
+                btn.setIconSize(QSize(_ICON_SLOT, _ICON_SLOT))
+                btn.setText(f" {label}")   # set_symbol drops the text; the space pads it off the icon
             btn.clicked.connect(lambda _=False, a=action: self._pick(a))
             layout.addWidget(btn)
 
