@@ -21,6 +21,8 @@ class Message:
     event_id: str | None = None
     # Thumbs state: 0 = no vote, 1 = up, -1 = down.
     rating: int = 0
+    # Glossary terms the server found in `text` (assistant only), so a reloaded chat keeps them.
+    terms: list[dict] = field(default_factory=list)
 
 
 class Conversation:
@@ -71,6 +73,7 @@ class Conversation:
                 text=m["text"],
                 event_id=m.get("event_id"),
                 rating=m.get("rating", 0),
+                terms=m.get("terms") or [],
             )
             for m in saved
         ]

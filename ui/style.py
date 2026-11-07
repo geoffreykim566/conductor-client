@@ -208,6 +208,24 @@ QPushButton#sendBtn:disabled {{
     background-color: {SURFACE_RAISED};
     color: {TEXT_FAINT};
 }}
+QPushButton#explainToggle {{
+    background: transparent;
+    color: {TEXT_MUTED};
+    border: 1px solid {BORDER};
+    border-radius: 11px;
+    font-size: {FONT_XS}px;
+    min-height: 20px;
+    max-height: 20px;
+    padding: 0 10px;
+}}
+QPushButton#explainToggle:hover {{
+    color: {TEXT_SECONDARY};
+}}
+QPushButton#explainToggle:checked {{
+    background-color: {ACCENT_TINT};
+    color: {TEXT};
+    border: 1px solid {ACCENT_TINT};
+}}
 QLabel#remainingLabel {{
     background: transparent;
     color: {TEXT_MUTED};

@@ -9,6 +9,7 @@ from ui.message.rating import RatingMixin
 from ui.message.research_prompt import ResearchPromptMixin
 from ui.message.sources import SourcesMixin
 from ui.message.styles import system_font
+from ui.message.terms import TermsMixin
 from ui.message.walkthrough_card import WalkthroughCard
 from ui.motion import fade_in, reduce_motion
 from ui.theme import BUTTON_RADIUS, SCROLLBAR_GUTTER, TEXT_MUTED
@@ -20,7 +21,7 @@ _REVEAL_TICK_MS = 16
 _REVEAL_TICKS = 30
 
 
-class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, QWidget):
+class MessageWidget(RatingMixin, ResearchPromptMixin, SourcesMixin, TermsMixin, QWidget):
     """A chat bubble. Use append_text() to grow streamed assistant messages."""
 
     def __init__(self, role: str, text: str = "", images_b64: list[str] | None = None,

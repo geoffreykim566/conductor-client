@@ -10,7 +10,7 @@ from core.capture import window_capture
 from core.net.account import get_me
 from core.net.auth import RegistrationRefused, RegistrationThrottled
 from core.net.chat_stream import CancelToken, FreeLimitReached, error_text, stream_chat
-from core.state import recent_context
+from core.state import prefs, recent_context
 
 
 class StreamWorker(QThread):
@@ -19,9 +19,9 @@ class StreamWorker(QThread):
     Signals:
         chunk(str)                           — emitted for each piece of text streamed in
         status(str)                          — transient research-progress notice
-        done(str, int, object, object, object, bool)  — (event_id, remaining,
+        done(str, int, object, object, object, bool, object)  — (event_id, remaining,
                                                        sources, walkthrough_steps,
-                                                       history, auto_run)
+                                                       history, auto_run, terms)
         research_prompt(str, object)         — server parked the turn at a web_research
                                                call: (query, history). No done follows;
                                                start a new worker with resume= and that
@@ -35,7 +35,7 @@ class StreamWorker(QThread):
 
     chunk = Signal(str)
     status = Signal(str)
-    done = Signal(str, int, object, object, object, bool)
+    done = Signal(str, int, object, object, object, bool, object)
     research_prompt = Signal(str, object)
     plugin_read_prompt = Signal(str, object, object)
     cancelled = Signal()
@@ -49,6 +49,7 @@ class StreamWorker(QThread):
         self._history = history
         self._resume = resume
         self._plugin_values = plugin_values
+        self._explain = prefs.explain()   # read on the UI thread
         self._cancel = CancelToken()
 
     def cancel(self) -> None:
@@ -64,6 +65,7 @@ class StreamWorker(QThread):
         walkthrough_steps: list = []
         history = None
         auto_run = False
+        terms: list = []
         # Pushed silently, like AX state -- no user-facing toggle, no attachment
         # UI. Best-effort: Logic not running / no Screen Recording permission
         # just means an empty list, never something a turn should block on.
@@ -83,6 +85,7 @@ class StreamWorker(QThread):
             for kind, payload in stream_chat(
                 self._text, self._history, screenshots_b64, ax_state,
                 resume=self._resume, cancel=self._cancel, plugin_values=self._plugin_values,
+                explain=self._explain,
             ):
                 if kind == "chunk":
                     self.chunk.emit(payload)
@@ -108,11 +111,12 @@ class StreamWorker(QThread):
                     # (an instruction, not a question or bulk request)? Absent
                     # from older servers -> False, i.e. always ask.
                     auto_run = bool(payload.get("auto_run"))
+                    terms = payload.get("terms") or []
                 elif kind == "error":
                     self.error.emit(payload)
                     return
             self.done.emit(event_id, remaining, sources,
-                           walkthrough_steps, history, auto_run)
+                           walkthrough_steps, history, auto_run, terms)
         except FreeLimitReached as e:
             self.limit_reached.emit(e.limit if e.limit is not None else -1)
         except RegistrationThrottled:

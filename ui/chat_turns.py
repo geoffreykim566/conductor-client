@@ -139,10 +139,13 @@ class ChatTurnsMixin:
 
     def _on_done(self, event_id: str = "", remaining: int = -1,
                  sources: object = None, walkthrough_steps: object = None, history: object = None,
-                 auto_run: bool = False) -> None:
+                 auto_run: bool = False, terms: object = None) -> None:
         self._server_history = history
         msg = self._conversation.last_assistant()
         self._chat_view.set_assistant_sources(sources or [])
+        if msg is not None and terms:
+            msg.terms = list(terms)
+        self._chat_view.set_assistant_terms(list(terms or []))
         if event_id and msg is not None:
             msg.event_id = event_id
             self._chat_view.show_rating(

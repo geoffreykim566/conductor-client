@@ -2,6 +2,7 @@
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
+from core import ax
 from ui.message.styles import (
     CARD_BUTTON_H,
     CARD_BUTTON_W,
@@ -40,43 +41,21 @@ class WalkthroughCard(WalkthroughRunMixin, QWidget):
         cl.setContentsMargins(0, 6, 0, 0)
         cl.setSpacing(2)
 
-        self._step_labels: list[QLabel] = []
-        for i, step in enumerate(steps):
-            n = i + 1
-            if "menu_path" in step:
-                text = f"{n}. " + " → ".join(step["menu_path"])
-            elif "shortcut" in step:
-                text = f"{n}. ⌨  <b>{step['shortcut']}</b>"
-            elif "click_value_of" in step:
-                text = f"{n}. {step['click_value_of']}"
-            elif "click_text" in step:
-                val = step["click_text"]
-                text = f"{n}. {val}" if isinstance(val, str) else f"{n}. (current selection)"
-            elif "ax_open_plugin" in step:
-                text = f"{n}. Open <b>{step['ax_open_plugin']}</b>"
-            elif "choose" in step:
-                v = step["choose"]
-                text = (f"{n}. One step <b>{v}</b>" if v in ("larger", "smaller")
-                        else f"{n}. Choose <b>{v}</b>")
-            elif "context_menu" in step:
-                what = f"“{step['target']}”" if step.get("target") else f"the {step.get('on') or 'region'}"
-                text = f"{n}. Control-click {what} → " + " → ".join(step["context_menu"])
-            elif "checks" in step:
-                on = [k for k, v in step["checks"].items() if v]
-                text = f"{n}. Tick <b>{', '.join(on)}</b>" + (" only" if len(on) < len(step["checks"]) else "")
-            elif "ax_set_param" in step:
-                p = step["ax_set_param"]
-                v = str(p.get("value", ""))
-                shown = f"by {v[3:]}" if v.lower().startswith("by:") else v
-                text = f"{n}. {p.get('plugin', '')} · {p.get('param', '')} → <b>{shown}</b>"
-            else:
-                continue
-            lbl = QLabel(text)
-            lbl.setFont(system_font(11))
-            lbl.setWordWrap(True)
-            lbl.setStyleSheet(STEP_STYLE)
-            cl.addWidget(lbl)
-            self._step_labels.append(lbl)
+        # One wire step can show as several numbered lines (a plug-in step is three keypresses);
+        # _step_labels[i] holds wire step i's labels, so highlighting stays per wire step.
+        self._step_labels: list[list[QLabel]] = []
+        n = 0
+        for step in steps:
+            labels = []
+            for line in self._step_lines(step):
+                n += 1
+                lbl = QLabel(f"{n}. {line}")
+                lbl.setFont(system_font(11))
+                lbl.setWordWrap(True)
+                lbl.setStyleSheet(STEP_STYLE)
+                cl.addWidget(lbl)
+                labels.append(lbl)
+            self._step_labels.append(labels)
 
         button = QPushButton("Run")
         button.setObjectName("primary")
@@ -163,12 +142,48 @@ class WalkthroughCard(WalkthroughRunMixin, QWidget):
         self._hint.show()
 
     def _highlight_step(self, idx: int) -> None:
-        for i, lbl in enumerate(self._step_labels):
-            lbl.setStyleSheet(STEP_ACTIVE_STYLE if i == idx else STEP_STYLE)
+        for i, labels in enumerate(self._step_labels):
+            for lbl in labels:
+                lbl.setStyleSheet(STEP_ACTIVE_STYLE if i == idx else STEP_STYLE)
 
     def _mark_step_failed(self, idx: int) -> None:
-        for i, lbl in enumerate(self._step_labels):
-            lbl.setStyleSheet(STEP_FAILED_STYLE if i == idx else STEP_STYLE)
+        for i, labels in enumerate(self._step_labels):
+            for lbl in labels:
+                lbl.setStyleSheet(STEP_FAILED_STYLE if i == idx else STEP_STYLE)
+
+    @staticmethod
+    def _step_lines(step: dict) -> list[str]:
+        """What the user sees for one wire step, one line per thing they'd do by hand."""
+        if "menu_path" in step:
+            return [" → ".join(step["menu_path"])]
+        if "shortcut" in step:
+            return [f"⌨  <b>{step['shortcut']}</b>"]
+        if "click_value_of" in step:
+            return [step["click_value_of"]]
+        if "click_text" in step:
+            val = step["click_text"]
+            return [val if isinstance(val, str) else "(current selection)"]
+        if "ax_open_plugin" in step:
+            # What the client actually presses (core/ax/plugins.py), so the user can repeat it.
+            name = step["ax_open_plugin"]
+            if ax.is_mastering(name):
+                return [f"Open <b>{name}</b>"]
+            return ["Press <b>⌃⌘P</b>", f"Type <b>{name}</b>", "Press <b>Return</b>"]
+        if "choose" in step:
+            v = step["choose"]
+            return [f"One step <b>{v}</b>" if v in ("larger", "smaller") else f"Choose <b>{v}</b>"]
+        if "context_menu" in step:
+            what = f"“{step['target']}”" if step.get("target") else f"the {step.get('on') or 'region'}"
+            return [f"Control-click {what} → " + " → ".join(step["context_menu"])]
+        if "checks" in step:
+            on = [k for k, v in step["checks"].items() if v]
+            return [f"Tick <b>{', '.join(on)}</b>" + (" only" if len(on) < len(step["checks"]) else "")]
+        if "ax_set_param" in step:
+            p = step["ax_set_param"]
+            v = str(p.get("value", ""))
+            shown = f"by {v[3:]}" if v.lower().startswith("by:") else v
+            return [f"{p.get('plugin', '')} · {p.get('param', '')} → <b>{shown}</b>"]
+        return []
 
     def _show_permission_needed(self) -> None:
         self._status.setText(

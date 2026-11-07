@@ -14,7 +14,7 @@ only from tokens in `theme.py`.
 - `minimized_bubble.py` - the draggable circle shown while the window is minimized.
 - `chat_view.py` - `ChatView`: scrolling column of `MessageWidget`s, turn anchoring.
 - `top_fade_effect.py` - graphics effect fading the chat view's top edge to transparent.
-- `input_bar.py` - text field, send button, image attachments, and the controls row.
+- `input_bar.py` - text field, send button, the Explain toggle under the text, image attachments, and the controls row.
 - `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, auto research, reset, delete, uninstall, privacy policy link).
 - `popup.py` - `Popup` base (header bar + close) for casually dismissed windows.
 - `glass.py` - `GlassBackdrop`: native Liquid Glass (or blur) shapes under a translucent window.

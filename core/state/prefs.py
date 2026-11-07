@@ -5,6 +5,7 @@ from core.state.config_store import read_config, write_config
 
 AUTO_RUN_KEY = "auto_run_actions"
 AUTO_RESEARCH_KEY = "auto_research"
+EXPLAIN_KEY = "explain"
 
 
 def auto_run() -> bool:
@@ -27,6 +28,17 @@ def auto_research() -> bool:
 def set_auto_research(enabled: bool) -> None:
     data = read_config()
     data[AUTO_RESEARCH_KEY] = bool(enabled)
+    write_config(data)
+
+
+def explain() -> bool:
+    """True (the default) = replies add a brief why in plain words; False = just do it or answer."""
+    return bool(read_config().get(EXPLAIN_KEY, True))
+
+
+def set_explain(enabled: bool) -> None:
+    data = read_config()
+    data[EXPLAIN_KEY] = bool(enabled)
     write_config(data)
 
 

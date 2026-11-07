@@ -175,6 +175,11 @@ class ChatView(QWidget):
             w = self._current_assistant
             w.after_reveal(lambda: w.set_sources(sources))
 
+    def set_assistant_terms(self, terms: list) -> None:
+        if self._current_assistant is not None and terms:
+            w = self._current_assistant
+            w.after_reveal(lambda: w.set_terms(terms))
+
     def setup_walkthrough_card(self, steps: list, *, auto: bool = False, destructive: bool = False) -> None:
         if self._current_assistant is not None:
             w = self._current_assistant
@@ -279,6 +284,8 @@ class ChatView(QWidget):
         for msg in messages:
             widget = MessageWidget(msg.role, text=msg.text, images_b64=[])
             self._insert_before_trailing_spacer(widget)
+            if msg.terms:
+                widget.set_terms(msg.terms)
             if on_rate and msg.role == "assistant" and msg.event_id:
                 widget.enable_rating(
                     lambda v, m=msg: on_rate(m, v), initial=msg.rating
