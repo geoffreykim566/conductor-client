@@ -27,6 +27,15 @@ plugins/params/tracks) plus `core.events` for synthetic keys and the event tag. 
 imports `core.automation`; step handlers that use this toolkit live there.
 
 ## Quirks & why
+### The Inspector must be showing
+`selected_strip()` reads the selected track's channel strip from the Inspector, and track
+selection, the plug-in add check (slot count) and Revert all go through it. With the Inspector
+hidden (Logic 13 opened with the Browser in its place, 2026-11-06), a card clicked the track and
+reported "not found", and a ⌃⌘P add loaded the plug-in but reported "no plugin loaded", leaving
+it with no Revert entry. `show_inspector()` presses the control bar's Inspector toggle through AX
+when no strip shows, before any strip step (`ax_steps._mw_or_abort`, Revert, plug-in reads), and
+leaves it on.
+
 Rules below were live-verified on Logic Pro 12.3.1 (tests/ax_mechanics/RESULTS.md).
 
 ### Return codes are never evidence

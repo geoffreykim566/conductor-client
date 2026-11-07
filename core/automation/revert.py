@@ -20,6 +20,8 @@ def revert(ledger: list[dict], log=print) -> list[tuple[dict, bool, str]]:
     results = []
     app = ax.app_element()
     mw = ax.main_window(app)
+    if mw is not None and any(e["kind"] in (LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN) for e in ledger):
+        ax.show_inspector(mw)
     for entry in reversed(ledger):
         try:
             if entry["kind"] in (LEDGER_KIND_PARAM, LEDGER_KIND_PLUGIN):
