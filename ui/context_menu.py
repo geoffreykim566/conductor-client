@@ -4,10 +4,9 @@
 for selectable labels (chat bubbles), text edits (the input field) and line
 edits, and shows `ContextMenu` with the same basic items Qt's menu had.
 """
-from PySide6.QtCore import QEvent, QObject, QPoint, QSize, Qt
+from PySide6.QtCore import QEvent, QObject, QPoint, Qt
 from PySide6.QtGui import QGuiApplication, QTextDocument
 from PySide6.QtWidgets import (
-    QFrame,
     QLabel,
     QLineEdit,
     QPlainTextEdit,
@@ -18,17 +17,17 @@ from PySide6.QtWidgets import (
 )
 
 from ui.glass import GlassBackdrop, full_rect
-from ui.symbols import set_symbol
-from ui.theme import ICON_SIZE, MENU_RADIUS, TEXT_DIM, TEXT_SECONDARY
+from ui.theme import CONTEXT_MENU_RADIUS
 
-_MIN_WIDTH = 150
+_MIN_WIDTH = 140
 _SCREEN_MARGIN = 6
-_ICON_SLOT = ICON_SIZE + 6
+_PAD = 4
 
 
 class ContextMenu(QWidget):
-    """A glass menu like the ☰ one. `items` holds (label, symbol, action, enabled)
-    tuples, or None for a divider. A click outside closes it (Qt.Popup)."""
+    """A compact glass menu in the style of macOS text menus: plain rows, no icons or
+    dividers, the hovered row filled purple. `items` holds (label, action, enabled)
+    tuples. A click outside closes it (Qt.Popup)."""
 
     def __init__(self, items) -> None:
         super().__init__(None, Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
@@ -36,36 +35,23 @@ class ContextMenu(QWidget):
         self.setAttribute(Qt.WA_DeleteOnClose)
 
         panel = QWidget(self)
-        panel.setObjectName("menuRoot")
+        panel.setObjectName("contextRoot")
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(panel)
 
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(1)
-        for item in items:
-            if item is None:
-                line = QFrame()
-                line.setObjectName("menuSeparator")
-                line.setFixedHeight(1)
-                layout.addWidget(line)
-                continue
-            label, symbol, action, enabled = item
+        layout.setContentsMargins(_PAD, _PAD, _PAD, _PAD)
+        layout.setSpacing(0)
+        for label, action, enabled in items:
             btn = QPushButton(label)
-            btn.setObjectName("menuItem")
+            btn.setObjectName("contextItem")
             btn.setEnabled(enabled)
-            if enabled:
-                btn.setCursor(Qt.PointingHandCursor)
-            set_symbol(btn, symbol, ICON_SIZE, TEXT_SECONDARY if enabled else TEXT_DIM)
-            # One slot for every glyph (they differ in width), so the labels line up.
-            btn.setIconSize(QSize(_ICON_SLOT, _ICON_SLOT))
-            btn.setText(f"  {label}")   # set_symbol drops the text; the spaces pad it off the icon
             btn.clicked.connect(lambda _=False, a=action: self._pick(a))
             layout.addWidget(btn)
 
         self.setMinimumWidth(_MIN_WIDTH)
-        self._glass = GlassBackdrop(self, full_rect(self, MENU_RADIUS), roots=[panel])
+        self._glass = GlassBackdrop(self, full_rect(self, CONTEXT_MENU_RADIUS), roots=[panel])
 
     def _pick(self, action) -> None:
         self.close()
@@ -99,9 +85,8 @@ def _label_items(label: QLabel) -> list:
         label.setSelection(0, len(text))
 
     return [
-        ("Copy", "doc.on.doc", lambda: _copy_text(label.selectedText()), label.hasSelectedText()),
-        None,
-        ("Select All", "character.textbox", select_all, bool(label.text())),
+        ("Copy", lambda: _copy_text(label.selectedText()), label.hasSelectedText()),
+        ("Select All", select_all, bool(label.text())),
     ]
 
 
@@ -119,18 +104,16 @@ def _edit_items(edit) -> list:
         can_undo, can_redo = doc.isUndoAvailable(), doc.isRedoAvailable()
         can_paste = not read_only and edit.canPaste()
         has_text = not doc.isEmpty()
-    copy = ("Copy", "doc.on.doc", edit.copy, has_sel)
-    select_all = ("Select All", "character.textbox", edit.selectAll, has_text)
+    copy = ("Copy", edit.copy, has_sel)
+    select_all = ("Select All", edit.selectAll, has_text)
     if read_only:
-        return [copy, None, select_all]
+        return [copy, select_all]
     return [
-        ("Undo", "arrow.uturn.backward", edit.undo, can_undo),
-        ("Redo", "arrow.uturn.forward", edit.redo, can_redo),
-        None,
-        ("Cut", "scissors", edit.cut, has_sel),
+        ("Undo", edit.undo, can_undo),
+        ("Redo", edit.redo, can_redo),
+        ("Cut", edit.cut, has_sel),
         copy,
-        ("Paste", "doc.on.clipboard", edit.paste, can_paste),
-        None,
+        ("Paste", edit.paste, can_paste),
         select_all,
     ]
 

@@ -32,6 +32,8 @@ from ui.theme import (
     FONT_XS,
     GLASS_WASH,
     GLASS_WASH_ALPHA,
+    CONTEXT_WASH_ALPHA,
+    CONTEXT_MENU_RADIUS,
     INPUT_PILL_RADIUS,
     MENU_RADIUS,
     MINIMIZED_RADIUS,
@@ -223,12 +225,26 @@ QPushButton#menuItem {{
     text-align: left;
 }}
 QPushButton#menuItem:hover {{ background: {SURFACE_HOVER}; }}
-QPushButton#menuItem:disabled {{ background: transparent; color: {TEXT_DIM}; }}
-QFrame#menuSeparator {{
-    background: {DIVIDER};
-    border: none;
-    margin: 3px 10px;
+QWidget#contextRoot {{
+    background-color: {rgba(PANEL, POPUP_ALPHA)};
+    border: {_PANEL_BORDER};
+    border-radius: {CONTEXT_MENU_RADIUS}px;
 }}
+QWidget#contextRoot[glass="true"] {{
+    background-color: {rgba(GLASS_WASH, CONTEXT_WASH_ALPHA)};
+    border: none;
+}}
+QPushButton#contextItem {{
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    color: {TEXT};
+    font-size: {FONT_MD}px;
+    padding: 3px 10px;
+    text-align: left;
+}}
+QPushButton#contextItem:hover {{ background: {_ACCENT_BG}; color: {WHITE}; }}
+QPushButton#contextItem:disabled {{ background: transparent; color: {TEXT_DIM}; }}
 QPushButton#rateBtn {{
     background: transparent;
     border: 1px solid transparent;

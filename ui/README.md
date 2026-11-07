@@ -18,7 +18,7 @@ only from tokens in `theme.py`.
 - `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, auto research, reset, delete, uninstall, privacy policy link).
 - `popup.py` - `Popup` base (header bar + close) for casually dismissed windows.
 - `glass.py` - `GlassBackdrop`: native Liquid Glass (or blur) under a translucent window, one view cut to its shapes.
-- `context_menu.py` - `ContextMenu`: the glass right-click menu for chat text, the input field and line edits, installed app-wide.
+- `context_menu.py` - `ContextMenu`: the glass right-click menu (thin text rows, purple hover) for chat text, the input field and line edits, installed app-wide.
 - `symbols.py` - SF Symbols rendered to Qt icons (header, send, bubble).
 - `motion.py` - fade-ins for widgets and windows, fade-out on hide; off under Reduce motion.
 - `style.py` - `STYLESHEET`. `theme.py` - every color/size/radius token.
@@ -107,6 +107,9 @@ own old look (user report 2026-11-06). Same reason as the ☰ menu. One app-wide
 event arrives on the viewport) and line edits, so no widget needs its own code. The items are
 the ones Qt's menu had, minus Copy Link Location: the links in replies are explain mode's terms,
 not web addresses. A widget with its own `contextMenuPolicy` is left to Qt.
+Styled after macOS's text menus (user call 11-06, Notes as the reference): thin rows, no icons or
+dividers, the hovered row filled with the accent purple. Its wash is darker than the ☰ menu's
+(`CONTEXT_WASH_ALPHA`): it opens over chat text, which showed through the normal one.
 
 ### Checkbox color
 The native macOS style paints checkboxes in the Mac's system accent color and ignores Qt's palette

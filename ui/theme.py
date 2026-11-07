@@ -41,6 +41,8 @@ PANEL_BORDER_ALPHA = 0.6
 # Dark wash Qt paints over the glass (ui/glass.py says why not a glass tint).
 GLASS_WASH = "#000000"
 GLASS_WASH_ALPHA = 0.38
+# The right-click menu opens over chat text, which showed through the normal wash.
+CONTEXT_WASH_ALPHA = 0.62
 # Everything drawn on a panel is translucent white so the glass shows through
 # (an opaque grey reads as a sticker on glass). Already rgba() strings.
 SURFACE = rgba(WHITE, 0.06)          # fields, hover rows, assistant bubble
@@ -98,6 +100,7 @@ PANEL_RADIUS = 22
 BUBBLE_RADIUS = 14           # <= half a one-line bubble's height, or Qt squares it
 POPUP_RADIUS = 18
 MENU_RADIUS = 12             # the ☰ dropdown
+CONTEXT_MENU_RADIUS = 9      # the right-click menu (smaller, like macOS's)
 ROW_RADIUS = 10
 FIELD_RADIUS = 10
 BUTTON_RADIUS = 8
