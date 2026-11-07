@@ -20,10 +20,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from core.state import prefs
 from ui.symbols import set_menu_lines, set_symbol
 from ui.theme import (
-    BORDER, CONTROL_SIZE, ICON_BTN_SIZE, INPUT_PILL_PADDING, MENU_ICON_WIDTH, TEXT_SECONDARY, WHITE,
-    WINDOW_ICON_SIZE,
+    BORDER, CONTROL_SIZE, ICON_BTN_SIZE, INPUT_PILL_PADDING, MENU_ICON_WIDTH, TEXT_SECONDARY,
+    WHITE, WINDOW_ICON_SIZE,
 )
 
 
@@ -148,11 +149,15 @@ class InputBar(QWidget):
         bubble = QWidget()
         self.pill = bubble
         bubble.setObjectName("inputBubble")
-        bubble_row = QHBoxLayout(bubble)
-        bubble_row.setContentsMargins(
-            INPUT_PILL_PADDING, INPUT_PILL_PADDING, INPUT_PILL_PADDING, INPUT_PILL_PADDING
+        bubble_col = QVBoxLayout(bubble)
+        bubble_col.setContentsMargins(
+            INPUT_PILL_PADDING, INPUT_PILL_PADDING, INPUT_PILL_PADDING, INPUT_PILL_PADDING + 2
         )
+        bubble_col.setSpacing(0)
+        bubble_row = QHBoxLayout()
+        bubble_row.setContentsMargins(0, 0, 0, 0)
         bubble_row.setSpacing(INPUT_PILL_PADDING)
+        bubble_col.addLayout(bubble_row)
 
         self._text = _ChatTextEdit()
         self._text.setObjectName("bareInput")
@@ -186,6 +191,20 @@ class InputBar(QWidget):
         set_symbol(self._send_btn, "arrow.up", 15, WHITE, bold=True)
         # Bottom-aligned: as the field grows the button stays by the last line.
         bubble_row.addWidget(self._send_btn, 0, Qt.AlignBottom)
+
+        # Controls under the text, inside the box. Explain: on = a brief why in plain words.
+        options_row = QHBoxLayout()
+        options_row.setContentsMargins(8, 2, 0, 0)
+        self._explain_btn = QPushButton("Explain")
+        self._explain_btn.setObjectName("explainToggle")
+        self._explain_btn.setCheckable(True)
+        self._explain_btn.setChecked(prefs.explain())
+        self._explain_btn.setCursor(Qt.PointingHandCursor)
+        self._explain_btn.setFocusPolicy(Qt.NoFocus)
+        self._explain_btn.toggled.connect(prefs.set_explain)
+        options_row.addWidget(self._explain_btn, 0, Qt.AlignVCenter)
+        options_row.addStretch()
+        bubble_col.addLayout(options_row)
 
         panel_layout.addWidget(bubble)
 

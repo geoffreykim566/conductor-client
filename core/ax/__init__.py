@@ -17,7 +17,7 @@ from core.ax.app import (
 from core.ax.mouse import click_at, ctrl_click_at, double_click_at, press_or_click
 from core.ax.menus import current_menu, dismiss_menus, drill, menu_item_checked, menubar_item, open_menu_of
 from core.ax.channel_strip import (
-    bypass_switch, fx_slots, is_mastering, loaded_names, loaded_slot, mastering_slot, plugin_slot, selected_strip, strip,
+    bypass_switch, fx_slots, is_mastering, loaded_names, loaded_slot, mastering_slot, plugin_slot, selected_strip, show_inspector, strip,
 )
 from core.ax.plugin_windows import close_window, plugin_window_for, plugin_windows_seen, window_plugin_name
 from core.ax.regions import pick_region, region_name, regions, target_region, visible_point
@@ -108,6 +108,7 @@ __all__ = [
     "role",
     "select_track",
     "selected_strip",
+    "show_inspector",
     "set_editor_checkbox",
     "set_view",
     "SETTLE_S",

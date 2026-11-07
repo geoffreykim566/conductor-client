@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import ApplicationServices as AS
 
-from core.ax.primitives import children, desc, norm, role
+from core.ax.primitives import ax_press, children, desc, norm, role, wait_until
 from core.ax.search import find_anywhere, find_child
 
 
@@ -17,6 +17,20 @@ def selected_strip(mw):
     mixer = find_anywhere(mw, desc_="Mixer", role_="AXLayoutArea")
     items = [c for c in children(mixer) if role(c) == "AXLayoutItem"] if mixer else []
     return items[0] if items else None
+
+
+def show_inspector(mw) -> bool:
+    """Turn on the Inspector when it's hidden, so the selected strip can be read: track
+    selection, the plug-in add check and Revert all go through it. Pressed through AX
+    (the control bar's toggle), not a keystroke. Left on afterwards. True once a strip shows."""
+    if selected_strip(mw) is not None:
+        return True
+    toggle = find_anywhere(mw, desc_="Inspector", role_="AXCheckBox")
+    if toggle is None:
+        return False
+    ax_press(toggle)
+    got, _ = wait_until(lambda: selected_strip(mw), timeout=2.0)
+    return got is not None
 
 
 def _is_slot_group(c):

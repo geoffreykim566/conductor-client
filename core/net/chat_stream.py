@@ -86,6 +86,7 @@ def stream_chat(
     resume: str | None = None,
     cancel: CancelToken | None = None,
     plugin_values: dict | None = None,
+    explain: bool = True,
 ) -> Iterator[tuple[str, object]]:
     """Relay one new user turn and yield (kind, payload) as the proxy streams.
 
@@ -112,6 +113,8 @@ def stream_chat(
     its first web_research call instead of running it, and plugin_reads so it
     may park at read_plugin_values: "allow_plugin_read" then carries what the
     client read as `plugin_values` (core.automation.plugin_read).
+
+    `explain` is the input bar's Explain toggle (prefs.explain): off asks for brief replies.
 
     `cancel` lets the UI thread abort this call mid-stream (see CancelToken).
 
@@ -150,6 +153,7 @@ def stream_chat(
                     "plugin_reads": True,
                     "resume": resume,
                     "plugin_values": plugin_values,
+                    "explain": explain,
                 },
                 timeout=120,
             ) as resp:

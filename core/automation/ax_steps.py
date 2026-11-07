@@ -31,6 +31,9 @@ def _mw_or_abort(app):
 
         raise StepAbort("Logic's project window isn't on this desktop — bring Logic Pro "
                         "to this desktop (or un-minimize it) and try again")
+    if not ax.show_inspector(mw):
+        raise StepAbort("couldn't show Logic's Inspector, where the selected track's channel strip is — "
+                        "show it (the Inspector button in Logic's control bar) and try again")
     return mw
 
 

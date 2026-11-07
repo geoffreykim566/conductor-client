@@ -10,7 +10,7 @@ from core.ax.channel_strip import fx_slots, is_mastering, loaded_names, loaded_s
 from core.ax.menus import dismiss_menus, open_menu_of
 from core.ax.mouse import press_or_click
 from core.ax.plugin_windows import plugin_window_for, plugin_windows_seen
-from core.ax.primitives import AxError, ax_press, ax_set, children, role, title, wait_until
+from core.ax.primitives import AxError, ax_get, ax_press, ax_set, children, role, title, wait_until
 from core.ax.search import find_child
 from core.events.keyboard import press
 
@@ -25,7 +25,10 @@ def open_plugin_by_search(app, mw, name: str) -> tuple[str, object, int]:
     press("Ctrl+Cmd+P")
     f, _ = wait_until(lambda: (lambda x: x if x is not None and role(x) == "AXTextField" else None)(focused(app)), timeout=2.0)
     if f is None:
-        raise AxError("Search-and-Add-Plug-in field did not take focus")
+        # Say what had focus instead, so a failure in the field can be told apart.
+        g = focused(app)
+        seen = f"{role(g)} {ax_get(g, AS.kAXDescriptionAttribute) or ''}".strip() if g is not None else "nothing"
+        raise AxError(f"Search-and-Add-Plug-in field did not take focus (Logic's focus: {seen})")
     ax_set(f, AS.kAXValueAttribute, name)
     time.sleep(0.5)
     press("Return")

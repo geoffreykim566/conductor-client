@@ -39,7 +39,8 @@ def save_session(session_id: str, messages: list, server_history: list | None = 
     HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     sessions = load_sessions()
     serialized = [
-        {"role": m.role, "text": m.text, "event_id": m.event_id, "rating": m.rating}
+        {"role": m.role, "text": m.text, "event_id": m.event_id, "rating": m.rating,
+         **({"terms": m.terms} if m.terms else {})}
         for m in messages
     ]
     for s in sessions:

@@ -8,6 +8,7 @@ chips, and the walkthrough card that runs actions in Logic.
 - `rating.py` - `RatingMixin`: Upvote/Downvote row; clicking the active button undoes the vote.
 - `research_prompt.py` - `ResearchPromptMixin`: "research the web?" with Yes / No.
 - `sources.py` - `SourcesMixin`: source-link chips (research turns).
+- `terms.py` - `TermsMixin`: underlines the reply's glossary terms (the server's `terms`); `TermPopup` shows a definition on click.
 - `walkthrough_card.py` - `WalkthroughCard`: step list, buttons, hint/status lines, view states.
 - `walkthrough_run.py` - `WalkthroughRunMixin`: start/stop the executor and revert threads, outcomes.
 - `styles.py` - shared label styles and `system_font()`.
@@ -44,6 +45,19 @@ Native tooltips render behind the frameless always-on-top window on macOS: `setT
 showed nothing (2026-09-04). The confidence badge's `Chip` (removed 2026-10-21, in git history)
 showed its own popup at the same window level instead; the popup box lived on a child widget
 because a translucent top-level never paints its stylesheet background.
+
+### Glossary popup
+`TermPopup` is just the definition and a Read more link (no title or close button, user call 2026-11-06). It closes on a click anywhere else in the app (an app-wide event filter), not on focus loss:
+the chat window takes focus straight back when the popup opens, so it closed the moment it appeared
+(2026-11-06). Terms render once the reveal finishes (`after_reveal`); the label switches to rich text
+with `term:<i>` links, and a saved message keeps its `terms` so a reloaded chat underlines them too.
+
+### Plug-in step text
+A plug-in step shows what the client actually does, one numbered line per keypress ("Press ⌃⌘P",
+"Type Compressor", "Press Return"; `core/ax/plugins.py`), so a beginner can repeat it: "Open
+Compressor" taught nothing (user call 2026-11-06). One wire step can show as several lines, so
+`_step_labels[i]` is wire step i's list and they highlight together. Mastering Assistant keeps
+"Open": it has its own slot on Stereo Out.
 
 ### Bubble margins
 User bubbles are right-aligned, so `ChatView`'s scrollbar gutter adds to their right edge; the
