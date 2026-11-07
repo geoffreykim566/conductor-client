@@ -138,7 +138,7 @@ class InputBar(QWidget):
         self._close_btn.setObjectName("headerBtn")
         self._close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         self._close_btn.clicked.connect(self.close_requested)
-        set_symbol(self._close_btn, "xmark", WINDOW_ICON_SIZE - 1, TEXT_SECONDARY)
+        set_symbol(self._close_btn, "xmark", WINDOW_ICON_SIZE - 2, TEXT_SECONDARY, bold=True)
         controls_row.addWidget(self._close_btn, 0, Qt.AlignVCenter)
 
         # Single rounded-rect bubble holding the text field and send button —

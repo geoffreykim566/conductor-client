@@ -73,7 +73,7 @@ def set_symbol(button, name: str, point_size: float, color: str, bold: bool = Fa
 def set_menu_lines(button, width: float, color: str) -> None:
     """Three rounded lines (the ☰ icon), drawn here rather than SF Symbols'
     line.3.horizontal, which is wider than the header wants (README "Header icons")."""
-    gap, stroke = 4.0, 1.6
+    gap, stroke = 4.0, 1.3
     height = 2 * gap + stroke
     pm = QPixmap(round((width + stroke) * _SCALE), round(height * _SCALE))
     pm.fill(QColor(0, 0, 0, 0))

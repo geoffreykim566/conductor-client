@@ -116,7 +116,8 @@ its own `contextMenuPolicy` is left to Qt.
 ### Header icons
 The ☰ is three drawn lines (`symbols.set_menu_lines`, `MENU_ICON_WIDTH`), not SF Symbols'
 `line.3.horizontal`, which has fixed proportions and read too wide (user call 11-06). Minimize
-and close are SF Symbols a step smaller than the other header glyphs (`WINDOW_ICON_SIZE`). The
+and close are SF Symbols a step smaller than the other header glyphs (`WINDOW_ICON_SIZE`); close
+is smaller again but semibold, since at that size the regular ✕ looked thin. The
 controls stay grey on the right, not traffic lights: this is a floating panel whose minimize
 and close don't do what a window's do, and colored dots would compete with the purple.
 
