@@ -6,8 +6,8 @@ context-menu event for selectable labels (chat bubbles), text edits (the input
 field) and line edits, and shows a `GlassMenu` with the same basic items Qt's
 menu had.
 """
-from PySide6.QtCore import QEvent, QObject, QPoint, QSize, Qt
-from PySide6.QtGui import QGuiApplication, QTextDocument
+from PySide6.QtCore import QEvent, QObject, QPoint, QRectF, QSize, Qt
+from PySide6.QtGui import QGuiApplication, QIcon, QPainter, QPixmap, QTextDocument
 from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
@@ -19,20 +19,38 @@ from PySide6.QtWidgets import (
 )
 
 from ui.glass import GlassBackdrop, full_rect
-from ui.symbols import set_symbol
-from ui.theme import MENU_ICON_SIZE, MENU_RADIUS, TEXT_DIM, TEXT_SECONDARY
+from ui.symbols import symbol_pixmap
+from ui.theme import MENU_CHECK_SIZE, MENU_ICON_SIZE, MENU_RADIUS, TEXT, TEXT_DIM, TEXT_SECONDARY
 
 _MIN_WIDTH = 170
 _SCREEN_MARGIN = 6
 _PAD = 4
-_ICON_SLOT = MENU_ICON_SIZE + 5   # one slot for every glyph (they differ in width), so labels line up
+_ICON_SLOT = 13   # one slot for every glyph (they differ in width), so labels line up
+
+
+def _slot_icon(name: str | None, size: float, color: str, bold: bool = False) -> QIcon:
+    """Symbol `name` at its own size, centred in an icon-slot-sized image (None: empty). The row
+    scales its icon to the slot, which would stretch a symbol drawn smaller than it."""
+    scale = 2.0
+    slot = QPixmap(round(_ICON_SLOT * scale), round(_ICON_SLOT * scale))
+    slot.fill(Qt.transparent)
+    slot.setDevicePixelRatio(scale)
+    sym = symbol_pixmap(name, size, color, bold) if name else None
+    if sym is not None:
+        w, h = sym.width() / sym.devicePixelRatio(), sym.height() / sym.devicePixelRatio()
+        p = QPainter(slot)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        p.drawPixmap(QRectF((_ICON_SLOT - w) / 2, (_ICON_SLOT - h) / 2, w, h), sym, QRectF(sym.rect()))
+        p.end()
+    return QIcon(slot)
 
 
 class GlassMenu(QWidget):
     """A compact glass menu in the style of macOS menus: no dividers, the hovered row
     filled purple. `items` holds (label, action, enabled) or (label, action, enabled,
-    symbol) tuples; a symbol puts a small SF Symbol before the label. A click outside
-    closes it (Qt.Popup)."""
+    symbol) tuples; a symbol puts a small SF Symbol before the label, and a None symbol an
+    empty slot of the same width (a checkmark list: only the picked row has one). A click
+    outside closes it (Qt.Popup)."""
 
     def __init__(self, items) -> None:
         super().__init__(None, Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
@@ -53,7 +71,10 @@ class GlassMenu(QWidget):
             btn.setObjectName("menuItem")
             btn.setEnabled(enabled)
             if symbol:
-                set_symbol(btn, symbol[0], MENU_ICON_SIZE, TEXT_SECONDARY if enabled else TEXT_DIM)
+                if symbol[0] == "checkmark":   # sized and coloured like macOS's menu checks
+                    btn.setIcon(_slot_icon("checkmark", MENU_CHECK_SIZE, TEXT if enabled else TEXT_DIM, bold=True))
+                else:
+                    btn.setIcon(_slot_icon(symbol[0], MENU_ICON_SIZE, TEXT_SECONDARY if enabled else TEXT_DIM))
                 btn.setIconSize(QSize(_ICON_SLOT, _ICON_SLOT))
                 btn.setText(f" {label}")   # set_symbol drops the text; the space pads it off the icon
             btn.clicked.connect(lambda _=False, a=action: self._pick(a))

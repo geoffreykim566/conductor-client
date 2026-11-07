@@ -222,6 +222,24 @@ QPushButton#explainToggle:checked {{
     color: {TEXT};
     border: 1px solid {ACCENT_TINT};
 }}
+QPushButton#micBtn, QPushButton#micMenuBtn,
+QPushButton#micBtn:hover, QPushButton#micMenuBtn:hover,
+QPushButton#micBtn:pressed, QPushButton#micMenuBtn:pressed,
+QPushButton#micMenuBtn:disabled {{
+    background: transparent;
+    border: none;
+    padding: 0;
+}}
+QLabel#voiceNote {{
+    background: transparent;
+    color: {TEXT_MUTED};
+    font-size: {FONT_XS}px;
+}}
+QLabel#voiceToastText {{
+    background: transparent;
+    color: {TEXT};
+    font-size: {FONT_XS}px;
+}}
 QLabel#remainingLabel {{
     background: transparent;
     color: {TEXT_MUTED};

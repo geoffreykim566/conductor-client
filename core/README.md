@@ -10,9 +10,10 @@ and local state. Nothing in core/ imports ui/.
 - `automation/` - the walkthrough executor: translate, run, verify, revert; its QThreads and interrupt tap.
 - `net/` - server API, chat streaming, update check, and the QThread workers for them.
 - `state/` - config.json (token, prefs, flags), chat history, the in-memory conversation.
+- `voice/` - voice input: the microphone, pause detection, phrases as WAV.
 
 ## How it works
-Import direction, lowest first: `events` <- `ax`, `capture` <- `automation`; `state` <- `net`.
+Import direction, lowest first: `events` <- `ax`, `capture` <- `automation`; `state` <- `net`, `voice`.
 `ui/` sits on top and imports from any of them. Keep it that way: a lower package importing a
 higher one recreates the old executor/ax import cycle.
 

@@ -58,6 +58,10 @@ app = BUNDLE(
         'CFBundleShortVersionString': VERSION,
         'NSHighResolutionCapable': True,
         'LSMinimumSystemVersion': '12.0',
+        'NSMicrophoneUsageDescription': (
+            'Conductor uses the microphone only while you press the mic button, to type '
+            'what you say into the message box.'
+        ),
         'NSScreenCaptureUsageDescription': (
             'Conductor captures your Logic Pro window to give Claude visual context '
             'when answering your questions.'

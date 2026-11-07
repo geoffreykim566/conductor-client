@@ -14,7 +14,10 @@ only from tokens in `theme.py`.
 - `minimized_bubble.py` - the draggable circle shown while the window is minimized.
 - `chat_view.py` - `ChatView`: scrolling column of `MessageWidget`s, turn anchoring.
 - `top_fade_effect.py` - graphics effect fading the chat view's top edge to transparent.
-- `input_bar.py` - text field, send button, the Explain toggle under the text, image attachments, and the controls row.
+- `input_bar.py` - text field, send button, the Explain Mode toggle and mic pill under the text, image attachments, and the controls row.
+- `mic_button.py` - `MicPill`: the mic (start/stop, spinner while text is coming) and the input menu, painted as one pill.
+- `voice_controller.py` - `VoiceController`: the pill's behaviour: recorder, phrases to the server in order, text at the cursor, the daily limit.
+- `voice_toast.py` - `VoiceToast`: a voice message in a small glass bubble above the pill.
 - `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, auto research, reset, delete, uninstall, privacy policy link).
 - `popup.py` - `Popup` base (header bar + close) for casually dismissed windows.
 - `glass.py` - `GlassBackdrop`: native Liquid Glass (or blur) under a translucent window, one view cut to its shapes.
@@ -106,7 +109,10 @@ can't drift apart. It's ours, not Qt's `QMenu`: a native menu follows the system
 and goes light in light mode, and Qt's right-click menu kept Qt's own old look (user report
 2026-11-06). Styled after macOS's menus (user calls 11-06/07, Notes as the reference): no
 dividers, the hovered row filled with the accent purple. A row can carry a small SF Symbol
-(`MENU_ICON_SIZE`, one fixed slot so labels line up); the ☰ menu's rows have one, the
+(`MENU_ICON_SIZE`, one fixed slot so labels line up; a None symbol keeps the slot empty, for a
+checkmark list). Symbols are drawn at their own size and centred in the slot: the row scales its icon
+to the slot, which had stretched them. The checkmark is smaller and bold in the label's colour, like
+macOS's menus (user call 11-07, a Logic menu as the reference); the ☰ menu's rows have one, the
 right-click menu's don't. The panel is the
 same glass as every other popup (the normal wash, no border; user call 11-07, matching the
 definition popup). A darker wash read as a flat box, and a light rim as a hard edge.
@@ -115,6 +121,30 @@ context-menu event for selectable labels, text edits (the event arrives on the v
 line edits, so no widget needs its own code. The items are the ones Qt's menu had, minus Copy
 Link Location: the links in replies are explain mode's terms, not web addresses. A widget with
 its own `contextMenuPolicy` is left to Qt.
+
+### Voice input
+The mic pill sits at the right of the Explain row (user calls 11-06/07). Click to listen; the mic
+turns to stop. Each phrase is sent when you pause and its text goes in at the cursor; listening
+stops on the stop click, 10 s without speech, or the cap (60 s, or what's left of the day's 10 minutes).
+After a stop the mic shows a spinner until the last text is in. Typing stops listening (the phrase
+in progress is still sent); sending, or a turn starting, cancels it and drops anything not yet in the box.
+Messages ("Couldn't use that microphone", the daily limit) replace the placeholder when the box is
+empty, else show in a glass bubble above the pill; only the last-10-seconds countdown sits by the pill.
+
+### Mic pill
+One pill split ~2:1, mic and chevron, no divider: hovering a part fills only that part (user call).
+The pill paints its outline and fills itself, clipped to the rounded shape. QSS hover rules didn't
+work: per-corner radii on a half-pill drew square, and the menu takes the mouse so the chevron never
+got its Leave and kept the fill; the pill re-checks the pointer when the menu closes. The menu lists
+System Default and every input with a check on the one in use; the pick is saved by device id.
+
+### Input box insets
+The Explain row is inset `OPTIONS_INSET` (8 px) inside the box's padding on both sides, so the
+pill's right gap matches Explain's left gap, and the send button keeps the same right inset, so its
+right edge lines up with the pill's (user call 11-07). The send button is `SEND_SIZE` (30 px), a
+rounded square whose radius is the box's minus the gap between them (11 px, the Explain toggle's
+too) so the corners run parallel. Its arrow is drawn (`symbols.set_send_arrow`): SF Symbols'
+`arrow.up` has a fixed long shaft, and the user wanted it shorter with short arms.
 
 ### Header icons
 The ☰ is three drawn lines (`symbols.set_menu_lines`, `MENU_ICON_WIDTH`), not SF Symbols'

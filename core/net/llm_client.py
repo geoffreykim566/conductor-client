@@ -138,13 +138,17 @@ class MeWorker(QThread):
 
     Signals:
         loaded(int) — emitted with messages remaining on success (-1 on failure)
+        voice(int, str) — voice seconds left today and when that resets (servers v0.4.5+ only)
     """
 
     loaded = Signal(int)
+    voice = Signal(int, str)
 
     def run(self) -> None:
         try:
             data = get_me()
             self.loaded.emit(data.get("remaining", -1))
+            if "voice_seconds_left" in data:
+                self.voice.emit(int(data["voice_seconds_left"]), data.get("voice_resets_at") or "")
         except Exception:
             self.loaded.emit(-1)

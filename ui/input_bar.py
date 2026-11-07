@@ -21,9 +21,13 @@ from PySide6.QtWidgets import (
 )
 
 from core.state import prefs
-from ui.symbols import set_menu_lines, set_symbol
+from ui.voice_controller import VoiceController
+from ui.mic_button import MicPill
+from ui.voice_toast import VoiceToast
+from ui.symbols import set_menu_lines, set_send_arrow, set_symbol
 from ui.theme import (
-    BORDER, CONTROL_SIZE, ICON_BTN_SIZE, INPUT_PILL_PADDING, MENU_ICON_WIDTH, TEXT_SECONDARY,
+    BORDER, CONTROL_SIZE, ICON_BTN_SIZE, INPUT_PILL_PADDING, MENU_ICON_WIDTH, OPTIONS_INSET, SEND_SIZE,
+    TEXT_SECONDARY,
     WHITE, WINDOW_ICON_SIZE,
 )
 
@@ -32,6 +36,7 @@ class _ChatTextEdit(QTextEdit):
     """QTextEdit that sends on Enter and inserts newline on Shift+Enter."""
 
     submit = Signal()
+    typed = Signal()   # the user changed the text by hand (voice input stops listening)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
@@ -40,6 +45,8 @@ class _ChatTextEdit(QTextEdit):
             else:
                 self.submit.emit()
                 return
+        if event.text() or event.key() in (Qt.Key_Backspace, Qt.Key_Delete):
+            self.typed.emit()
         super().keyPressEvent(event)
 
 
@@ -186,16 +193,21 @@ class InputBar(QWidget):
 
         self._send_btn = QPushButton("↑")
         self._send_btn.setObjectName("sendBtn")
-        self._send_btn.setFixedSize(CONTROL_SIZE, CONTROL_SIZE)
+        self._send_btn.setFixedSize(SEND_SIZE, SEND_SIZE)
         self._send_btn.clicked.connect(self._on_send)
-        set_symbol(self._send_btn, "arrow.up", 15, WHITE, bold=True)
-        # Bottom-aligned: as the field grows the button stays by the last line.
-        bubble_row.addWidget(self._send_btn, 0, Qt.AlignBottom)
+        set_send_arrow(self._send_btn, 7, 8, WHITE)
+        # Bottom-aligned, centred on the last line: as the field grows the button stays by it.
+        # The right inset lines its right edge up with the mic pill's below (README "Input box insets").
+        send_col = QVBoxLayout()
+        send_col.setContentsMargins(0, 0, OPTIONS_INSET, (CONTROL_SIZE - SEND_SIZE) // 2)
+        send_col.addStretch()
+        send_col.addWidget(self._send_btn)
+        bubble_row.addLayout(send_col)
 
         # Controls under the text, inside the box. Explain: on = a brief why in plain words.
         options_row = QHBoxLayout()
-        options_row.setContentsMargins(8, 2, 0, 0)
-        self._explain_btn = QPushButton("Explain")
+        options_row.setContentsMargins(OPTIONS_INSET, 2, OPTIONS_INSET, 0)
+        self._explain_btn = QPushButton("Explain Mode")
         self._explain_btn.setObjectName("explainToggle")
         self._explain_btn.setCheckable(True)
         self._explain_btn.setChecked(prefs.explain())
@@ -204,7 +216,20 @@ class InputBar(QWidget):
         self._explain_btn.toggled.connect(prefs.set_explain)
         options_row.addWidget(self._explain_btn, 0, Qt.AlignVCenter)
         options_row.addStretch()
+        # Voice input, under the send button: a status line, then the mic pill.
+        self._voice_note = QLabel("")
+        self._voice_note.setObjectName("voiceNote")
+        self._voice_note.hide()
+        options_row.addWidget(self._voice_note, 0, Qt.AlignVCenter)
+        options_row.addSpacing(6)
+        self.mic_pill = MicPill()
+        options_row.addWidget(self.mic_pill, 0, Qt.AlignVCenter)
         bubble_col.addLayout(options_row)
+        self._voice_placeholder = False   # the placeholder is showing a voice message
+        self.voice = VoiceController(self.mic_pill, self._insert_dictation, self._text.toPlainText,
+                                     self._show_voice_message, self._set_countdown, self)
+        self._text.typed.connect(self.voice.stop)
+        self._text.typed.connect(lambda: self._show_voice_message(""))
 
         panel_layout.addWidget(bubble)
 
@@ -263,12 +288,44 @@ class InputBar(QWidget):
     def set_enabled_inputs(self, enabled: bool) -> None:
         self._text.setEnabled(enabled)
         self._send_btn.setEnabled(enabled)
+        if not enabled:
+            self.voice.cancel()
+        self.mic_pill.setEnabled(enabled)
+
+    def _insert_dictation(self, text: str) -> None:
+        """Put dictated text in at the cursor, a space off the word before it."""
+        cursor = self._text.textCursor()
+        before = self._text.toPlainText()[:cursor.position()]
+        if before and not before[-1].isspace():
+            text = " " + text
+        cursor.insertText(text)
+        self._text.setTextCursor(cursor)
+        self._text.ensureCursorVisible()
+
+    def _set_countdown(self, text: str) -> None:
+        self._voice_note.setText(text)
+        self._voice_note.setVisible(bool(text))
+
+    def _show_voice_message(self, text: str) -> None:
+        """In place of the placeholder when the box is empty, else in a bubble above the pill."""
+        if not text:
+            VoiceToast.hide_open()
+            if self._voice_placeholder:
+                self._voice_placeholder = False
+                self._text.setPlaceholderText(self._DEFAULT_PLACEHOLDER)
+            return
+        if not self._text.toPlainText().strip():
+            self._voice_placeholder = True
+            self._text.setPlaceholderText(text)
+        else:
+            VoiceToast.show_above(self.mic_pill, text)
 
     def set_placeholder(self, text: str | None = None) -> None:
         """Swap the empty-field hint; None restores the default. Used while a
         turn is in flight ("Press Esc to cancel") -- the field is empty and
         disabled then, so the placeholder is the one line the user still
         reads there."""
+        self._voice_placeholder = False
         self._text.setPlaceholderText(text or self._DEFAULT_PLACEHOLDER)
 
     def _on_send(self) -> None:
@@ -276,6 +333,7 @@ class InputBar(QWidget):
         if not text:
             self.enter_empty.emit()
             return
+        self.voice.cancel()
         images = list(self._pending_images)
         self._pending_images.clear()
         self._clear_attachments_ui()

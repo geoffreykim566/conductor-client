@@ -332,6 +332,7 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         """Fetch the user's free-tier usage in the background and update the input bar."""
         self._me_worker = MeWorker()
         self._me_worker.loaded.connect(self._input_bar.set_remaining)
+        self._me_worker.voice.connect(self._input_bar.voice.set_seconds_left)
         self._me_worker.start()
 
     def eventFilter(self, obj, event) -> bool:
@@ -378,3 +379,4 @@ class ChatWindow(ChatTurnsMixin, ChatSessionsMixin, ChatPromptsMixin, QWidget):
         thread before QApplication teardown destroys it while still running
         (Qt6 aborts the process in that case)."""
         self._chat_view.force_end_active_walkthrough()
+        self._input_bar.voice.shutdown()   # a transcribe thread still running would abort too

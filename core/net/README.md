@@ -10,10 +10,11 @@ those calls off the UI thread.
 - `account.py` - ratings, `get_me` (usage), `put_me` (onboarding answers), `delete_me`; async variants.
 - `llm_client.py` - `StreamWorker` (one chat turn with screenshots + AX context) and `MeWorker`.
 - `update_checker.py` - `UpdateChecker` QThread comparing the latest GitHub release to `config.VERSION`.
+- `voice.py` - `POST /v3/transcribe` (one phrase to text), `VoiceLimitReached`, `TranscribeFailed`, `TranscribeWorker`.
 - `feedback.py` - `POST /v3/feedback`, the bug-report context dump (`build_context`, `versions`) and `FeedbackWorker`.
 
 ## How it works
-Every request carries the token as `X-Conductor-Id`, plus the device hash as `X-Conductor-Device` (also on register). User-facing calls (chat, `get_me`)
+Every request carries the token as `X-Conductor-Id`, plus the device hash as `X-Conductor-Device` (also on register) and the Mac's IANA timezone as `X-Conductor-Timezone` (read from `/etc/localtime`'s link; the voice limit resets at local midnight). User-facing calls (chat, `get_me`)
 register lazily on first use; fire-and-forget calls (ratings, `put_me`, `delete_me`) skip when
 no token exists rather than burn a registration. A 401 clears the token and retries once (a
 loop, not recursion, so a broken server can't cause a register storm). The chat `history` is

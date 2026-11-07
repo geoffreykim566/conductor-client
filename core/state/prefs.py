@@ -6,6 +6,7 @@ from core.state.config_store import read_config, write_config
 AUTO_RUN_KEY = "auto_run_actions"
 AUTO_RESEARCH_KEY = "auto_research"
 EXPLAIN_KEY = "explain"
+MIC_DEVICE_KEY = "mic_device"
 
 
 def auto_run() -> bool:
@@ -39,6 +40,21 @@ def explain() -> bool:
 def set_explain(enabled: bool) -> None:
     data = read_config()
     data[EXPLAIN_KEY] = bool(enabled)
+    write_config(data)
+
+
+def mic_device() -> str | None:
+    """The chosen voice input's device id (hex), or None for the system default."""
+    v = read_config().get(MIC_DEVICE_KEY)
+    return v if isinstance(v, str) and v else None
+
+
+def set_mic_device(device_id: str | None) -> None:
+    data = read_config()
+    if device_id:
+        data[MIC_DEVICE_KEY] = device_id
+    else:
+        data.pop(MIC_DEVICE_KEY, None)
     write_config(data)
 
 

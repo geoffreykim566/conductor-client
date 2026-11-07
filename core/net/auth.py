@@ -3,6 +3,8 @@
 User-facing calls (chat, get_me) register on first use; fire-and-forget calls
 skip silently when no token exists rather than burn a registration slot.
 """
+import os
+
 import httpx
 
 from config import SERVER_BASE_URL
@@ -59,5 +61,22 @@ def _device_header() -> dict:
 
 
 def headers(token: str) -> dict:
-    """Auth headers; the device hash rides along so /v3/me can link a pre-hash user to this Mac."""
-    return {"X-Conductor-Id": token, "Content-Type": "application/json", **_device_header()}
+    """Auth headers; the device hash rides along so /v3/me can link a pre-hash user to this Mac,
+    and the timezone so the voice limit resets at local midnight."""
+    return {"X-Conductor-Id": token, "Content-Type": "application/json",
+            **_device_header(), **_timezone_header()}
+
+
+def local_timezone() -> str | None:
+    """The Mac's IANA zone name (e.g. Europe/London) from /etc/localtime's link target."""
+    try:
+        target = os.path.realpath("/etc/localtime")
+    except OSError:
+        return None
+    _, sep, name = target.partition("/zoneinfo/")
+    return name if sep and name else None
+
+
+def _timezone_header() -> dict:
+    tz = local_timezone()
+    return {"X-Conductor-Timezone": tz} if tz else {}

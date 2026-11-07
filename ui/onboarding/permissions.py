@@ -10,7 +10,7 @@ from core.events.tag import check_event_permission
 
 BUNDLE_ID = "com.conductor.logicpro"  # must match bundle_identifier in conductor.spec
 # ListenEvent (Input Monitoring) is no longer asked for, but older installs were granted it.
-_TCC_SERVICES = ("ScreenCapture", "ListenEvent", "Accessibility")
+_TCC_SERVICES = ("ScreenCapture", "ListenEvent", "Accessibility", "Microphone")
 _PANE_URL = "x-apple.systempreferences:com.apple.preference.security?"
 
 

@@ -70,6 +70,29 @@ def set_symbol(button, name: str, point_size: float, color: str, bold: bool = Fa
     button.setIconSize(QSize(round(pm.width() / _SCALE), round(pm.height() / _SCALE)))
 
 
+def set_send_arrow(button, width: float, height: float, color: str, stroke: float = 1.8) -> None:
+    """An up arrow, drawn here rather than SF Symbols' arrow.up, whose shaft is longer than the
+    send button wants (README "Send button")."""
+    pad = stroke / 2
+    pm = QPixmap(round((width + stroke) * _SCALE), round((height + stroke) * _SCALE))
+    pm.fill(QColor(0, 0, 0, 0))
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.scale(_SCALE, _SCALE)
+    pen = QPen(QColor(color), stroke)
+    pen.setCapStyle(Qt.RoundCap)
+    pen.setJoinStyle(Qt.RoundJoin)
+    p.setPen(pen)
+    tip = QPointF(pad + width / 2, pad)
+    p.drawLine(tip, QPointF(pad + width / 2, pad + height))
+    p.drawPolyline([QPointF(pad, pad + width / 2), tip, QPointF(pad + width, pad + width / 2)])
+    p.end()
+    pm.setDevicePixelRatio(_SCALE)
+    button.setText("")
+    button.setIcon(QIcon(pm))
+    button.setIconSize(QSize(round(width + stroke), round(height + stroke)))
+
+
 def set_menu_lines(button, width: float, color: str) -> None:
     """Three rounded lines (the ☰ icon), drawn here rather than SF Symbols'
     line.3.horizontal, which is wider than the header wants (README "Header icons")."""

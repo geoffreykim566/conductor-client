@@ -28,7 +28,7 @@ CONDUCTOR_SERVER_URL=http://127.0.0.1:8000 .venv/bin/python main.py   # against 
 ```
 For a local server run `docker compose up -d --build` inside `server/`. On first launch setup
 asks for Accessibility (called Device Control and Data Access from macOS 27; needed to run actions)
-and Screen Recording.
+and Screen Recording. The microphone is asked for the first time the mic is pressed.
 In dev these are granted to the terminal / Python binary, not to Conductor.app.
 
 ## Tests
@@ -49,8 +49,8 @@ are listed in the spec's `hiddenimports`.
 `~/Library/Application Support/Conductor/` (see `core/state` README for the move from `Conductor-v3`):
 - `config.json` - identity token, preferences, window geometry, onboarding/feedback flags.
 - `history.json` - all chat sessions.
-Settings -> Uninstall notifies the server, deletes this folder and resets the app's three macOS
-permissions (`tccutil`, scoped to the bundle id), so a reinstall replays the setup screens.
+Settings -> Uninstall notifies the server, deletes this folder and resets the app's four macOS
+permissions (Microphone included) (`tccutil`, scoped to the bundle id), so a reinstall replays the setup screens.
 `uninstall.sh` notifies the server and deletes this folder only; it doesn't reset permissions.
 
 ## Releasing
