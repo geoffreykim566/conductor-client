@@ -31,7 +31,6 @@ from ui.theme import (
     FONT_XS,
     GLASS_WASH,
     GLASS_WASH_ALPHA,
-    MENU_WASH_ALPHA,
     INPUT_PILL_RADIUS,
     MENU_RADIUS,
     MINIMIZED_RADIUS,
@@ -76,6 +75,7 @@ QWidget#minimizedRoot {{
 }}
 QWidget#setupRoot[glass="true"], QWidget#guideRoot[glass="true"],
 QWidget#popupRoot[glass="true"], QWidget#minimizedRoot[glass="true"],
+QWidget#menuRoot[glass="true"],
 QWidget#inputBubble[glass="true"] {{
     background-color: {_GLASS_WASH};
     border: none;
@@ -211,10 +211,6 @@ QWidget#menuRoot {{
     background-color: {rgba(PANEL, POPUP_ALPHA)};
     border: {_PANEL_BORDER};
     border-radius: {MENU_RADIUS}px;
-}}
-QWidget#menuRoot[glass="true"] {{
-    background-color: {rgba(GLASS_WASH, MENU_WASH_ALPHA)};
-    border: none;
 }}
 QPushButton#menuItem {{
     background: transparent;

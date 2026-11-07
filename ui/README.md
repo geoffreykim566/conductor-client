@@ -105,8 +105,9 @@ The ☰ menu and the right-click menu are one design, `GlassMenu` (`glass_menu.p
 can't drift apart. It's ours, not Qt's `QMenu`: a native menu follows the system appearance
 and goes light in light mode, and Qt's right-click menu kept Qt's own old look (user report
 2026-11-06). Styled after macOS's text menus (user call 11-06, Notes as the reference): thin
-rows, no icons or dividers, the hovered row filled with the accent purple. Its wash is darker
-than the panels' (`MENU_WASH_ALPHA`): a menu opens over chat text, which showed through.
+rows, no icons or dividers, the hovered row filled with the accent purple. The panel is the
+same glass as every other popup (the normal wash, no border; user call 11-07, matching the
+definition popup). A darker wash read as a flat box, and a light rim as a hard edge.
 Right-click: one app-wide event filter (`install_context_menus` in `main.py`) catches the
 context-menu event for selectable labels, text edits (the event arrives on the viewport) and
 line edits, so no widget needs its own code. The items are the ones Qt's menu had, minus Copy
