@@ -59,6 +59,11 @@ spike (2026-10-23):
   report 2026-10-23). It took both fixes, checked by pixel reads with the window key: no
   `NSGlassEffectContainerView` (it shaded the whole window rect), and each glass view's layer
   clipped to its rounded shape (`masksToBounds` + `cornerRadius`).
+- One glass view per window, cut to all its shapes by a layer mask, not a view per shape:
+  Liquid Glass renders a short shape lighter than a tall one (over white, 46 px tall read 185
+  grey vs 121 for 120 px and up; over grey 134 vs 116), so the input pill looked lighter than the
+  chat panel above it (user report 2026-11-06). Masked from one view, both read the same over
+  white, grey and black. A darker wash on the pill can't match it: the gap changes with what's behind.
 - Surfaces on the glass are translucent white (`theme.SURFACE*`), and the dim text greys are a
   step lighter than Apple's, since Qt text gets no vibrancy.
 

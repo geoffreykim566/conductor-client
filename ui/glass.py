@@ -13,6 +13,7 @@ from PySide6.QtCore import QEvent, QObject, QRect, QTimer
 try:
     import AppKit
     import objc
+    import Quartz
 except Exception:  # pragma: no cover - pyobjc missing outside macOS
     AppKit = None
 
@@ -125,6 +126,8 @@ class GlassBackdrop(QObject):
             self._window.update()
 
     def _new_view(self):
+        """The one native view behind all of the window's shapes (README
+        "Glass backdrop": separate views render small shapes lighter)."""
         if mode() == "glass":
             view = AppKit.NSGlassEffectView.alloc().initWithFrame_(((0, 0), (1, 1)))
             # No tintColor: macOS applies it only while the window is key, and
@@ -151,23 +154,40 @@ class GlassBackdrop(QObject):
             return
         try:
             shapes = [(r, rad) for r, rad in self._shapes() if r.width() > 0 and r.height() > 0]
-            while len(self._views) < len(shapes):
+            if not self._views:
                 self._views.append(self._new_view())
+            view = self._views[0]
+            if not shapes:
+                view.setHidden_(True)
+                return
+            view.setHidden_(False)
+            bounds = shapes[0][0]
+            for rect, _ in shapes[1:]:
+                bounds = bounds.united(rect)
+            radius = max(rad for _, rad in shapes)
             # Sized from Qt, not from the native views: on a Qt resize the
             # NSWindow (and the autoresized holder) can still have the old size.
+            # Cocoa's y runs up from the bottom; Qt's runs down from the top.
             height = self._window.height()
-            for i, view in enumerate(self._views):
-                if i >= len(shapes):
-                    view.setHidden_(True)
-                    continue
-                rect, radius = shapes[i]
-                view.setHidden_(False)
-                # Cocoa's y runs up from the bottom; Qt's runs down from the top.
-                view.setFrame_(((rect.x(), height - rect.y() - rect.height()),
-                                (rect.width(), rect.height())))
-                if mode() == "glass":
-                    view.setCornerRadius_(radius)
-                view.layer().setCornerRadius_(radius)
+            view.setFrame_(((bounds.x(), height - bounds.y() - bounds.height()),
+                            (bounds.width(), bounds.height())))
+            if mode() == "glass":
+                view.setCornerRadius_(radius)
+            view.layer().setCornerRadius_(radius)
+            # Cut to the shapes, in the view's own coordinates (y up).
+            path = Quartz.CGPathCreateMutable()
+            bottom = bounds.y() + bounds.height()
+            for rect, rad in shapes:
+                Quartz.CGPathAddRoundedRect(
+                    path, None,
+                    ((rect.x() - bounds.x(), bottom - rect.y() - rect.height()),
+                     (rect.width(), rect.height())),
+                    rad, rad)
+            mask = view.layer().mask()
+            if mask is None:
+                mask = Quartz.CAShapeLayer.layer()
+                view.layer().setMask_(mask)
+            mask.setPath_(path)
         except Exception as e:
             print(f"[glass] sync failed: {e}", flush=True)
 
