@@ -9,7 +9,7 @@ only from tokens in `theme.py`.
 - `chat_turns.py` - mixin: send a message, stream the reply, research / plug-in read confirm (auto-approved by Auto research / auto-run), cancel, errors.
 - `chat_sessions.py` - mixin: load/switch/new/clear sessions, persist ratings.
 - `chat_prompts.py` - mixin: feedback prompt (opens the Report Bug form on Feedback) and update-available popup.
-- `main_menu.py` - `MainMenu`: the ☰ glass dropdown (New Chat, History, Settings, Report Bug).
+- `main_menu.py` - `MainMenu`: the ☰ menu's items (New Chat, History, Settings, Report Bug) on a `GlassMenu`.
 - `feedback_form.py` - `FeedbackForm`: the Report Bug popup (Bug or Feedback, title, optional message).
 - `minimized_bubble.py` - the draggable circle shown while the window is minimized.
 - `chat_view.py` - `ChatView`: scrolling column of `MessageWidget`s, turn anchoring.
@@ -18,8 +18,8 @@ only from tokens in `theme.py`.
 - `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, auto research, reset, delete, uninstall, privacy policy link).
 - `popup.py` - `Popup` base (header bar + close) for casually dismissed windows.
 - `glass.py` - `GlassBackdrop`: native Liquid Glass (or blur) under a translucent window, one view cut to its shapes.
-- `context_menu.py` - `ContextMenu`: the glass right-click menu (thin text rows, purple hover) for chat text, the input field and line edits, installed app-wide.
-- `symbols.py` - SF Symbols rendered to Qt icons (header, send, bubble).
+- `glass_menu.py` - `GlassMenu`: the one menu design (☰ and right-click), and `install_context_menus`, the app-wide right-click menu for chat text, the input field and line edits.
+- `symbols.py` - SF Symbols rendered to Qt icons (header, send, bubble), and the drawn ☰ lines.
 - `motion.py` - fade-ins for widgets and windows, fade-out on hide; off under Reduce motion.
 - `style.py` - `STYLESHEET`. `theme.py` - every color/size/radius token.
 - `checkbox_style.py` - `CheckboxStyle`: draws checkbox squares in `theme.CHECKBOX`.
@@ -100,16 +100,25 @@ New chat and history moved into the ☰ menu with Report Bug and Settings (user 
 Settings is also still in the macOS menu bar. The menu is our own glass dropdown, not a
 `QMenu`: a native menu follows the system appearance and goes light in light mode.
 
-### Context menu
-Right-clicking text shows our glass menu (`context_menu.py`), not Qt's `QMenu`, which kept Qt's
-own old look (user report 2026-11-06). Same reason as the ☰ menu. One app-wide event filter
-(`install` in `main.py`) catches the context-menu event for selectable labels, text edits (the
-event arrives on the viewport) and line edits, so no widget needs its own code. The items are
-the ones Qt's menu had, minus Copy Link Location: the links in replies are explain mode's terms,
-not web addresses. A widget with its own `contextMenuPolicy` is left to Qt.
-Styled after macOS's text menus (user call 11-06, Notes as the reference): thin rows, no icons or
-dividers, the hovered row filled with the accent purple. Its wash is darker than the ☰ menu's
-(`CONTEXT_WASH_ALPHA`): it opens over chat text, which showed through the normal one.
+### Menus
+The ☰ menu and the right-click menu are one design, `GlassMenu` (`glass_menu.py`), so they
+can't drift apart. It's ours, not Qt's `QMenu`: a native menu follows the system appearance
+and goes light in light mode, and Qt's right-click menu kept Qt's own old look (user report
+2026-11-06). Styled after macOS's text menus (user call 11-06, Notes as the reference): thin
+rows, no icons or dividers, the hovered row filled with the accent purple. Its wash is darker
+than the panels' (`MENU_WASH_ALPHA`): a menu opens over chat text, which showed through.
+Right-click: one app-wide event filter (`install_context_menus` in `main.py`) catches the
+context-menu event for selectable labels, text edits (the event arrives on the viewport) and
+line edits, so no widget needs its own code. The items are the ones Qt's menu had, minus Copy
+Link Location: the links in replies are explain mode's terms, not web addresses. A widget with
+its own `contextMenuPolicy` is left to Qt.
+
+### Header icons
+The ☰ is three drawn lines (`symbols.set_menu_lines`, `MENU_ICON_WIDTH`), not SF Symbols'
+`line.3.horizontal`, which has fixed proportions and read too wide (user call 11-06). Minimize
+and close are SF Symbols a step smaller than the other header glyphs (`WINDOW_ICON_SIZE`). The
+controls stay grey on the right, not traffic lights: this is a floating panel whose minimize
+and close don't do what a window's do, and colored dots would compete with the purple.
 
 ### Checkbox color
 The native macOS style paints checkboxes in the Mac's system accent color and ignores Qt's palette

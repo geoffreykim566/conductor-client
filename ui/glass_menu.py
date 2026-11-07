@@ -1,8 +1,10 @@
-"""Right-click menu for text: our glass menu in place of Qt's QMenu (README "Context menu").
+"""`GlassMenu`: the app's one menu design, used by the ☰ menu and the right-click menu
+(README "Menus"), in place of Qt's QMenu.
 
-`install(app)` adds one app-wide event filter. It catches the context-menu event
-for selectable labels (chat bubbles), text edits (the input field) and line
-edits, and shows `ContextMenu` with the same basic items Qt's menu had.
+`install_context_menus(app)` adds one app-wide event filter. It catches the
+context-menu event for selectable labels (chat bubbles), text edits (the input
+field) and line edits, and shows a `GlassMenu` with the same basic items Qt's
+menu had.
 """
 from PySide6.QtCore import QEvent, QObject, QPoint, Qt
 from PySide6.QtGui import QGuiApplication, QTextDocument
@@ -17,14 +19,14 @@ from PySide6.QtWidgets import (
 )
 
 from ui.glass import GlassBackdrop, full_rect
-from ui.theme import CONTEXT_MENU_RADIUS
+from ui.theme import MENU_RADIUS
 
 _MIN_WIDTH = 140
 _SCREEN_MARGIN = 6
 _PAD = 4
 
 
-class ContextMenu(QWidget):
+class GlassMenu(QWidget):
     """A compact glass menu in the style of macOS text menus: plain rows, no icons or
     dividers, the hovered row filled purple. `items` holds (label, action, enabled)
     tuples. A click outside closes it (Qt.Popup)."""
@@ -35,7 +37,7 @@ class ContextMenu(QWidget):
         self.setAttribute(Qt.WA_DeleteOnClose)
 
         panel = QWidget(self)
-        panel.setObjectName("contextRoot")
+        panel.setObjectName("menuRoot")
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(panel)
@@ -45,17 +47,21 @@ class ContextMenu(QWidget):
         layout.setSpacing(0)
         for label, action, enabled in items:
             btn = QPushButton(label)
-            btn.setObjectName("contextItem")
+            btn.setObjectName("menuItem")
             btn.setEnabled(enabled)
             btn.clicked.connect(lambda _=False, a=action: self._pick(a))
             layout.addWidget(btn)
 
         self.setMinimumWidth(_MIN_WIDTH)
-        self._glass = GlassBackdrop(self, full_rect(self, CONTEXT_MENU_RADIUS), roots=[panel])
+        self._glass = GlassBackdrop(self, full_rect(self, MENU_RADIUS), roots=[panel])
 
     def _pick(self, action) -> None:
         self.close()
         action()
+
+    def show_below(self, anchor: QWidget) -> None:
+        """Under `anchor` (a button), left edges aligned."""
+        self.show_at(anchor.mapToGlobal(QPoint(0, anchor.height() + 6)))
 
     def show_at(self, pos: QPoint) -> None:
         """Top-left at `pos` (global), moved back inside the screen."""
@@ -139,11 +145,11 @@ class _ContextMenuFilter(QObject):
         if target is None or target.contextMenuPolicy() != Qt.DefaultContextMenu:
             return False
         items = _label_items(target) if isinstance(target, QLabel) else _edit_items(target)
-        ContextMenu(items).show_at(event.globalPos())
+        GlassMenu(items).show_at(event.globalPos())
         return True
 
 
-def install(app) -> None:
+def install_context_menus(app) -> None:
     """Show our menu for text widgets app-wide. Call once, after the QApplication exists."""
     app._context_menu_filter = _ContextMenuFilter(app)   # kept alive with the app
     app.installEventFilter(app._context_menu_filter)

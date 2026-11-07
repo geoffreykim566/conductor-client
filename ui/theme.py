@@ -41,8 +41,8 @@ PANEL_BORDER_ALPHA = 0.6
 # Dark wash Qt paints over the glass (ui/glass.py says why not a glass tint).
 GLASS_WASH = "#000000"
 GLASS_WASH_ALPHA = 0.38
-# The right-click menu opens over chat text, which showed through the normal wash.
-CONTEXT_WASH_ALPHA = 0.62
+# Menus open over chat text, which showed through the normal wash.
+MENU_WASH_ALPHA = 0.62
 # Everything drawn on a panel is translucent white so the glass shows through
 # (an opaque grey reads as a sticker on glass). Already rgba() strings.
 SURFACE = rgba(WHITE, 0.06)          # fields, hover rows, assistant bubble
@@ -99,8 +99,7 @@ MINIMIZED_SIZE = 60          # collapsed bubble, px square
 PANEL_RADIUS = 22
 BUBBLE_RADIUS = 14           # <= half a one-line bubble's height, or Qt squares it
 POPUP_RADIUS = 18
-MENU_RADIUS = 12             # the ☰ dropdown
-CONTEXT_MENU_RADIUS = 9      # the right-click menu (smaller, like macOS's)
+MENU_RADIUS = 9              # the ☰ and right-click menus (smaller, like macOS's)
 ROW_RADIUS = 10
 FIELD_RADIUS = 10
 BUTTON_RADIUS = 8
@@ -115,5 +114,7 @@ INPUT_PILL_RADIUS = CONTROL_SIZE // 2 + INPUT_PILL_PADDING  # fully capsule ends
 SEND_RADIUS = CONTROL_SIZE // 2                             # perfect circle
 ICON_BTN_SIZE = 22
 ICON_SIZE = 14               # SF Symbol glyphs in the header buttons
+WINDOW_ICON_SIZE = 12        # the chat header's minimize and close glyphs
+MENU_ICON_WIDTH = 12         # the chat header's ☰ lines
 SCROLLBAR_WIDTH = 4
 SCROLLBAR_GUTTER = 6         # keeps the track inboard of the panel's rounded edge

@@ -20,8 +20,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui.symbols import set_symbol
-from ui.theme import BORDER, CONTROL_SIZE, ICON_BTN_SIZE, ICON_SIZE, INPUT_PILL_PADDING, TEXT_SECONDARY, WHITE
+from ui.symbols import set_menu_lines, set_symbol
+from ui.theme import (
+    BORDER, CONTROL_SIZE, ICON_BTN_SIZE, INPUT_PILL_PADDING, MENU_ICON_WIDTH, TEXT_SECONDARY, WHITE,
+    WINDOW_ICON_SIZE,
+)
 
 
 class _ChatTextEdit(QTextEdit):
@@ -111,7 +114,7 @@ class InputBar(QWidget):
         menu_btn.setObjectName("headerBtn")
         menu_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         menu_btn.clicked.connect(self.menu_requested)
-        set_symbol(menu_btn, "line.3.horizontal", ICON_SIZE, TEXT_SECONDARY)
+        set_menu_lines(menu_btn, MENU_ICON_WIDTH, TEXT_SECONDARY)
         controls_row.addWidget(menu_btn, 0, Qt.AlignVCenter)
         self.menu_button = menu_btn
 
@@ -128,14 +131,14 @@ class InputBar(QWidget):
         self._min_btn.setObjectName("headerBtn")
         self._min_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         self._min_btn.clicked.connect(self.minimize_requested)
-        set_symbol(self._min_btn, "minus", ICON_SIZE, TEXT_SECONDARY)
+        set_symbol(self._min_btn, "minus", WINDOW_ICON_SIZE, TEXT_SECONDARY)
         controls_row.addWidget(self._min_btn, 0, Qt.AlignVCenter)
 
         self._close_btn = QPushButton("✕")
         self._close_btn.setObjectName("headerBtn")
         self._close_btn.setFixedSize(ICON_BTN_SIZE, ICON_BTN_SIZE)
         self._close_btn.clicked.connect(self.close_requested)
-        set_symbol(self._close_btn, "xmark", ICON_SIZE - 1, TEXT_SECONDARY)
+        set_symbol(self._close_btn, "xmark", WINDOW_ICON_SIZE - 1, TEXT_SECONDARY)
         controls_row.addWidget(self._close_btn, 0, Qt.AlignVCenter)
 
         # Single rounded-rect bubble holding the text field and send button —

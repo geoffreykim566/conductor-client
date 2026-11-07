@@ -3,8 +3,8 @@
 set_symbol() keeps the button's text glyph when AppKit or the symbol is
 missing, so a button is never blank.
 """
-from PySide6.QtCore import QSize
-from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
+from PySide6.QtCore import QPointF, QSize, Qt
+from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 
 try:
     import AppKit
@@ -68,3 +68,26 @@ def set_symbol(button, name: str, point_size: float, color: str, bold: bool = Fa
     button.setText("")
     button.setIcon(QIcon(pm))
     button.setIconSize(QSize(round(pm.width() / _SCALE), round(pm.height() / _SCALE)))
+
+
+def set_menu_lines(button, width: float, color: str) -> None:
+    """Three rounded lines (the ☰ icon), drawn here rather than SF Symbols'
+    line.3.horizontal, which is wider than the header wants (README "Header icons")."""
+    gap, stroke = 4.0, 1.6
+    height = 2 * gap + stroke
+    pm = QPixmap(round((width + stroke) * _SCALE), round(height * _SCALE))
+    pm.fill(QColor(0, 0, 0, 0))
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.scale(_SCALE, _SCALE)
+    pen = QPen(QColor(color), stroke)
+    pen.setCapStyle(Qt.RoundCap)
+    p.setPen(pen)
+    for i in range(3):
+        y = stroke / 2 + i * gap
+        p.drawLine(QPointF(stroke / 2, y), QPointF(stroke / 2 + width, y))
+    p.end()
+    pm.setDevicePixelRatio(_SCALE)
+    button.setText("")
+    button.setIcon(QIcon(pm))
+    button.setIconSize(QSize(round(width + stroke), round(height)))

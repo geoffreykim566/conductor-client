@@ -17,7 +17,6 @@ from ui.theme import (
     BORDER,
     BORDER_FOCUS,
     BUBBLE_RADIUS,
-    BUTTON_RADIUS,
     CAPSULE_RADIUS,
     CHIP_RADIUS,
     DANGER,
@@ -32,8 +31,7 @@ from ui.theme import (
     FONT_XS,
     GLASS_WASH,
     GLASS_WASH_ALPHA,
-    CONTEXT_WASH_ALPHA,
-    CONTEXT_MENU_RADIUS,
+    MENU_WASH_ALPHA,
     INPUT_PILL_RADIUS,
     MENU_RADIUS,
     MINIMIZED_RADIUS,
@@ -71,11 +69,6 @@ QWidget#setupRoot, QWidget#guideRoot, QWidget#popupRoot {{
     border: {_PANEL_BORDER};
     border-radius: {POPUP_RADIUS}px;
 }}
-QWidget#menuRoot {{
-    background-color: {rgba(PANEL, POPUP_ALPHA)};
-    border: {_PANEL_BORDER};
-    border-radius: {MENU_RADIUS}px;
-}}
 QWidget#minimizedRoot {{
     background-color: {_PANEL_BG};
     border: {_PANEL_BORDER};
@@ -83,7 +76,6 @@ QWidget#minimizedRoot {{
 }}
 QWidget#setupRoot[glass="true"], QWidget#guideRoot[glass="true"],
 QWidget#popupRoot[glass="true"], QWidget#minimizedRoot[glass="true"],
-QWidget#menuRoot[glass="true"],
 QWidget#inputBubble[glass="true"] {{
     background-color: {_GLASS_WASH};
     border: none;
@@ -215,26 +207,16 @@ QLabel#remainingLabel {{
     color: {TEXT_MUTED};
     font-size: {FONT_XS}px;
 }}
-QPushButton#menuItem {{
-    background: transparent;
-    border: none;
-    border-radius: {BUTTON_RADIUS}px;
-    color: {TEXT};
-    font-size: {FONT_MD}px;
-    padding: 6px 10px;
-    text-align: left;
-}}
-QPushButton#menuItem:hover {{ background: {SURFACE_HOVER}; }}
-QWidget#contextRoot {{
+QWidget#menuRoot {{
     background-color: {rgba(PANEL, POPUP_ALPHA)};
     border: {_PANEL_BORDER};
-    border-radius: {CONTEXT_MENU_RADIUS}px;
+    border-radius: {MENU_RADIUS}px;
 }}
-QWidget#contextRoot[glass="true"] {{
-    background-color: {rgba(GLASS_WASH, CONTEXT_WASH_ALPHA)};
+QWidget#menuRoot[glass="true"] {{
+    background-color: {rgba(GLASS_WASH, MENU_WASH_ALPHA)};
     border: none;
 }}
-QPushButton#contextItem {{
+QPushButton#menuItem {{
     background: transparent;
     border: none;
     border-radius: 5px;
@@ -243,8 +225,8 @@ QPushButton#contextItem {{
     padding: 3px 10px;
     text-align: left;
 }}
-QPushButton#contextItem:hover {{ background: {_ACCENT_BG}; color: {WHITE}; }}
-QPushButton#contextItem:disabled {{ background: transparent; color: {TEXT_DIM}; }}
+QPushButton#menuItem:hover {{ background: {_ACCENT_BG}; color: {WHITE}; }}
+QPushButton#menuItem:disabled {{ background: transparent; color: {TEXT_DIM}; }}
 QPushButton#rateBtn {{
     background: transparent;
     border: 1px solid transparent;
