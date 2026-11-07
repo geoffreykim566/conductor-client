@@ -223,6 +223,12 @@ QPushButton#menuItem {{
     text-align: left;
 }}
 QPushButton#menuItem:hover {{ background: {SURFACE_HOVER}; }}
+QPushButton#menuItem:disabled {{ background: transparent; color: {TEXT_DIM}; }}
+QFrame#menuSeparator {{
+    background: {DIVIDER};
+    border: none;
+    margin: 3px 10px;
+}}
 QPushButton#rateBtn {{
     background: transparent;
     border: 1px solid transparent;

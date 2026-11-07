@@ -17,7 +17,8 @@ only from tokens in `theme.py`.
 - `input_bar.py` - text field, send button, image attachments, and the controls row.
 - `session_list.py` - the history page. `settings_panel.py` - Settings popup (auto-run, auto research, reset, delete, uninstall, privacy policy link).
 - `popup.py` - `Popup` base (header bar + close) for casually dismissed windows.
-- `glass.py` - `GlassBackdrop`: native Liquid Glass (or blur) shapes under a translucent window.
+- `glass.py` - `GlassBackdrop`: native Liquid Glass (or blur) under a translucent window, one view cut to its shapes.
+- `context_menu.py` - `ContextMenu`: the glass right-click menu for chat text, the input field and line edits, installed app-wide.
 - `symbols.py` - SF Symbols rendered to Qt icons (header, send, bubble).
 - `motion.py` - fade-ins for widgets and windows, fade-out on hide; off under Reduce motion.
 - `style.py` - `STYLESHEET`. `theme.py` - every color/size/radius token.
@@ -98,6 +99,14 @@ controls row's own bottom margin, one lever instead of margin+spacing stacking u
 New chat and history moved into the ☰ menu with Report Bug and Settings (user call 10-24);
 Settings is also still in the macOS menu bar. The menu is our own glass dropdown, not a
 `QMenu`: a native menu follows the system appearance and goes light in light mode.
+
+### Context menu
+Right-clicking text shows our glass menu (`context_menu.py`), not Qt's `QMenu`, which kept Qt's
+own old look (user report 2026-11-06). Same reason as the ☰ menu. One app-wide event filter
+(`install` in `main.py`) catches the context-menu event for selectable labels, text edits (the
+event arrives on the viewport) and line edits, so no widget needs its own code. The items are
+the ones Qt's menu had, minus Copy Link Location: the links in replies are explain mode's terms,
+not web addresses. A widget with its own `contextMenuPolicy` is left to Qt.
 
 ### Checkbox color
 The native macOS style paints checkboxes in the Mac's system accent color and ignores Qt's palette
